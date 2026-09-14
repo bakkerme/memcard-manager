@@ -1,0 +1,5 @@
+[build]
+target-dir = "target"
+
+[env]
+PKG_CONFIG_PATH = { value = "/opt/homebrew/lib/pkgconfig", relative = false, force = false }

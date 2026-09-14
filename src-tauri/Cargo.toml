@@ -1,0 +1,24 @@
+[package]
+name = "memcard-viewer"
+version = "0.1.0"
+description = "PlayStation 1 memory card viewer"
+authors = ["memcard-viewer contributors"]
+license = "GPL-3.0-or-later"
+edition = "2021"
+
+[lib]
+name = "memcard_viewer_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+encoding_rs = "0.8"
+unicode-normalization = "0.1"
+rusb = "0.9"
