@@ -2,9 +2,9 @@
 
 A desktop PlayStation 1 memory card manager built with Tauri, React, and Rust. Browse all fifteen blocks, back up a whole card, export saves to a local library with version history, and compose a new card from selected saves.
 
-![memcard-viewer development preview showing the fifteen-block gallery and save inspector](docs/images/memcard-viewer.jpg)
+![memcard-viewer desktop app showing real saves from blue.mcr and the linked-block inspector](docs/images/memcard-viewer.jpg)
 
-*Development preview with synthetic save data and icons; real card icons are read from the card in the desktop app.*
+*The macOS app displaying real saves and icons from `blue.mcr`, with Worms World Party’s linked blocks selected.*
 
 ## What works today
 
