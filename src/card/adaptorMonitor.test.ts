@@ -84,14 +84,15 @@ it("reads an adaptor present at startup once, even after a failed read and resum
   monitor.stop();
 });
 
-it("does not auto-read a later attachment or an unmounted startup", async () => {
+it("auto-reads a later attachment but ignores an unmounted probe", async () => {
   vi.useFakeTimers();
   const read = vi.fn();
   const monitor = createAdaptorMonitor(vi.fn().mockResolvedValueOnce(absent).mockResolvedValue(present), vi.fn(), vi.fn(), read);
   await monitor.check();
   await vi.advanceTimersByTimeAsync(2000);
-  expect(read).not.toHaveBeenCalled();
+  expect(read).toHaveBeenCalledTimes(1);
   monitor.stop();
+  read.mockClear();
   const stopped = createAdaptorMonitor(vi.fn().mockResolvedValue(present), vi.fn(), vi.fn(), read);
   const pending = stopped.check();
   stopped.stop();
@@ -108,5 +109,20 @@ it("lets the startup read pause the probe without deadlocking", async () => {
   await monitor.check();
   await pause;
   expect(vi.getTimerCount()).toBe(0);
+  monitor.stop();
+});
+
+
+it("reads once per attachment, including reattachment, without retrying on transient errors", async () => {
+  vi.useFakeTimers();
+  const read = vi.fn();
+  const probe = vi.fn().mockResolvedValueOnce(present).mockRejectedValueOnce(new Error("Transient"))
+    .mockResolvedValueOnce(present).mockResolvedValueOnce(absent).mockResolvedValue(present);
+  const monitor = createAdaptorMonitor(probe, vi.fn(), vi.fn(), read);
+  await monitor.check();
+  await vi.advanceTimersByTimeAsync(4000);
+  expect(read).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(4000);
+  expect(read).toHaveBeenCalledTimes(2);
   monitor.stop();
 });

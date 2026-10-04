@@ -1,3 +1,5 @@
+import type { GameDetails } from "./gameDetails";
+
 export const SLOT_COUNT = 15;
 export const CARD_SIZE = 131072;
 export const HEADER_SIZE = 128;
@@ -39,9 +41,12 @@ export interface SaveInfo {
   deleted: boolean;
   frameCount: number;
   frames: RgbaFrame[];
+  gameDetails?: GameDetails | null;
+  gameDetailsError?: string | null;
 }
 
 export interface CardView {
+  sessionId?: string;
   sourceName: string;
   imageId: string;
   format: CardFormat;

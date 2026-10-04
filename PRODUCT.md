@@ -40,12 +40,17 @@ Confirmed in shipping v1:
 - Read raw `.mcr` family, DexDrive `.gme`, and VGS `.vgs`/`.mem`.
 - Icon-first gallery with linked blocks, deleted/ghost saves, PocketStation software, and XOR status.
 - Manual Sync: choose a local directory and export active saves as `.mcs`, grouped by product code (unknown codes use `unknown-game`). Stable PS1 save filenames distinguish saves within a game. Changed files update, identical files are skipped, and files absent from the card are retained. Deleted saves are excluded. Sync uses the currently opened card snapshot; reload Slot 1 to capture later hardware changes.
-- Local backups: a persisted, user-chosen directory shared with Sync. Recursively read `.mcs` files, grouped by game, with icons, metadata, file reveal, folder change, and refresh. Invalid files are reported without hiding readable saves. Library reads never replace the currently open card.
+- Local collection: one persisted, user-chosen folder shared by Backup and Sync. A folder selected in the earlier save-backup flow is reused automatically; no second folder choice is required. Sync writes MCS files and snapshot history under `saves/`; whole-card Backup automatically writes timestamped raw MCR files under `card-backups/`. First-use setup, automatic migration, and folder changes copy existing saves, hidden snapshot history, and card backups with byte verification; originals are retained and conflicting files are never overwritten.
+- Local saves (under All Saves): Recursively read `.mcs` files into a compact icon catalog with search, game filtering, title/game/latest-capture sorting, 24-save pages, metadata and file reveal. Collection-folder selection, changes, reveal, and manual refresh live in a sidebar Settings page; opening Local saves or Card backups automatically refreshes their contents. The sidebar keeps the window height; catalog results and inspector scroll independently. Invalid files are reported without hiding readable saves. Library reads never replace the currently open card.
 - Save snapshots: manual Sync archives existing and incoming versions before updating the latest dump. Distinct game filename and save payload combinations are preserved; identical contents reuse a snapshot even across card layouts. Local backups exposes version history and capture sources. Sources identify loaded card images, not physical cards. Multiple playthroughs under the same filename remain separate snapshots; automatic playthrough identity and stable card IDs are deferred.
-- Whole-card backup to a file; compose a new raw `.mcr` from selected master saves (rejects selections over 15 blocks).
+- Card backups: a first-class source with whole-card thumbnails, active save/block counts, capture/source metadata, Open card, and Reveal in Finder. Choose a name and grey, black, white, blue, green, or red thumbnail when capturing; edit these labels later without changing the MCR image. Color is user-assigned metadata, including for adaptor captures; it is not detected shell color or stable physical-card identity. Legacy card images with no sidecar remain readable, default to grey, and show unknown capture time.
+- Open-card workspace: multiple card files and card backups stay loaded as virtual cards in the sidebar. Select a row to switch the displayed card and the backend source used by Backup, Sync, and compose. Opening the same backup again focuses its existing row. The X closes a loaded card without changing its saved file. Composing selected saves opens the new card after it is saved.
+- Adaptor attachment (including after startup or reattachment) automatically reads Slot 1. Selecting its sidebar row returns to the cached read; refresh rereads hardware. Adaptor reads preserve loaded virtual cards. Absence is a normal sidebar state.
+- Whole-card backup preserves the complete image, including deleted saves and unused blocks; compose a new raw `.mcr` from selected master saves (rejects selections over 15 blocks).
 - Adaptor **read** only. No hardware write is implemented. The adaptor has one physical slot; the sidebar lists Slot 1 only when that adaptor is present, with no second-slot row.
 - Parser ported from MemcardRex Core by Shendo. License: GPL-3.0-or-later.
 - Inspector already exposes title, region, product code, identifier, and linked slot chain.
+- Read-only game-details pilot for original US Digimon World 2 (`SLUS-01193`): a button in the card and backup inspectors opens three in-game profiles with tamer, rank, saved location, playtime, Bits, Digi-Beetle, and Digimon roster stats/techniques. The game checksum is checked; malformed layouts show an error without preventing card browsing. Playtime matches the game’s hours/minutes display with its 99:59 cap. Inventory, story progress, other regions, and game editing are outside this pilot.
 
 Confirmed product direction (not all shipping yet):
 
@@ -60,7 +65,7 @@ Confirmed product direction (not all shipping yet):
 Undecided:
 
 - Display name beyond the repo and window title `memcard-viewer`. The vision mock’s subtitle “PlayStation Memory Card Manager” describes the job; it is not a rename and not a Sony-licensed brand.
-- Where virtual cards and the save library live on disk, and how they are named/organized.
+- Where persistent named virtual cards live within the local collection, and how their version references are managed. The collection root and `saves/` / `card-backups/` separation are settled.
 - Whether “Open card” from an arbitrary file stays first-class once virtual cards exist, or becomes import-into-library.
 - Whether save titles are user-editable, or inspect-only.
 - Cloud provider, account model, and what “connected” means for that bucket.

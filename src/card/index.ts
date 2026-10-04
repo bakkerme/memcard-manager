@@ -19,7 +19,10 @@ export type {
   SlotType,
 } from "./engine";
 export {
+  activateCard,
+  closeCard,
   backupCard,
+  labelCardBackup,
   syncCard,
   readLocalBackups,
   chooseLocalBackups,
@@ -33,5 +36,5 @@ export {
   revealPath,
   saveExport,
 } from "./api";
-export type { AdaptorIdentity, BackupResult, LibraryView, LibrarySave, LibrarySnapshot, SnapshotSource, SyncResult, ExportResult, HardwareStatus } from "./api";
+export type { AdaptorIdentity, BackupResult, CardBackup, CardColor, LibraryView, LibrarySave, LibrarySnapshot, SnapshotSource, SyncResult, ExportResult, HardwareStatus } from "./api";
 export { demoView } from "./demo";

@@ -3,7 +3,11 @@ import { isTauri } from "@tauri-apps/api/core";
 import {
   CardError,
   SLOT_COUNT,
+  activateCard,
+  closeCard,
   backupCard,
+  labelCardBackup,
+  openCardPath,
   syncCard,
   readLocalBackups,
   chooseLocalBackups,
@@ -17,6 +21,8 @@ import {
   revealPath,
   saveExport,
   type BackupResult,
+  type CardBackup,
+  type CardColor,
   type SyncResult,
   type CardView,
   type LibraryView,
@@ -25,14 +31,19 @@ import {
   type SlotInfo,
 } from "./card";
 import { createAdaptorMonitor } from "./card/adaptorMonitor";
+import { CardBackups } from "./components/CardBackups";
+import { CardColorPicker, MemoryCardThumbnail } from "./components/MemoryCardThumbnail";
+import { Settings } from "./components/Settings";
 import { LocalBackups } from "./components/LocalBackups";
 import { PixelIcon } from "./components/PixelIcon";
+import { GameDetailsButton } from "./components/GameDetails";
 import cardThumb from "./assets/plates/card-thumb.png";
 import {
   IconArchive,
   IconBackup,
   IconCard,
   IconCloud,
+  IconClose,
   IconCopy,
   IconFolder,
   IconImport,
@@ -42,6 +53,7 @@ import {
   IconPlus,
   IconRefresh,
   IconStack,
+  IconSettings,
   IconTrash,
 } from "./icons";
 import "./App.css";
@@ -62,9 +74,20 @@ function laterTitle(feature: string): string {
   return `${feature} is not available yet`;
 }
 
+type WorkspacePage = "card" | "saves" | "backups" | "settings";
+
+interface OpenCard {
+  id: string;
+  view: CardView;
+  backup: CardBackup | null;
+}
+
 export default function App() {
   const hasOverlayTitlebar = isTauri() && /Mac/.test(navigator.platform);
   const [view, setView] = useState<CardView | null>(null);
+  const [openCards, setOpenCards] = useState<OpenCard[]>([]);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [autoReadPending, setAutoReadPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [focus, setFocus] = useState<number | null>(null);
@@ -75,7 +98,15 @@ export default function App() {
   const [notice, setNotice] = useState<BackupResult | null>(null);
   const [syncNotice, setSyncNotice] = useState<SyncResult | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [page, setPage] = useState<WorkspacePage>("card");
+  const libraryOpen = page === "saves";
+  const cardsOpen = page === "backups";
+  const settingsOpen = page === "settings";
+  const collectionOpen = page !== "card";
+  const [backupEditing, setBackupEditing] = useState(false);
+  const [backupName, setBackupName] = useState("");
+  const [backupColor, setBackupColor] = useState<CardColor>("grey");
+  const [activeBackup, setActiveBackup] = useState<CardBackup | null>(null);
   const [library, setLibrary] = useState<LibraryView | null>(null);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState<string | null>(null);
@@ -84,9 +115,19 @@ export default function App() {
   const readingRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const applyView = useCallback((next: CardView) => {
+  const applyView = useCallback((next: CardView, backup: CardBackup | null = null) => {
+    const id = next.sessionId ?? `${next.source}:${next.imageId}`;
+    setOpenCards(current => {
+      const entry = { id, view: next, backup };
+      return current.some(card => card.id === id)
+        ? current.map(card => card.id === id ? entry : card)
+        : [...current, entry];
+    });
+    setActiveCardId(id);
     setView(next);
-    setLibraryOpen(false);
+    setPage("card");
+    setBackupEditing(false);
+    setActiveBackup(backup);
     setSelected([]);
     setFocus(null);
     setError(null);
@@ -104,7 +145,7 @@ export default function App() {
       if (request === libraryRequest.current) setLibrary(next);
     } catch (err) {
       if (request === libraryRequest.current) {
-        setLibrary(current => current ? { ...current, saves: [], warnings: [] } : null);
+        setLibrary(current => current ? { ...current, saves: [], cards: [], warnings: [] } : null);
         setLibraryError(err instanceof CardError ? err.message : "Could not read local backups. Choose a folder again.");
       }
     } finally {
@@ -113,6 +154,11 @@ export default function App() {
   }, []);
 
   useEffect(() => { void refreshLibrary(); }, [refreshLibrary]);
+
+  function openSettings() {
+    setPage("settings");
+    setBackupEditing(false);
+  }
 
   async function configureLibrary() {
     if (busy || libraryLoading) return;
@@ -134,10 +180,11 @@ export default function App() {
     catch (err) { setLibraryError(err instanceof CardError ? err.message : "Could not reveal the backup."); }
   }
 
-  const startupReadAllowed = useRef(true);
   const readUsb = useCallback(async () => {
     if (readingRef.current) return;
     readingRef.current = true;
+    setPage("card");
+    setBackupEditing(false);
     setError(null);
     setBusy(true);
     setHw((current) => ({
@@ -153,7 +200,7 @@ export default function App() {
       }));
     } catch (err) {
       const message = err instanceof CardError ? err.message : "Could not read the adaptor.";
-      setError(`${message} Check the card and adaptor, then try Read Slot 1 again.`);
+      setError(`${message} Check the card and adaptor, then reload Slot 1 in the sidebar.`);
       setHw((current) => ({
         state: "adaptor", message, identity: current?.identity ?? null, frame: 0, total: 1024,
       }));
@@ -200,10 +247,20 @@ export default function App() {
         frame: 12,
         total: 1024,
       });
-    } else if (qa === "library") {
+    } else if (qa === "library" || qa === "library-large" || qa === "card-backups") {
       const demo = demoView();
-      setLibrary({ directory: "/tmp/memcard-demo", displayPath: "~/Documents/PS1 saves",
-        saves: demo.saves.map((save, index) => ({ save,
+      setLibrary({ directory: "/tmp/memcard-demo", displayPath: "~/Documents/memcard-viewer",
+        collectionConfigured: true,
+        cards: (["grey", "black", "white", "blue", "green", "red"] as CardColor[]).map((color, index) => ({
+          path: `/tmp/memcard-demo/card-backups/${color}.mcr`, filename: `${color}-2026-10-04.mcr`,
+          name: ["Original card", "RPG collection", "Platformers", "MiSTer card", "Second playthrough", "Arcade favorites"][index],
+          color, capturedAt: "2026-10-04T06:00:00Z", sourceName: "Demo card (synthetic)", source: "file",
+          imageId: demo.imageId, saveCount: demo.saves.filter(save => !save.deleted).length, usedBlocks: demo.usedBlocks,
+        })),
+        saves: Array.from({ length: qa === "library-large" ? 6 : 1 }, (_, batch) => demo.saves.map((original, offset) => {
+          const index = batch * demo.saves.length + offset;
+          const save = batch ? { ...original, title: `${original.title} · Backup ${batch + 1}` } : original;
+          return { save,
           path: `/tmp/memcard-demo/${index}.mcs`,
           relativePath: `${save.prodCode || "unknown-game"}/${index}.mcs`,
           snapshots: [0, 1].map(version => ({
@@ -212,8 +269,14 @@ export default function App() {
             sources: [{ imageId: demo.imageId, sourceName: "Demo card (synthetic)", source: "file" }],
             current: version === 1, save,
           })),
-        })), warnings: [] });
-      setLibraryOpen(true);
+        }; })).flat(), warnings: [] });
+      setPage(qa === "card-backups" ? "backups" : "saves");
+      setHw({ state: "idle", message: "Preview", identity: null, frame: 0, total: 1024 });
+    } else if (qa === "backup-editor") {
+      applyView(demoView());
+      setBackupEditing(true);
+      setBackupName("Blue card");
+      setBackupColor("blue");
       setHw({ state: "idle", message: "Preview", identity: null, frame: 0, total: 1024 });
     } else if (qa === "backup") {
       applyView(demoView());
@@ -241,7 +304,7 @@ export default function App() {
     let disposed = false;
     let unlisten: (() => void) | undefined;
     const monitor = createAdaptorMonitor(probeAdaptor, setHw, () => undefined, () => {
-      if (startupReadAllowed.current) void readUsb();
+      setAutoReadPending(true);
     });
     monitorRef.current = monitor;
     void onUsbProgress((status) => {
@@ -261,6 +324,12 @@ export default function App() {
     };
   }, [readUsb]);
 
+  useEffect(() => {
+    if (!autoReadPending || busy || libraryLoading || readingRef.current || !adaptorPresent(hw)) return;
+    setAutoReadPending(false);
+    void readUsb();
+  }, [autoReadPending, busy, libraryLoading, hw, readUsb]);
+
   const saveByMaster = useMemo(() => {
     const map = new Map<number, SaveInfo>();
     if (view) for (const save of view.saves) map.set(save.masterSlot, save);
@@ -278,25 +347,22 @@ export default function App() {
   }, [view]);
 
   const focusedSave = focus != null ? (saveByMaster.get(focus) ?? saveBySlot.get(focus) ?? null) : null;
-  const canCompose = selected.length > 0 && !busy && !libraryOpen;
+  const canCompose = selected.length > 0 && !busy && !collectionOpen;
   const connected = adaptorPresent(hw);
   const reading = hw?.state === "reading";
   const readPercent = Math.min(100, Math.floor(((hw?.frame ?? 0) / (hw?.total || 1024)) * 100));
-  const diskOpen = view?.source === "file";
+  const virtualCards = openCards.filter(card => card.view.source === "file");
+  const physicalCard = openCards.find(card => card.view.source === "usb");
   const usbOpen = view?.source === "usb";
 
   const loadBytes = useCallback(
     async (file: File) => {
       if (readingRef.current || busy) return;
-      startupReadAllowed.current = false;
       setError(null);
       setBusy(true);
       try {
         applyView(await openCardBytes(new Uint8Array(await file.arrayBuffer()), file.name));
       } catch (err) {
-        setView(null);
-        setSelected([]);
-        setFocus(null);
         setError(
           !isTauri()
             ? "Opening a card needs the desktop app. Run npm run tauri."
@@ -318,7 +384,6 @@ export default function App() {
 
   async function openNative() {
     if (readingRef.current) return;
-    startupReadAllowed.current = false;
     setError(null);
     if (!isTauri()) {
       fileRef.current?.click();
@@ -329,7 +394,6 @@ export default function App() {
       const opened = await pickAndOpenCard();
       if (opened) applyView(opened);
     } catch (err) {
-      setView(null);
       setError(err instanceof CardError ? err.message : "Could not open that file.");
     } finally {
       setBusy(false);
@@ -353,7 +417,7 @@ export default function App() {
     setBusy(true);
     try {
       const dest = await composeCard(selected);
-      await saveExport(dest);
+      if (await saveExport(dest)) applyView(await openCardBytes(dest.bytes, dest.filename));
     } catch (err) {
       setError(err instanceof CardError ? err.message : "Compose failed.");
     } finally {
@@ -361,19 +425,113 @@ export default function App() {
     }
   }
 
-  async function backup() {
+  async function ensureCollection(): Promise<string | null> {
+    if (library?.collectionConfigured && library.directory) return library.directory;
+    // Resolve the persisted folder before offering a picker, including when
+    // the initial collection refresh has not finished yet.
+    const current = await readLocalBackups();
+    setLibrary(current);
+    if (current.collectionConfigured && current.directory) return current.directory;
+    const next = await chooseLocalBackups(current.directory);
+    if (next) setLibrary(next);
+    return next?.directory ?? null;
+  }
+
+  function beginBackup() {
     if (!view) return;
+    setBackupName(activeBackup?.name ?? (view.source === "usb" ? "Memory Card" : view.sourceName.replace(/\.[^/.]+$/, "")).slice(0, 80));
+    setBackupColor(activeBackup?.color ?? "grey");
+    setBackupEditing(true);
+  }
+
+  async function backup() {
+    if (!view || busy) return;
     setBusy(true);
     setError(null);
     setNotice(null);
     setSyncNotice(null);
     try {
-      setNotice(await backupCard());
+      const directory = await ensureCollection();
+      if (!directory) return;
+      setNotice(await backupCard(directory, backupName, backupColor));
+      setBackupEditing(false);
+      await refreshLibrary();
     } catch (err) {
       setError(err instanceof CardError ? err.message : "Backup failed.");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
+  }
+
+  async function openBackup(card: CardBackup) {
+    if (busy) return;
+    const existing = openCards.find(open => open.backup?.path === card.path);
+    if (existing) { await selectCard(existing); return; }
+    setBusy(true);
+    setLibraryError(null);
+    try {
+      applyView(await openCardPath(card.path), card);
+    } catch (err) { setLibraryError(err instanceof CardError ? err.message : "Could not open that card backup. Refresh and try again."); }
+    finally { setBusy(false); }
+  }
+
+  async function selectCard(card: OpenCard) {
+    if (busy || readingRef.current) return;
+    setBusy(true);
+    try {
+      if (card.view.sessionId) await activateCard(card.view.sessionId);
+      applyView(card.view, card.backup);
+    } catch (err) {
+      const message = err instanceof CardError ? err.message : "Could not switch cards. Try opening the card again.";
+      setError(message);
+      setLibraryError(message);
+    } finally { setBusy(false); }
+  }
+
+  async function closeVirtualCard(card: OpenCard) {
+    if (busy || readingRef.current) return;
+    const remaining = openCards.filter(open => open.id !== card.id);
+    const next = card.id === activeCardId
+      ? remaining.find(open => open.view.source === "file") ?? (connected ? physicalCard : undefined)
+      : undefined;
+    setBusy(true);
+    try {
+      if (card.view.sessionId) await closeCard(card.view.sessionId, next?.view.sessionId ?? null);
+      setOpenCards(remaining);
+      if (card.id === activeCardId) {
+        if (next) {
+          applyView(next.view, next.backup);
+          setPage(page);
+        }
+        else {
+          setView(null);
+          setActiveCardId(null);
+          setActiveBackup(null);
+          setSelected([]);
+          setFocus(null);
+          setBackupEditing(false);
+          setNotice(null);
+          setSyncNotice(null);
+          setError(null);
+        }
+      }
+    } catch (err) {
+      const message = err instanceof CardError ? err.message : "Could not close that card. Try again.";
+      setError(message);
+      setLibraryError(message);
+    } finally { setBusy(false); }
+  }
+
+  async function saveCardLabel(path: string, name: string, color: CardColor) {
+    if (busy) return;
+    setBusy(true);
+    setLibraryError(null);
+    try {
+      const next = await labelCardBackup(path, name, color);
+      setLibrary(next);
+      const label = next.cards.find(card => card.path === path) ?? null;
+      if (activeBackup?.path === path) setActiveBackup(label);
+      setOpenCards(current => current.map(card => card.backup?.path === path ? { ...card, backup: label } : card));
+    } catch (err) { setLibraryError(err instanceof CardError ? err.message : "Could not save the card label. Try again."); }
+    finally { setBusy(false); }
   }
 
   async function sync() {
@@ -384,15 +542,13 @@ export default function App() {
     setNotice(null);
     setSyncNotice(null);
     try {
-      const result = await syncCard(library?.directory);
+      const directory = await ensureCollection();
+      if (!directory) return;
+      const result = await syncCard(directory);
       setSyncNotice(result);
       if (result) await refreshLibrary();
-    } catch (err) {
-      setError(err instanceof CardError ? err.message : "Sync failed. Try Sync again.");
-    } finally {
-      setSyncing(false);
-      setBusy(false);
-    }
+    } catch (err) { setError(err instanceof CardError ? err.message : "Sync failed. Try Sync again."); }
+    finally { setSyncing(false); setBusy(false); }
   }
 
   async function revealSync() {
@@ -413,25 +569,6 @@ export default function App() {
     }
   }
 
-
-  const statusClass =
-    hw?.state === "error"
-      ? "error"
-      : reading || hw?.state === "searching" || hw == null
-        ? "searching"
-        : connected
-          ? "connected"
-          : "disconnected";
-  const statusLabel =
-    hw?.state === "error"
-      ? "Adaptor error"
-      : reading
-        ? "Reading"
-        : connected
-          ? "Connected"
-          : hw?.state === "searching" || hw == null
-            ? "Searching"
-            : "No adaptor";
 
   return (
     <div
@@ -465,36 +602,19 @@ export default function App() {
           <h1>memcard-viewer</h1>
         </div>
         <div className="topbar-actions">
-          <span className={`pill ${statusClass}`}>
-            <span className="dot" />
-            {statusLabel}
-          </span>
-          <button type="button" className="btn" disabled={busy} onClick={() => void openNative()}>
-            <IconFolder />
-            Open card
+          <button type="button" className="btn" disabled title={laterTitle("Import save")}><IconImport />Import save</button>
+          <button type="button" className="btn" disabled={!view || busy || collectionOpen || libraryLoading || !isTauri()}
+            title={isTauri() ? "Back up the whole card to your collection" : "Backup requires the desktop app"} onClick={beginBackup}>
+            <IconBackup />Backup
           </button>
-          <button type="button" className="btn" disabled title={laterTitle("Import save")}>
-            <IconImport />
-            Import save
-          </button>
-          <button type="button" className="btn" disabled={!view || busy || libraryOpen} onClick={() => void backup()}>
-            <IconBackup />
-            Backup
-          </button>
-          <button type="button" className="btn" disabled={!view || busy || libraryOpen || libraryLoading || !isTauri()}
-            title={isTauri() ? "Export active saves by game to a local directory. Card is read-only." : "Sync requires the desktop app"}
-            onClick={() => void sync()}>
-            <IconRefresh />
-            {syncing ? "Syncing…" : "Sync"}
-          </button>
-          <button type="button" className="btn btn-primary" disabled={!canCompose} onClick={() => void compose()}>
-            <IconPlus />
-            New memory card
-          </button>
+          <button type="button" className="btn" disabled={!view || busy || collectionOpen || libraryLoading || !isTauri()}
+            title={isTauri() ? "Export active saves by game to your collection. Card is read-only." : "Sync requires the desktop app"}
+            onClick={() => void sync()}><IconRefresh />{syncing ? "Syncing…" : "Sync"}</button>
         </div>
       </header>
 
       <aside className="sidebar">
+        <div className="sidebar-sources">
         <section className="nav-section">
           <div className="nav-label">
             <span className="nav-label-name">
@@ -504,16 +624,14 @@ export default function App() {
             <span className="nav-count">{connected ? 1 : 0}</span>
           </div>
           {connected ? (
-            <div className={`nav-item ${usbOpen && !libraryOpen ? "selected" : ""}`}>
+            <div className={`nav-item ${usbOpen && !collectionOpen ? "selected" : ""}`}>
               <IconCard />
-              <button type="button" className="nav-copy" disabled={busy} onClick={() => void readUsb()} style={navReset}>
+              <button type="button" className="nav-copy" disabled={busy} onClick={() => physicalCard ? void selectCard(physicalCard) : void readUsb()} style={navReset}>
                 <strong>Slot 1</strong>
                 <span>
-                  {usbOpen && view
-                    ? `${view.usedBlocks} blocks used`
-                    : reading
-                      ? "Reading…"
-                      : "Click to read"}
+                  {reading ? "Reading…" : physicalCard
+                    ? `${physicalCard.view.usedBlocks} blocks used`
+                    : "Click to retry read"}
                 </span>
               </button>
               <div className="nav-aside">
@@ -521,7 +639,7 @@ export default function App() {
                   type="button"
                   className="refresh"
                   disabled={busy}
-                  aria-label="Reload card"
+                  aria-label="Reload Slot 1"
                   onClick={(e) => {
                     e.stopPropagation();
                     void readUsb();
@@ -548,30 +666,31 @@ export default function App() {
               <IconStack />
               Virtual Cards
             </span>
-            <span className="nav-count">{diskOpen ? 1 : 0}</span>
+            <span className="nav-count">{virtualCards.length}</span>
           </div>
-          {diskOpen && view ? (
-            <button type="button" className={`nav-item ${!libraryOpen ? "selected" : ""}`} disabled={busy} onClick={() => setLibraryOpen(false)}>
+          {virtualCards.map(card => {
+            const name = card.backup?.name ?? card.view.sourceName;
+            return <div key={card.id} className={`nav-item ${card.id === activeCardId && !collectionOpen ? "selected" : ""}`}>
               <IconCard />
-              <span className="nav-copy">
-                <strong>{view.sourceName}</strong>
-                <span>{view.usedBlocks} blocks used</span>
-              </span>
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="nav-item nav-add"
-            disabled={!canCompose}
-            onClick={() => void compose()}
-            title={canCompose ? "Compose a new .mcr from the selected saves" : "Select saves to compose a new card"}
-          >
-            <IconPlus />
-            <span className="nav-copy">
-              <strong>Add virtual card</strong>
-            </span>
+              <button type="button" className="nav-copy" style={navReset} disabled={busy}
+                aria-current={card.id === activeCardId && !collectionOpen ? "page" : undefined}
+                onClick={() => void selectCard(card)}>
+                <strong>{name}</strong>
+                <span>{card.view.usedBlocks} blocks used</span>
+              </button>
+              <button type="button" className="nav-close" disabled={busy} aria-label={`Close ${name}`}
+                title={`Close ${name}`} onClick={() => void closeVirtualCard(card)}><IconClose /></button>
+            </div>;
+          })}
+          <button type="button" className="nav-item nav-add" disabled={busy} onClick={() => void openNative()}>
+            <IconFolder /><span className="nav-copy"><strong>Open card…</strong></span>
+          </button>
+          <button type="button" className="nav-item nav-add" disabled={!canCompose || !isTauri()} onClick={() => void compose()}
+            title={canCompose ? "Compose a new .mcr from the selected saves" : "Select saves to compose a new card"}>
+            <IconPlus /><span className="nav-copy"><strong>New card from selection</strong></span>
           </button>
         </section>
+
 
         <section className="nav-section">
           <div className="nav-label">
@@ -582,10 +701,10 @@ export default function App() {
             <span className="nav-count">{library?.saves.length ?? 0}</span>
           </div>
           <button type="button" className={`nav-item ${libraryOpen ? "selected" : ""}`} disabled={busy}
-            onClick={() => { setLibraryOpen(true); void refreshLibrary(); }}>
+            onClick={() => { setPage("saves"); void refreshLibrary(); }}>
             <IconArchive />
             <span className="nav-copy">
-              <strong>Local backups</strong>
+              <strong>Local saves</strong>
               <span>{library?.directory ? `${library.saves.length} saves` : "Choose a folder"}</span>
             </span>
           </button>
@@ -599,6 +718,13 @@ export default function App() {
         </section>
 
         <section className="nav-section">
+          <button type="button" className={`nav-item ${cardsOpen ? "selected" : ""}`} disabled={busy}
+            onClick={() => { setPage("backups"); void refreshLibrary(); }}>
+            <IconCard /><span className="nav-copy"><strong>Card backups</strong><span>{library?.cards.length ?? 0} whole-card captures</span></span>
+          </button>
+        </section>
+
+        <section className="nav-section">
           <button type="button" className="nav-item" disabled title={laterTitle("Auto-backup")}>
             <IconRefresh />
             <span className="nav-copy">
@@ -607,15 +733,25 @@ export default function App() {
             </span>
           </button>
         </section>
+        </div>
+        <section className="nav-section nav-settings">
+          <button type="button" className={`nav-item ${settingsOpen ? "selected" : ""}`} disabled={busy}
+            aria-current={settingsOpen ? "page" : undefined} onClick={openSettings}>
+            <IconSettings /><span className="nav-copy"><strong>Settings</strong></span>
+          </button>
+        </section>
       </aside>
 
-      {libraryOpen ? <LocalBackups library={library} loading={libraryLoading} busy={busy}
-        error={libraryError} frameTick={frameTick} onChoose={() => void configureLibrary()}
-        onRefresh={() => void refreshLibrary()} onReveal={path => void revealLibrary(path)} /> : <main className={`workspace ${dragging ? "drop-active" : ""}`}>
+      {settingsOpen ? <Settings library={library} loading={libraryLoading} busy={busy} error={libraryError}
+        onChoose={() => void configureLibrary()} onRefresh={() => void refreshLibrary()} onReveal={path => void revealLibrary(path)} /> : cardsOpen ? <CardBackups library={library} loading={libraryLoading} busy={busy} error={libraryError}
+        onSettings={openSettings} onReveal={path => void revealLibrary(path)}
+        onOpen={card => void openBackup(card)} onLabel={(path, name, color) => void saveCardLabel(path, name, color)} /> : libraryOpen ? <LocalBackups library={library} loading={libraryLoading} busy={busy}
+        error={libraryError} frameTick={frameTick} onSettings={openSettings}
+        onReveal={path => void revealLibrary(path)} /> : <main className={`workspace ${dragging ? "drop-active" : ""}`}>
         <div className="card-head">
-          <img className="card-thumb" src={cardThumb} alt="" width={64} height={72} />
+          {activeBackup ? <MemoryCardThumbnail color={activeBackup.color} /> : <img className="card-thumb" src={cardThumb} alt="" width={64} height={72} />}
           <div className="card-id">
-            <h2>{view ? (usbOpen ? "Memory Card" : view.sourceName) : reading ? "Memory Card" : "No card open"}</h2>
+            <h2>{view ? (activeBackup?.name ?? (usbOpen ? "Memory Card" : view.sourceName)) : reading ? "Memory Card" : "No card open"}</h2>
             <p>
               {usbOpen
                 ? "Slot 1"
@@ -665,6 +801,7 @@ export default function App() {
             <button type="button" onClick={() => void revealBackup()}>
               Reveal in Finder
             </button>
+            <button type="button" onClick={() => { setPage("backups"); void refreshLibrary(); }}>View card backups</button>
           </div>
         )}
 
@@ -675,6 +812,21 @@ export default function App() {
           </div>
         )}
 
+        {backupEditing && <form className="backup-create" onSubmit={event => { event.preventDefault(); void backup(); }}>
+          <MemoryCardThumbnail color={backupColor} />
+          <div className="backup-create-fields">
+            <h3>Back up this card</h3>
+            <label htmlFor="new-backup-name">Card name</label>
+            <input id="new-backup-name" value={backupName} onChange={event => setBackupName(event.target.value)} maxLength={80} required disabled={busy} autoFocus />
+            <CardColorPicker value={backupColor} onChange={setBackupColor} disabled={busy} />
+            <p className="muted">Choose a thumbnail color for this backup. The entire card is preserved, including deleted saves.</p>
+            <p className="muted">{library?.collectionConfigured ? `Saved automatically in ${library.displayPath}/card-backups/` : libraryLoading ? "Checking your collection folder…" : "Choose your collection folder once; card backups will use its card-backups/ subfolder automatically."}</p>
+          </div>
+          <div className="backup-create-actions">
+            <button className="btn btn-primary" disabled={busy || !backupName.trim() || !isTauri()} title={!isTauri() ? "Backup requires the desktop app" : undefined}>{busy ? "Backing up…" : "Back up card"}</button>
+            <button className="btn" type="button" disabled={busy} onClick={() => setBackupEditing(false)}>Cancel</button>
+          </div>
+        </form>}
         <div className="workspace-body">
           <section className="board" aria-label="Memory card gallery">
             {view ? (
@@ -697,27 +849,12 @@ export default function App() {
             ) : reading ? null : (
               <div className="empty-board">
                 <h2>
-                  {connected
-                    ? "Read Slot 1 to see this card"
-                    : hw?.state === "searching" || hw == null
-                      ? "Looking for the PS3 adaptor"
-                      : "Open a PlayStation 1 memory card"}
+                  {connected ? "Read Slot 1 to see this card" : "Open a PlayStation 1 memory card"}
                 </h2>
                 <p className="muted">
-                  Drop a raw .mcr, DexDrive .gme, or VGS .vgs/.mem file, or click Slot 1 when the PS3 adaptor is connected. Backup writes a .mcr to Documents/memcard-viewer/backups. Hardware is read-only.
+                  Open a card from Virtual Cards in the sidebar, or drop a .mcr, .gme, .vgs, or .mem file here. Connecting a PS3 adaptor starts reading Slot 1 automatically.
                 </p>
-                <div className="topbar-actions">
-                  <button type="button" className="btn" disabled={busy} onClick={() => void openNative()}>
-                    <IconFolder />
-                    Open card
-                  </button>
-                  {connected ? (
-                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void readUsb()}>
-                      <IconRefresh />
-                      Read Slot 1
-                    </button>
-                  ) : null}
-                </div>
+
               </div>
             )}
           </section>
@@ -726,8 +863,8 @@ export default function App() {
       </main>}
 
       <footer className="footer">
-        <p className="footer-tip">{libraryOpen ? "Local backups · Card stays read-only" : "Drop a card file anywhere to open it"}</p>
-        {!libraryOpen && <div className="footer-keys">
+        <p className="footer-tip">{settingsOpen ? "Collection settings" : collectionOpen ? "Local collection · Card stays read-only" : "Drop a card file anywhere to open it"}</p>
+        {!collectionOpen && <div className="footer-keys">
           <span className="kbd live">
             <b>Ctrl</b>+<b>Click</b> Select multiple
           </span>
@@ -942,6 +1079,7 @@ function Inspector({
           {save.linkedSlots.length} block{save.linkedSlots.length === 1 ? "" : "s"} · {save.sizeKb} KB
         </p>
       </div>
+      <GameDetailsButton save={save} />
       <div className="inspector-actions">
         <button type="button" className="btn" disabled title={laterTitle("Export")}>
           <IconBackup />

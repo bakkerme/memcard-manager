@@ -5,9 +5,9 @@ export function createAdaptorMonitor(
   probe: () => Promise<HardwareStatus>,
   update: (status: HardwareStatus) => void,
   checking: (value: boolean) => void,
-  readOnStartup: () => void = () => undefined,
+  readOnConnect: () => void = () => undefined,
 ) {
-  let startup = true;
+  let attached = false;
   let stopped = false;
   let paused = false;
   let pending: Promise<void> | undefined;
@@ -23,12 +23,12 @@ export function createAdaptorMonitor(
         const status = await probe();
         if (!stopped && !paused) {
           update(status);
-          const shouldRead = startup && status.state === "adaptor";
-          startup = false;
-          if (shouldRead) readOnStartup();
+          const present = ["adaptor", "reading", "live"].includes(status.state);
+          const shouldRead = !attached && status.state === "adaptor";
+          if (status.state !== "error") attached = present;
+          if (shouldRead) readOnConnect();
         }
       } catch (err) {
-        startup = false;
         if (!stopped && !paused) update({
           state: "error",
           message: err instanceof Error ? err.message : String(err),

@@ -71,10 +71,8 @@ export interface SyncResult {
   snapshotsAdded: number;
 }
 
-export async function syncCard(configuredDirectory?: string | null): Promise<SyncResult | null> {
+export async function syncCard(directory: string): Promise<SyncResult> {
   try {
-    const directory = configuredDirectory ?? await open({ directory: true, multiple: false, title: "Sync saves to directory" });
-    if (!directory || Array.isArray(directory)) return null;
     return await invoke<SyncResult>("sync_card", { directory });
   } catch (err) {
     throw asError(err);
@@ -108,6 +106,23 @@ export interface LibraryView {
   displayPath: string | null;
   saves: LibrarySave[];
   warnings: string[];
+  collectionConfigured: boolean;
+  cards: CardBackup[];
+}
+
+export type CardColor = "grey" | "black" | "white" | "blue" | "green" | "red";
+
+export interface CardBackup {
+  path: string;
+  filename: string;
+  name: string;
+  color: CardColor;
+  capturedAt: string | null;
+  sourceName: string | null;
+  source: "file" | "usb" | null;
+  imageId: string;
+  saveCount: number;
+  usedBlocks: number;
 }
 
 type SaveDto = CardViewDto["saves"][number];
@@ -137,7 +152,7 @@ export async function readLocalBackups(): Promise<LibraryView> {
 export async function chooseLocalBackups(defaultPath?: string | null): Promise<LibraryView | null> {
   try {
     const directory = await open({ directory: true, multiple: false,
-      title: "Choose local backups directory", defaultPath: defaultPath ?? undefined });
+      title: "Choose collection folder for saves and card backups", defaultPath: defaultPath ?? undefined });
     if (!directory || Array.isArray(directory)) return null;
     return libraryFromIpc(await invoke<LibraryDto>("configure_local_backups", { directory }));
   } catch (err) { throw asError(err); }
@@ -174,6 +189,16 @@ export async function pickAndOpenCard(): Promise<CardView | null> {
   return openCardPath(path);
 }
 
+export async function activateCard(sessionId: string): Promise<void> {
+  try { await invoke("activate_card", { sessionId }); }
+  catch (err) { throw asError(err); }
+}
+
+export async function closeCard(sessionId: string, nextSessionId: string | null): Promise<void> {
+  try { await invoke("close_card", { sessionId, nextSessionId }); }
+  catch (err) { throw asError(err); }
+}
+
 export async function composeCard(masterSlots: number[]): Promise<ExportResult> {
   try {
     const result = await invoke<{ bytes: number[]; filename: string; view: CardViewDto | null }>(
@@ -190,12 +215,18 @@ export async function composeCard(masterSlots: number[]): Promise<ExportResult> 
   }
 }
 
-export async function backupCard(): Promise<BackupResult> {
+export async function backupCard(directory: string, name: string, color: CardColor): Promise<BackupResult> {
   try {
-    return await invoke<BackupResult>("backup_card");
+    return await invoke<BackupResult>("backup_card", { directory, name, color });
   } catch (err) {
     throw asError(err);
   }
+}
+
+export async function labelCardBackup(path: string, name: string, color: CardColor): Promise<LibraryView> {
+  try {
+    return libraryFromIpc(await invoke<LibraryDto>("label_card_backup", { path, name, color }));
+  } catch (err) { throw asError(err); }
 }
 
 export async function revealPath(path: string): Promise<void> {

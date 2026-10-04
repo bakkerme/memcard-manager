@@ -1,14 +1,15 @@
 mod card;
+mod card_session;
 mod usb;
 
 use card::{
-    configure_directory, configured_directory, read_library, sync_saves, LibraryView, SyncResult,
+    capture_card, cards_directory, configure_collection, configured_collection,
+    configured_directory, read_card_backups, read_collection, resolve_collection, saves_directory,
+    sync_saves, update_card_label, CardColor, LibraryView, SyncResult,
 };
 
-use card::{
-    backup_bytes, backup_dir, backup_filename, backup_stem, compose_new_card, display_path,
-    local_timestamp, write_backup, CardFormat, CardSource, CardView, Ps1Card,
-};
+use card::{backup_dir, compose_new_card, display_path, CardSource, CardView, Ps1Card};
+use card_session::{CardSessions, LoadedCard};
 use serde::Serialize;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, State};
@@ -16,7 +17,7 @@ use tauri_plugin_opener::OpenerExt;
 use usb::HardwareStatus;
 
 struct AppState {
-    card: Mutex<Option<Ps1Card>>,
+    card: Mutex<CardSessions>,
     usb: Mutex<Option<rusb::Context>>,
 }
 
@@ -44,10 +45,7 @@ fn with_card<T>(
         .card
         .lock()
         .map_err(|_| "Card lock poisoned.".to_string())?;
-    let card = guard
-        .as_ref()
-        .ok_or_else(|| "No card is open.".to_string())?;
-    f(card)
+    f(guard.active()?)
 }
 
 fn usb_context<'a>(slot: &'a mut Option<rusb::Context>) -> Result<&'a rusb::Context, String> {
@@ -58,15 +56,13 @@ fn usb_context<'a>(slot: &'a mut Option<rusb::Context>) -> Result<&'a rusb::Cont
 }
 
 #[tauri::command]
-fn open_card(bytes: Vec<u8>, name: String, state: State<AppState>) -> Result<CardView, String> {
+fn open_card(bytes: Vec<u8>, name: String, state: State<AppState>) -> Result<LoadedCard, String> {
     let card = Ps1Card::open(&bytes, &name, false).map_err(|e| e.0)?;
-    let view = card.view();
-    *state.card.lock().map_err(|e| e.to_string())? = Some(card);
-    Ok(view)
+    Ok(state.card.lock().map_err(|e| e.to_string())?.open(card))
 }
 
 #[tauri::command]
-fn open_path(path: String, state: State<AppState>) -> Result<CardView, String> {
+fn open_path(path: String, state: State<AppState>) -> Result<LoadedCard, String> {
     let bytes = std::fs::read(&path).map_err(|e| format!("Could not read file ({e})."))?;
     let name = std::path::Path::new(&path)
         .file_name()
@@ -74,6 +70,28 @@ fn open_path(path: String, state: State<AppState>) -> Result<CardView, String> {
         .unwrap_or("card.mcr")
         .to_string();
     open_card(bytes, name, state)
+}
+
+#[tauri::command]
+fn activate_card(session_id: String, state: State<AppState>) -> Result<(), String> {
+    state
+        .card
+        .lock()
+        .map_err(|e| e.to_string())?
+        .activate(&session_id)
+}
+
+#[tauri::command]
+fn close_card(
+    session_id: String,
+    next_session_id: Option<String>,
+    state: State<AppState>,
+) -> Result<(), String> {
+    state
+        .card
+        .lock()
+        .map_err(|e| e.to_string())?
+        .close(&session_id, next_session_id.as_deref())
 }
 
 #[tauri::command]
@@ -90,25 +108,20 @@ fn compose_card(master_slots: Vec<u8>, state: State<AppState>) -> Result<ExportR
 }
 
 #[tauri::command]
-fn backup_card(app: tauri::AppHandle, state: State<AppState>) -> Result<BackupResult, String> {
-    let documents = app
-        .path()
-        .document_dir()
-        .map_err(|e| format!("Could not find Documents ({e})."))?;
-    let dir = backup_dir(documents);
+fn backup_card(
+    directory: String,
+    name: String,
+    color: CardColor,
+    app: tauri::AppHandle,
+    state: State<AppState>,
+) -> Result<BackupResult, String> {
+    let root = require_collection(&app, &directory)?;
     with_card(&state, |card| {
-        let stem = backup_stem(&card.source_name, matches!(card.source, CardSource::Usb));
-        let filename = backup_filename(&stem, &local_timestamp());
-        let path = write_backup(&dir, &filename, &backup_bytes(card, CardFormat::Raw))?;
-        let filename = path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or(&filename)
-            .to_string();
+        let path = capture_card(&root, card, &name, color)?;
         Ok(BackupResult {
             display_path: display_path(&path),
+            filename: path.file_name().unwrap().to_string_lossy().into_owned(),
             path: path.to_string_lossy().into_owned(),
-            filename,
         })
     })
 }
@@ -120,16 +133,45 @@ fn library_config(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> 
         .map_err(|e| format!("Could not find settings folder ({e})."))
 }
 
+fn collection_config(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    Ok(library_config(app)?.with_file_name("collection.json"))
+}
+
+fn previous_card_directory(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    Ok(backup_dir(
+        app.path().document_dir().map_err(|e| e.to_string())?,
+    ))
+}
+
+fn require_collection(
+    app: &tauri::AppHandle,
+    directory: &str,
+) -> Result<std::path::PathBuf, String> {
+    let root = configured_collection(&collection_config(app)?)?
+        .ok_or("Choose a collection folder for both Backup and Sync first.")?;
+    if root != std::path::Path::new(directory) {
+        return Err("The collection folder changed. Refresh the collection and try again.".into());
+    }
+    Ok(root)
+}
+
 #[tauri::command]
 async fn local_backups(app: tauri::AppHandle) -> Result<LibraryView, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        match configured_directory(&library_config(&app)?)? {
-            Some(directory) => read_library(&directory),
-            None => Ok(LibraryView::default()),
+        let previous_cards = previous_card_directory(&app)?;
+        if let Some(root) = resolve_collection(
+            &collection_config(&app)?,
+            &library_config(&app)?,
+            &previous_cards,
+        )? {
+            return read_collection(&root);
         }
+        let mut view = LibraryView::default();
+        view.cards = read_card_backups(&previous_cards, &mut view.warnings)?;
+        Ok(view)
     })
     .await
-    .map_err(|e| format!("Local backups worker failed ({e})."))?
+    .map_err(|e| format!("Collection worker failed ({e})."))?
 }
 
 #[tauri::command]
@@ -138,28 +180,54 @@ async fn configure_local_backups(
     app: tauri::AppHandle,
 ) -> Result<LibraryView, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let directory = std::path::Path::new(&directory);
-        let view = read_library(directory)?;
-        configure_directory(&library_config(&app)?, directory)?;
-        Ok(view)
+        let root = std::path::Path::new(&directory);
+        let existing = configured_collection(&collection_config(&app)?)?;
+        let previous_saves = match &existing {
+            Some(previous) => Some(saves_directory(previous)),
+            None => configured_directory(&library_config(&app)?)?,
+        };
+        let previous_cards = match &existing {
+            Some(previous) => cards_directory(previous),
+            None => previous_card_directory(&app)?,
+        };
+        configure_collection(
+            &collection_config(&app)?,
+            root,
+            previous_saves.as_deref(),
+            &previous_cards,
+        )?;
+        read_collection(root)
     })
     .await
-    .map_err(|e| format!("Local backups worker failed ({e})."))?
+    .map_err(|e| format!("Collection worker failed ({e})."))?
 }
 
 #[tauri::command]
 async fn sync_card(directory: String, app: tauri::AppHandle) -> Result<SyncResult, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        let root = require_collection(&app, &directory)?;
         let state = app.state::<AppState>();
-        let directory = std::path::Path::new(&directory);
-        let result = with_card(&state, |card| sync_saves(card, directory))?;
-        configure_directory(&library_config(&app)?, directory).map_err(|e| {
-            format!("Saves were exported, but the destination setting could not be saved. {e}")
-        })?;
-        Ok(result)
+        with_card(&state, |card| sync_saves(card, &saves_directory(&root)))
     })
     .await
     .map_err(|e| format!("Sync worker failed ({e})."))?
+}
+
+#[tauri::command]
+async fn label_card_backup(
+    path: String,
+    name: String,
+    color: CardColor,
+    app: tauri::AppHandle,
+) -> Result<LibraryView, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = configured_collection(&collection_config(&app)?)?
+            .ok_or("Choose a collection folder before labeling card backups.")?;
+        update_card_label(&root, std::path::Path::new(&path), &name, color)?;
+        read_collection(&root)
+    })
+    .await
+    .map_err(|e| format!("Card label worker failed ({e})."))?
 }
 
 #[tauri::command]
@@ -191,7 +259,7 @@ fn probe_adaptor_blocking(state: &AppState) -> Result<HardwareStatus, String> {
 }
 
 #[tauri::command]
-async fn read_adaptor(app: tauri::AppHandle) -> Result<CardView, String> {
+async fn read_adaptor(app: tauri::AppHandle) -> Result<LoadedCard, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let state = app.state::<AppState>();
         read_adaptor_blocking(&app, &state)
@@ -200,7 +268,7 @@ async fn read_adaptor(app: tauri::AppHandle) -> Result<CardView, String> {
     .map_err(|e| format!("Card read worker failed ({e})."))?
 }
 
-fn read_adaptor_blocking(app: &tauri::AppHandle, state: &AppState) -> Result<CardView, String> {
+fn read_adaptor_blocking(app: &tauri::AppHandle, state: &AppState) -> Result<LoadedCard, String> {
     let mut slot = state.usb.lock().map_err(|e| e.to_string())?;
     let ctx = usb_context(&mut slot)?;
     let probed = usb::find_identity(ctx).ok().flatten();
@@ -238,8 +306,7 @@ fn read_adaptor_blocking(app: &tauri::AppHandle, state: &AppState) -> Result<Car
     } else {
         card.source_name = "adaptor".into();
     }
-    let view = card.view();
-    *state.card.lock().map_err(|e| e.to_string())? = Some(card);
+    let view = state.card.lock().map_err(|e| e.to_string())?.open(card);
     let _ = app.emit(
         "usb-progress",
         HardwareStatus {
@@ -268,14 +335,17 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
-            card: Mutex::new(None),
+            card: Mutex::new(CardSessions::default()),
             usb: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             open_card,
             open_path,
+            activate_card,
+            close_card,
             compose_card,
             backup_card,
+            label_card_backup,
             sync_card,
             local_backups,
             configure_local_backups,

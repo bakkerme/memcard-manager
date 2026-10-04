@@ -50,7 +50,7 @@ pub enum CardFormat {
     Vgs,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CardSource {
     File,
@@ -82,6 +82,8 @@ pub struct SaveInfo {
     pub deleted: bool,
     pub frame_count: u8,
     pub frames: Vec<Vec<u8>>,
+    pub game_details: Option<super::digimon_world2::GameDetails>,
+    pub game_details_error: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -624,6 +626,25 @@ impl Ps1Card {
                     prod_code.clone()
                 };
             }
+            let (game_details, game_details_error) = if prod_code == "SLUS-01193"
+                && region_raw == "BA"
+            {
+                if linked.len() != 2
+                    || linked[0] == linked[1]
+                    || size_bytes != 16_384
+                    || self.header(linked[1])[8] != 0xff
+                {
+                    (None, Some("This save has an incomplete or unexpected block chain. Try another backup of this save.".into()))
+                } else {
+                    let bytes = self.get_save_bytes(i);
+                    match super::digimon_world2::decode(&bytes[MCS_HEADER_SIZE..]) {
+                        Ok(details) => (Some(details), None),
+                        Err(error) => (None, Some(error)),
+                    }
+                }
+            } else {
+                (None, None)
+            };
             saves.push(SaveInfo {
                 master_slot: i as u8,
                 linked_slots: linked.iter().map(|s| *s as u8).collect(),
@@ -641,6 +662,8 @@ impl Ps1Card {
                 deleted: self.slot_type[i] == SlotType::DeletedInitial,
                 frame_count,
                 frames: load_frames(block, frame_count),
+                game_details,
+                game_details_error,
             });
         }
 

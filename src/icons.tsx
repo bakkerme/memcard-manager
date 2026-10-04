@@ -35,6 +35,10 @@ export function IconFolder(props: Props) {
   );
 }
 
+export function IconSearch(props: Props) {
+  return <Svg {...props}><circle {...s} cx="10.5" cy="10.5" r="6" /><path {...s} d="m15 15 5 5" /></Svg>;
+}
+
 export function IconImport(props: Props) {
   return (
     <Svg {...props}>
@@ -154,4 +158,16 @@ export function IconLink(props: Props) {
       <path {...s} d="M14 10.5 15.5 9A3.2 3.2 0 1 1 20 13.5L18 15.5" />
     </Svg>
   );
+}
+
+
+export function IconClose(props: Props) {
+  return <Svg {...props}><path {...s} d="m6 6 12 12M18 6 6 18" /></Svg>;
+}
+
+export function IconSettings(props: Props) {
+  return <Svg {...props}>
+    <path {...s} d="m9.5 3-.6 2.3-2 .9-2.2-.7-2.5 4.3 1.7 1.6v2.2l-1.7 1.6 2.5 4.3 2.2-.7 2 .9.6 2.3h5l.6-2.3 2-.9 2.2.7 2.5-4.3-1.7-1.6v-2.2l1.7-1.6-2.5-4.3-2.2.7-2-.9-.6-2.3z" />
+    <circle {...s} cx="12" cy="12.5" r="3" />
+  </Svg>;
 }

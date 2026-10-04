@@ -119,6 +119,8 @@ pub struct LibraryView {
     pub display_path: Option<String>,
     pub saves: Vec<LibrarySave>,
     pub warnings: Vec<String>,
+    pub collection_configured: bool,
+    pub cards: Vec<super::CardBackup>,
 }
 
 #[derive(Serialize, Deserialize)]
