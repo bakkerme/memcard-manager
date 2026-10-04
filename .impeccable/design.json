@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-30T21:33:20.105113+00:00",
+  "title": "Design System: memcard-viewer",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Cool Paper",
+        "tonalRamp": [
+          "oklch(15% 0.01439 254.61)",
+          "oklch(27% 0.01439 254.61)",
+          "oklch(39% 0.01439 254.61)",
+          "oklch(51% 0.01439 254.61)",
+          "oklch(63% 0.01439 254.61)",
+          "oklch(75% 0.01439 254.61)",
+          "oklch(87% 0.01439 254.61)",
+          "oklch(95% 0.01439 254.61)"
+        ]
+      },
+      "bg-accent": {
+        "role": "neutral",
+        "displayName": "Mist Wash",
+        "tonalRamp": [
+          "oklch(15% 0.01143 252.09)",
+          "oklch(27% 0.01143 252.09)",
+          "oklch(39% 0.01143 252.09)",
+          "oklch(51% 0.01143 252.09)",
+          "oklch(63% 0.01143 252.09)",
+          "oklch(75% 0.01143 252.09)",
+          "oklch(87% 0.01143 252.09)",
+          "oklch(95% 0.01143 252.09)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Frost Panel",
+        "tonalRamp": [
+          "oklch(15% 0.01434 254.61)",
+          "oklch(27% 0.01434 254.61)",
+          "oklch(39% 0.01434 254.61)",
+          "oklch(51% 0.01434 254.61)",
+          "oklch(63% 0.01434 254.61)",
+          "oklch(75% 0.01434 254.61)",
+          "oklch(87% 0.01434 254.61)",
+          "oklch(95% 0.01434 254.61)"
+        ]
+      },
+      "panel-strong": {
+        "role": "neutral",
+        "displayName": "Frost Control",
+        "tonalRamp": [
+          "oklch(15% 0.01143 252.09)",
+          "oklch(27% 0.01143 252.09)",
+          "oklch(39% 0.01143 252.09)",
+          "oklch(51% 0.01143 252.09)",
+          "oklch(63% 0.01143 252.09)",
+          "oklch(75% 0.01143 252.09)",
+          "oklch(87% 0.01143 252.09)",
+          "oklch(95% 0.01143 252.09)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Pale Rule",
+        "tonalRamp": [
+          "oklch(15% 0.02838 248.17)",
+          "oklch(27% 0.02838 248.17)",
+          "oklch(39% 0.02838 248.17)",
+          "oklch(51% 0.02838 248.17)",
+          "oklch(63% 0.02838 248.17)",
+          "oklch(75% 0.02838 248.17)",
+          "oklch(87% 0.02838 248.17)",
+          "oklch(95% 0.02838 248.17)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Steel Rule",
+        "tonalRamp": [
+          "oklch(15% 0.02292 254.41)",
+          "oklch(27% 0.02292 254.41)",
+          "oklch(39% 0.02292 254.41)",
+          "oklch(51% 0.02292 254.41)",
+          "oklch(63% 0.02292 254.41)",
+          "oklch(75% 0.02292 254.41)",
+          "oklch(87% 0.02292 254.41)",
+          "oklch(95% 0.02292 254.41)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ink Navy",
+        "tonalRamp": [
+          "oklch(15% 0.07681 254.87)",
+          "oklch(27% 0.07681 254.87)",
+          "oklch(39% 0.07681 254.87)",
+          "oklch(51% 0.07681 254.87)",
+          "oklch(63% 0.07681 254.87)",
+          "oklch(75% 0.07681 254.87)",
+          "oklch(87% 0.07681 254.87)",
+          "oklch(95% 0.07681 254.87)"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Slate Caption",
+        "tonalRamp": [
+          "oklch(15% 0.06129 254.71)",
+          "oklch(27% 0.06129 254.71)",
+          "oklch(39% 0.06129 254.71)",
+          "oklch(51% 0.06129 254.71)",
+          "oklch(63% 0.06129 254.71)",
+          "oklch(75% 0.06129 254.71)",
+          "oklch(87% 0.06129 254.71)",
+          "oklch(95% 0.06129 254.71)"
+        ]
+      },
+      "text-faint": {
+        "role": "neutral",
+        "displayName": "Quiet Slate",
+        "tonalRamp": [
+          "oklch(15% 0.04581 255.10)",
+          "oklch(27% 0.04581 255.10)",
+          "oklch(39% 0.04581 255.10)",
+          "oklch(51% 0.04581 255.10)",
+          "oklch(63% 0.04581 255.10)",
+          "oklch(75% 0.04581 255.10)",
+          "oklch(87% 0.04581 255.10)",
+          "oklch(95% 0.04581 255.10)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Manager Blue",
+        "tonalRamp": [
+          "oklch(15% 0.20516 259.49)",
+          "oklch(27% 0.20516 259.49)",
+          "oklch(39% 0.20516 259.49)",
+          "oklch(51% 0.20516 259.49)",
+          "oklch(63% 0.20516 259.49)",
+          "oklch(75% 0.20516 259.49)",
+          "oklch(87% 0.20516 259.49)",
+          "oklch(95% 0.20516 259.49)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Blue Wash",
+        "tonalRamp": [
+          "oklch(15% 0.03829 255.61)",
+          "oklch(27% 0.03829 255.61)",
+          "oklch(39% 0.03829 255.61)",
+          "oklch(51% 0.03829 255.61)",
+          "oklch(63% 0.03829 255.61)",
+          "oklch(75% 0.03829 255.61)",
+          "oklch(87% 0.03829 255.61)",
+          "oklch(95% 0.03829 255.61)"
+        ]
+      },
+      "good": {
+        "role": "neutral",
+        "displayName": "Connected Green",
+        "tonalRamp": [
+          "oklch(15% 0.15387 154.19)",
+          "oklch(27% 0.15387 154.19)",
+          "oklch(39% 0.15387 154.19)",
+          "oklch(51% 0.15387 154.19)",
+          "oklch(63% 0.15387 154.19)",
+          "oklch(75% 0.15387 154.19)",
+          "oklch(87% 0.15387 154.19)",
+          "oklch(95% 0.15387 154.19)"
+        ]
+      },
+      "occupancy-gold": {
+        "role": "neutral",
+        "displayName": "Occupancy Gold",
+        "tonalRamp": [
+          "oklch(15% 0.15150 88.21)",
+          "oklch(27% 0.15150 88.21)",
+          "oklch(39% 0.15150 88.21)",
+          "oklch(51% 0.15150 88.21)",
+          "oklch(63% 0.15150 88.21)",
+          "oklch(75% 0.15150 88.21)",
+          "oklch(87% 0.15150 88.21)",
+          "oklch(95% 0.15150 88.21)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger Rose",
+        "tonalRamp": [
+          "oklch(15% 0.16310 11.45)",
+          "oklch(27% 0.16310 11.45)",
+          "oklch(39% 0.16310 11.45)",
+          "oklch(51% 0.16310 11.45)",
+          "oklch(63% 0.16310 11.45)",
+          "oklch(75% 0.16310 11.45)",
+          "oklch(87% 0.16310 11.45)",
+          "oklch(95% 0.16310 11.45)"
+        ]
+      },
+      "danger-soft": {
+        "role": "neutral",
+        "displayName": "Danger Wash",
+        "tonalRamp": [
+          "oklch(15% 0.01883 5.29)",
+          "oklch(27% 0.01883 5.29)",
+          "oklch(39% 0.01883 5.29)",
+          "oklch(51% 0.01883 5.29)",
+          "oklch(63% 0.01883 5.29)",
+          "oklch(75% 0.01883 5.29)",
+          "oklch(87% 0.01883 5.29)",
+          "oklch(95% 0.01883 5.29)"
+        ]
+      },
+      "pixel-well": {
+        "role": "neutral",
+        "displayName": "Pixel Well",
+        "tonalRamp": [
+          "oklch(15% 0.01813 259.70)",
+          "oklch(27% 0.01813 259.70)",
+          "oklch(39% 0.01813 259.70)",
+          "oklch(51% 0.01813 259.70)",
+          "oklch(63% 0.01813 259.70)",
+          "oklch(75% 0.01813 259.70)",
+          "oklch(87% 0.01813 259.70)",
+          "oklch(95% 0.01813 259.70)"
+        ]
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Empty Well",
+        "tonalRamp": [
+          "oklch(15% 0.00967 252.81)",
+          "oklch(27% 0.00967 252.81)",
+          "oklch(39% 0.00967 252.81)",
+          "oklch(51% 0.00967 252.81)",
+          "oklch(63% 0.00967 252.81)",
+          "oklch(75% 0.00967 252.81)",
+          "oklch(87% 0.00967 252.81)",
+          "oklch(95% 0.00967 252.81)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White Highlight",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(27% 0.00000 0.00)",
+          "oklch(39% 0.00000 0.00)",
+          "oklch(51% 0.00000 0.00)",
+          "oklch(63% 0.00000 0.00)",
+          "oklch(75% 0.00000 0.00)",
+          "oklch(87% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Manager Blue Hover",
+        "tonalRamp": [
+          "oklch(15% 0.19200 259.74)",
+          "oklch(27% 0.19200 259.74)",
+          "oklch(39% 0.19200 259.74)",
+          "oklch(51% 0.19200 259.74)",
+          "oklch(63% 0.19200 259.74)",
+          "oklch(75% 0.19200 259.74)",
+          "oklch(87% 0.19200 259.74)",
+          "oklch(95% 0.19200 259.74)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Top-left wordmark only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Compact task interface text."
+      },
+      "inspector-title": {
+        "displayName": "Inspector Title",
+        "purpose": "Compact task interface text."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Compact task interface text."
+      },
+      "navigation": {
+        "displayName": "Navigation",
+        "purpose": "Compact task interface text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Compact task interface text."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Compact task interface text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow",
+        "value": "inset 0 1px 0 #ffffff99, 0 8px 24px #1c304e06",
+        "purpose": "Panels and menus."
+      },
+      {
+        "name": "shadow-tile",
+        "value": "inset 0 1px 0 #ffffffb3, 0 2px 4px #1c304e0a",
+        "purpose": "Tiles, summary, inspector and chips."
+      },
+      {
+        "name": "pixel-well",
+        "value": "0 0 0 2px #f5f8fb99, 0 2px 5px #1c304e26",
+        "purpose": "Pixel image frame."
+      },
+      {
+        "name": "primary-action",
+        "value": "inset 0 1px 2px #ffffff99, 0 3px 8px #1e71ef29",
+        "purpose": "Primary compose action."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "160ms ease",
+        "purpose": "Buttons and tile state changes."
+      },
+      {
+        "name": "search-lamp",
+        "value": "1.2s ease-in-out infinite",
+        "purpose": "Searching opacity pulse; disabled by reduced-motion preference."
+      },
+      {
+        "name": "read-progress",
+        "value": "transform 160ms linear",
+        "purpose": "Determinate frame progress; removed by reduced-motion preference."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1350px"
+      },
+      {
+        "name": "stacked-inspector",
+        "value": "1050px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "narrow-mobile",
+        "value": "400px"
+      }
+    ],
+    "assets": {
+      "brandFont": {
+        "path": "src/assets/fonts/encode-sans-expanded-600.ttf",
+        "license": "src/assets/fonts/OFL.txt"
+      },
+      "monogram": {
+        "source": "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/playstation.svg",
+        "license": "CC0",
+        "implementation": "src/icons.tsx"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compose action with inset highlight.",
+      "html": "<button class=\"ds-primary\">New memory card</button>",
+      "css": ".ds-primary{font-family:var(--font);font-size:13px;font-weight:400;line-height:1;border:1px solid var(--line);border-radius:6px;padding:8px 14px;min-height:35px;cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease;color:#fff;background:linear-gradient(#378bff,#1267e6);border-color:var(--accent);box-shadow:inset 0 1px 2px #ffffff99,0 3px 8px #1e71ef29}.ds-primary:hover:not(:disabled){background:#1964d8;border-color:#1964d8}.ds-primary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ds-primary:disabled{background:color-mix(in srgb,var(--accent) 35%,var(--line));border-color:transparent;opacity:.7;box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none;animation:none}}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Standard Open card, Backup, and Sync control; quiet disabled state.",
+      "html": "<button class=\"ds-secondary\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19.6 12a7.6 7.6 0 1 1-2.2-5.4M19.6 5.4v5h-5\"/></svg>Sync</button>",
+      "css": ".ds-secondary{font-family:var(--font);font-size:13px;font-weight:400;line-height:1;border:1px solid var(--line);border-radius:6px;padding:8px 14px;min-height:35px;cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease;background:var(--panel-strong);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,var(--shadow-tile)}.ds-secondary:hover:not(:disabled){color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.ds-secondary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ds-secondary:disabled{color:var(--text-faint);box-shadow:none;cursor:default}.ds-secondary{display:inline-flex;align-items:center;gap:8px}.ds-secondary svg{flex-shrink:0}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none;animation:none}}"
+    },
+    {
+      "name": "Danger button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Visible unavailable destructive action.",
+      "html": "<button class=\"ds-danger\" disabled title=\"Delete save is not available yet\">Delete save</button>",
+      "css": ".ds-danger{font-family:var(--font);font-size:13px;font-weight:400;line-height:1;border:1px solid var(--line);border-radius:6px;padding:8px 14px;min-height:35px;cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease;padding:8px;min-height:40px;color:var(--danger);background:transparent;border-color:color-mix(in srgb,var(--danger) 35%,white);box-shadow:none}.ds-danger:hover:not(:disabled){color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.ds-danger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ds-danger:disabled{color:var(--text-faint);border-color:var(--line);cursor:default}@media(prefers-reduced-motion:reduce){.ds-danger{transition:none;animation:none}}"
+    },
+    {
+      "name": "Selected navigation",
+      "kind": "nav",
+      "refersTo": "navigation-selected",
+      "description": "Selected card or Local backups source row with secondary context.",
+      "html": "<button class=\"ds-nav\"><strong>Memory card</strong><span>15 blocks used</span></button>",
+      "css": ".ds-nav{font-family:var(--font);display:flex;flex-direction:column;gap:2px;text-align:left;border:0;border-radius:7px;padding:10px 6px;min-height:44px;width:100%;background:var(--accent-soft);color:var(--text);box-shadow:inset 3px 0 0 var(--accent)}.ds-nav strong{font-size:14px;font-weight:400}.ds-nav span{font-size:12px;line-height:1.5;color:var(--text-muted)}.ds-nav:hover:not(:disabled){background:color-mix(in srgb,white 55%,transparent)}.ds-nav:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Linked block chip",
+      "kind": "chip",
+      "refersTo": "chip-block",
+      "description": "Read-only physical position in a save chain.",
+      "html": "<span class=\"ds-chip\">12</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);background:var(--panel-strong);border:1px solid var(--line);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow-tile)}"
+    },
+    {
+      "name": "Empty block tile",
+      "kind": "card",
+      "refersTo": "card-tile",
+      "description": "A visible numbered empty physical block; never omitted.",
+      "html": "<div class=\"ds-tile\"><button class=\"ds-tile-hit\" disabled><span class=\"ds-index\">01</span><span class=\"ds-well\"></span><span>Empty</span></button></div>",
+      "css": ".ds-tile{position:relative;width:150px;min-height:176px;background:color-mix(in srgb,var(--panel-strong) 40%,transparent);color:var(--text-faint);border:1px dashed var(--line);border-radius:var(--radius-md)}.ds-tile-hit{font-family:var(--font);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:176px;padding:12px 8px 14px;background:transparent;color:inherit;border:0;border-radius:12px;cursor:default}.ds-index{position:absolute;top:8px;left:8px;color:var(--text);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}.ds-well{display:block;width:80px;height:80px;border:2px dashed #acbdcd;border-radius:var(--radius-well)}.ds-tile:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.ds-tile-hit:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}"
+    },
+    {
+      "name": "Operation banner",
+      "kind": "custom",
+      "description": "Backup and Sync completion feedback, including new snapshot counts, with a reveal action.",
+      "html": "<div class=\"ds-banner\" role=\"status\"><span>Synced 2 saves \u00b7 10 unchanged \u00b7 2 new snapshots</span><button>Reveal in Finder</button></div>",
+      "css": ".ds-banner{font-family:var(--font);font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--text)}.ds-banner button{font:inherit;font-weight:600;border:0;background:transparent;color:var(--accent);padding:0;cursor:pointer}.ds-banner button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Read progress panel",
+      "kind": "custom",
+      "description": "Compact frost panel with a blue determinate progress bar; visible copy is omitted.",
+      "html": "<div class=\"ds-progress-panel\"><div class=\"ds-progress\" role=\"progressbar\" aria-label=\"Reading Slot 1\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"42\"><span style=\"transform:scaleX(.42)\"></span></div></div>",
+      "css": ".ds-progress-panel{width:min(320px,calc(100vw - 32px));padding:24px;border:1px solid var(--line-strong);border-radius:var(--radius-xl);background:var(--panel-strong);color:var(--text);box-shadow:var(--shadow)}.ds-progress{height:8px;border-radius:var(--radius-well);background:var(--line);overflow:hidden}.ds-progress span{display:block;height:100%;background:var(--accent);transform-origin:left;transition:transform 160ms linear}@media(prefers-reduced-motion:reduce){.ds-progress span{transition:none}}"
+    },
+    {
+      "name": "Save snapshot selector",
+      "kind": "custom",
+      "description": "Native version selection in the local backup inspector; metadata and reveal destination follow the chosen version.",
+      "html": "<section class=\"ds-snapshot\"><label for=\"ds-version\">Snapshots (2)</label><select id=\"ds-version\"><option>Latest dump</option><option>30/09/2026, 16:00 \u00b7 b36af9e2</option></select><p>Snapshots share a game filename and may contain different playthroughs.</p></section>",
+      "css": ".ds-snapshot{border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:var(--text)}.ds-snapshot label{display:block;margin-bottom:8px;font-weight:500}.ds-snapshot select{width:100%;min-height:35px;border:1px solid var(--line);border-radius:var(--radius-well);background:var(--panel-strong);color:var(--text);font-family:var(--font);font-size:12px;padding:8px}.ds-snapshot p{margin:8px 0 0;line-height:1.5;color:var(--text-muted)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cool Paper Desk",
+    "overview": "A light desktop manager built around the physical geometry of a PS1 memory card. Cool paper, frost surfaces, fine navy rules, and small inset highlights make the controls feel tangible without overpowering the save icons. The existing world remains The Cool Paper Desk.\n\nThe final mock supplies the grouped source sidebar, inset card summary, five-column block gallery, adjacent inspector, and quiet footer. The implementation retains that material and spacing hierarchy while following PRODUCT.md for real card contents and available operations. System UI type keeps metadata compact; Encode Sans Expanded identifies the product only in the top-left wordmark.",
+    "keyCharacteristics": [
+      "Cool paper and layered frost materials.",
+      "Fifteen numbered blocks with crisp pixel wells.",
+      "One action blue with small semantic status accents.",
+      "Compact metadata and restrained, tactile controls."
+    ],
+    "rules": [
+      {
+        "name": "The Blue Selection Rule",
+        "body": "Selection, chain focus, occupied blocks, progress, and the primary action share Manager Blue. Occupancy Gold identifies only the focused chain in the occupancy strip.",
+        "section": "colors"
+      },
+      {
+        "name": "The Compact Wordmark Rule",
+        "body": "Reserve Encode Sans Expanded for the top-left memcard-viewer wordmark; use the body stack for task headings and metadata.",
+        "section": "typography"
+      },
+      {
+        "name": "The Soft Depth Rule",
+        "body": "Use the named inset-highlight and diffuse navy shadow vocabulary; do not introduce hard offset shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep all fifteen numbered tiles in physical slot order, including empty tiles and non-contiguous continuation blocks.",
+      "Do retain the same save icon and an n of m caption on continuation tiles.",
+      "Do render real 16\u00d716 save frames with pixelated scaling in the near-black well.",
+      "Do use actual save and occupied-block counts; a multi-block save is one save.",
+      "Do keep unavailable actions visible, disabled, and titled \u201c{feature} is not available yet\u201d.",
+      "Do preserve the top-left PlayStation monogram beside memcard-viewer as the only brand lockup."
+    ],
+    "donts": [
+      "Don\u2019t use charcoal slabs, CRT or XMB styling, or PlayStation red as the action accent.",
+      "Don\u2019t copy the mock\u2019s second hardware slot, fictitious collection counts, or two-way sync claims; hardware exposes one slot and auto-backup remains unavailable. Manual Sync is card-to-directory only.",
+      "Don\u2019t add Sony branding to the card plate or a second PlayStation Memory Card Manager lockup.",
+      "Don\u2019t treat synthetic development fixture icons as production artwork or substitute mock illustrations for parsed save icons.",
+      "Don\u2019t hide empty or continuation blocks, rearrange physical slots to group a chain, or smooth pixel art."
+    ]
+  }
+}

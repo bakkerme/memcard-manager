@@ -5,6 +5,7 @@ describe("viewFromIpc", () => {
   it("turns IPC number frames into RGBA clamped arrays", () => {
     const dto: CardViewDto = {
       sourceName: "blue",
+      imageId: "a".repeat(64),
       format: "raw",
       source: "file",
       usedBlocks: 1,

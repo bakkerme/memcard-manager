@@ -20,6 +20,9 @@ export type {
 } from "./engine";
 export {
   backupCard,
+  syncCard,
+  readLocalBackups,
+  chooseLocalBackups,
   composeCard,
   onUsbProgress,
   openCardBytes,
@@ -27,6 +30,8 @@ export {
   pickAndOpenCard,
   probeAdaptor,
   readAdaptor,
+  revealPath,
   saveExport,
 } from "./api";
-export type { AdaptorIdentity, ExportResult, HardwareStatus } from "./api";
+export type { AdaptorIdentity, BackupResult, LibraryView, LibrarySave, LibrarySnapshot, SnapshotSource, SyncResult, ExportResult, HardwareStatus } from "./api";
+export { demoView } from "./demo";

@@ -88,6 +88,7 @@ pub struct SaveInfo {
 #[serde(rename_all = "camelCase")]
 pub struct CardView {
     pub source_name: String,
+    pub image_id: String,
     pub format: CardFormat,
     pub source: CardSource,
     pub slots: Vec<SlotInfo>,
@@ -282,9 +283,7 @@ impl Ps1Card {
         source: CardSource,
     ) -> Result<Self, CardError> {
         if bytes.len() < 2 {
-            return Err(CardError(
-                "File is too small to be a Memory Card.".into(),
-            ));
+            return Err(CardError("File is too small to be a Memory Card.".into()));
         }
 
         let magic = detect_magic(bytes);
@@ -400,7 +399,11 @@ impl Ps1Card {
         out
     }
 
-    pub fn set_save_bytes(&mut self, slot_number: usize, save_bytes: &[u8]) -> Result<usize, usize> {
+    pub fn set_save_bytes(
+        &mut self,
+        slot_number: usize,
+        save_bytes: &[u8],
+    ) -> Result<usize, usize> {
         let slot_count = (save_bytes.len() - MCS_HEADER_SIZE) / BLOCK_SIZE;
         let free = self.find_free_slots(slot_number, slot_count);
         if free.len() < slot_count {
@@ -447,7 +450,11 @@ impl Ps1Card {
         Ok(slot_count)
     }
 
-    pub fn compose_from(&mut self, source: &Ps1Card, master_slots: &[usize]) -> Result<(), CardError> {
+    pub fn compose_from(
+        &mut self,
+        source: &Ps1Card,
+        master_slots: &[usize],
+    ) -> Result<(), CardError> {
         let needed: usize = master_slots
             .iter()
             .map(|slot| source.find_save_links(*slot).len())
@@ -514,7 +521,8 @@ impl Ps1Card {
         header[20] = 0x1;
         header[21] = b'M';
         for slot in 0..SLOT_COUNT {
-            let slot_header = &raw[HEADER_SIZE + slot * HEADER_SIZE..HEADER_SIZE + (slot + 1) * HEADER_SIZE];
+            let slot_header =
+                &raw[HEADER_SIZE + slot * HEADER_SIZE..HEADER_SIZE + (slot + 1) * HEADER_SIZE];
             header[22 + slot] = slot_header[0];
             header[38 + slot] = slot_header[8];
             let comment = self.gme_comments[slot].as_bytes();
@@ -553,6 +561,11 @@ impl Ps1Card {
                 out
             }
         }
+    }
+
+    /// Content identity of this image, not a physical card serial number.
+    pub fn image_id(&self) -> String {
+        super::snapshot::image_id(&self.raw)
     }
 
     pub fn view(&self) -> CardView {
@@ -633,6 +646,7 @@ impl Ps1Card {
 
         CardView {
             source_name: self.source_name.clone(),
+            image_id: self.image_id(),
             format: self.format,
             source: self.source,
             slots,
@@ -736,7 +750,11 @@ impl Ps1Card {
     }
 }
 
-pub fn compose_new_card(source: &Ps1Card, master_slots: &[usize], name: Option<&str>) -> Result<Ps1Card, CardError> {
+pub fn compose_new_card(
+    source: &Ps1Card,
+    master_slots: &[usize],
+    name: Option<&str>,
+) -> Result<Ps1Card, CardError> {
     let dest_name = name
         .map(|s| s.to_string())
         .unwrap_or_else(|| format!("{}-composed", source.source_name));
@@ -791,7 +809,11 @@ mod tests {
 
         let s11 = by_slot(11);
         assert_eq!(s11.title.trim(), "Worms World Party");
-        assert_eq!(s11.linked_slots, vec![11, 12, 14], "non-contiguous Worms chain");
+        assert_eq!(
+            s11.linked_slots,
+            vec![11, 12, 14],
+            "non-contiguous Worms chain"
+        );
         assert_eq!(s11.size_kb, 24);
         assert_eq!(view.slots[12].slot_type, SlotType::MiddleLink);
         assert_eq!(view.slots[14].slot_type, SlotType::EndLink);
@@ -813,9 +835,15 @@ mod tests {
         assert!(regions.contains("America"));
         assert!(regions.contains("Europe"));
 
-        assert!(view.saves.iter().any(|s| s.linked_slots.len() == 1 && !s.deleted));
+        assert!(view
+            .saves
+            .iter()
+            .any(|s| s.linked_slots.len() == 1 && !s.deleted));
         assert!(view.saves.iter().any(|s| s.linked_slots.len() > 1));
-        assert!(view.saves.iter().all(|s| s.frames.len() == s.frame_count as usize));
+        assert!(view
+            .saves
+            .iter()
+            .all(|s| s.frames.len() == s.frame_count as usize));
         assert_eq!(view.saves[0].frames[0].len(), 16 * 16 * 4);
         assert!(view.slots.iter().all(|s| s.xor_ok));
     }
@@ -870,8 +898,15 @@ mod tests {
 
         let round_trip = Ps1Card::open(&raw, "composed.mcr", false).unwrap().view();
         assert_eq!(
-            round_trip.saves.iter().map(|s| s.title.clone()).collect::<Vec<_>>(),
-            view.saves.iter().map(|s| s.title.clone()).collect::<Vec<_>>()
+            round_trip
+                .saves
+                .iter()
+                .map(|s| s.title.clone())
+                .collect::<Vec<_>>(),
+            view.saves
+                .iter()
+                .map(|s| s.title.clone())
+                .collect::<Vec<_>>()
         );
         assert_eq!(
             round_trip
@@ -882,7 +917,11 @@ mod tests {
             vec![1, 2, 3]
         );
         assert_eq!(
-            round_trip.saves.iter().map(|s| s.region.clone()).collect::<Vec<_>>(),
+            round_trip
+                .saves
+                .iter()
+                .map(|s| s.region.clone())
+                .collect::<Vec<_>>(),
             vec!["America", "America", "America"]
         );
     }
@@ -905,7 +944,11 @@ mod tests {
         let view = opened.view();
         assert_eq!(view.used_blocks, 15);
         assert_eq!(
-            view.saves.iter().find(|s| s.master_slot == 11).unwrap().linked_slots,
+            view.saves
+                .iter()
+                .find(|s| s.master_slot == 11)
+                .unwrap()
+                .linked_slots,
             vec![11, 12, 14]
         );
     }

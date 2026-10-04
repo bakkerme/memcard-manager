@@ -6,6 +6,10 @@ pub const SONY_VID: u16 = 0x054C;
 pub const PS3MCA_PID: u16 = 0x02EA;
 const TIMEOUT: Duration = Duration::from_millis(5000);
 const READ_CMD_LEN: usize = 144;
+// Match MemcardRex's receive buffer for both detection and frame reads.
+// The two-byte card-type reply still needs room for a full USB packet;
+// an eight-byte buffer can produce LIBUSB_ERROR_OVERFLOW on macOS.
+const USB_RESPONSE_CAPACITY: usize = 256;
 const FRAME_SIZE: usize = 128;
 pub const FRAME_COUNT: u16 = 1024;
 const MAX_CONSECUTIVE_FAILURES: u32 = 8;
@@ -92,7 +96,9 @@ pub fn find_identity(ctx: &Context) -> Result<Option<AdaptorIdentity>, String> {
             _ => String::new(),
         };
         let product = match (handle.as_ref(), lang, desc.product_string_index()) {
-            (Some(h), Some(l), Some(_)) => h.read_product_string(l, &desc, TIMEOUT).unwrap_or_default(),
+            (Some(h), Some(l), Some(_)) => {
+                h.read_product_string(l, &desc, TIMEOUT).unwrap_or_default()
+            }
             _ => String::new(),
         };
         return Ok(Some(identity_from(&device, &desc, manufacturer, product)));
@@ -165,9 +171,9 @@ impl Adaptor {
         if handle.kernel_driver_active(0).unwrap_or(false) {
             let _ = handle.detach_kernel_driver(0);
         }
-        handle.claim_interface(0).map_err(|e| {
-            format!("Could not claim USB interface 0 ({e}).")
-        })?;
+        handle
+            .claim_interface(0)
+            .map_err(|e| format!("Could not claim USB interface 0 ({e})."))?;
 
         let (in_ep, out_ep) = endpoints(&handle)?;
         let identity = identity_from(&device, &desc, String::new(), String::new());
@@ -185,7 +191,7 @@ impl Adaptor {
         self.handle
             .write_bulk(self.out_ep, &cmd, TIMEOUT)
             .map_err(|e| format!("USB write failed while detecting card ({e})."))?;
-        let mut buf = [0u8; 8];
+        let mut buf = [0u8; USB_RESPONSE_CAPACITY];
         let n = self
             .handle
             .read_bulk(self.in_ep, &mut buf, TIMEOUT)
@@ -201,7 +207,7 @@ impl Adaptor {
         self.handle
             .write_bulk(self.out_ep, &cmd, TIMEOUT)
             .map_err(usb_err)?;
-        let mut buf = [0u8; 256];
+        let mut buf = [0u8; USB_RESPONSE_CAPACITY];
         let n = self
             .handle
             .read_bulk(self.in_ep, &mut buf, TIMEOUT)
@@ -235,10 +241,7 @@ fn read_frame_command(frame: u16) -> [u8; READ_CMD_LEN] {
 }
 
 fn endpoints(handle: &DeviceHandle<Context>) -> Result<(u8, u8), String> {
-    let config = handle
-        .device()
-        .config_descriptor(0)
-        .map_err(usb_err)?;
+    let config = handle.device().config_descriptor(0).map_err(usb_err)?;
     let mut in_ep = None;
     let mut out_ep = None;
     for interface in config.interfaces() {
@@ -254,10 +257,7 @@ fn endpoints(handle: &DeviceHandle<Context>) -> Result<(u8, u8), String> {
             }
         }
     }
-    Ok((
-        in_ep.unwrap_or(0x81),
-        out_ep.unwrap_or(0x02),
-    ))
+    Ok((in_ep.unwrap_or(0x81), out_ep.unwrap_or(0x02)))
 }
 
 fn identity_from(
@@ -318,13 +318,9 @@ mod tests {
         let ctx = rusb::Context::new().expect("libusb context");
         let (bytes, identity) = read_card(&ctx, |_| {}).expect("read adaptor");
         assert_eq!(bytes.len(), crate::card::CARD_SIZE);
-        let card = crate::card::Ps1Card::open_from(
-            &bytes,
-            "adaptor",
-            false,
-            crate::card::CardSource::Usb,
-        )
-        .expect("parse dumped card");
+        let card =
+            crate::card::Ps1Card::open_from(&bytes, "adaptor", false, crate::card::CardSource::Usb)
+                .expect("parse dumped card");
         let view = card.view();
         eprintln!(
             "live card {:04X}:{:04X} used={} saves={} titles={:?}",

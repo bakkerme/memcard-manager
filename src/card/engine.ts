@@ -43,6 +43,7 @@ export interface SaveInfo {
 
 export interface CardView {
   sourceName: string;
+  imageId: string;
   format: CardFormat;
   source: CardSource;
   slots: SlotInfo[];

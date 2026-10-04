@@ -1,12 +1,12 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   CardError,
   bytesFromIpc,
   viewFromIpc,
-  type CardFormat,
   type CardView,
+  type SaveInfo,
   type CardViewDto,
 } from "./engine";
 
@@ -57,6 +57,92 @@ export interface ExportResult {
   view: CardView | null;
 }
 
+export interface BackupResult {
+  path: string;
+  displayPath: string;
+  filename: string;
+}
+
+export interface SyncResult {
+  path: string;
+  displayPath: string;
+  written: number;
+  unchanged: number;
+  snapshotsAdded: number;
+}
+
+export async function syncCard(configuredDirectory?: string | null): Promise<SyncResult | null> {
+  try {
+    const directory = configuredDirectory ?? await open({ directory: true, multiple: false, title: "Sync saves to directory" });
+    if (!directory || Array.isArray(directory)) return null;
+    return await invoke<SyncResult>("sync_card", { directory });
+  } catch (err) {
+    throw asError(err);
+  }
+}
+
+export interface SnapshotSource {
+  imageId: string;
+  sourceName: string;
+  source: string;
+}
+
+export interface LibrarySnapshot {
+  path: string;
+  contentId: string;
+  capturedAt: string | null;
+  sources: SnapshotSource[];
+  current: boolean;
+  save: SaveInfo;
+}
+
+export interface LibrarySave {
+  path: string;
+  relativePath: string;
+  save: SaveInfo;
+  snapshots: LibrarySnapshot[];
+}
+
+export interface LibraryView {
+  directory: string | null;
+  displayPath: string | null;
+  saves: LibrarySave[];
+  warnings: string[];
+}
+
+type SaveDto = CardViewDto["saves"][number];
+type SnapshotDto = Omit<LibrarySnapshot, "save"> & { save: SaveDto };
+type LibraryDto = Omit<LibraryView, "saves"> & {
+  saves: (Omit<LibrarySave, "save" | "snapshots"> & { save: SaveDto; snapshots: SnapshotDto[] })[];
+};
+
+function saveFromIpc(save: SaveDto): SaveInfo {
+  return { ...save, frames: save.frames.map(frame => new Uint8ClampedArray(frame)) };
+}
+
+function libraryFromIpc(dto: LibraryDto): LibraryView {
+  return { ...dto, saves: dto.saves.map(entry => ({
+    ...entry,
+    save: saveFromIpc(entry.save),
+    snapshots: entry.snapshots.map(snapshot => ({ ...snapshot, save: saveFromIpc(snapshot.save) })),
+  })) };
+}
+
+export async function readLocalBackups(): Promise<LibraryView> {
+  try {
+    return libraryFromIpc(await invoke<LibraryDto>("local_backups"));
+  } catch (err) { throw asError(err); }
+}
+
+export async function chooseLocalBackups(defaultPath?: string | null): Promise<LibraryView | null> {
+  try {
+    const directory = await open({ directory: true, multiple: false,
+      title: "Choose local backups directory", defaultPath: defaultPath ?? undefined });
+    if (!directory || Array.isArray(directory)) return null;
+    return libraryFromIpc(await invoke<LibraryDto>("configure_local_backups", { directory }));
+  } catch (err) { throw asError(err); }
+}
+
 function asError(err: unknown): CardError {
   if (err instanceof CardError) return err;
   if (typeof err === "string") return new CardError(err);
@@ -104,17 +190,17 @@ export async function composeCard(masterSlots: number[]): Promise<ExportResult> 
   }
 }
 
-export async function backupCard(format?: CardFormat | "mcr"): Promise<ExportResult> {
+export async function backupCard(): Promise<BackupResult> {
   try {
-    const result = await invoke<{ bytes: number[]; filename: string; view: CardViewDto | null }>(
-      "backup_card",
-      { format: format ?? null },
-    );
-    return {
-      bytes: bytesFromIpc(result.bytes),
-      filename: result.filename,
-      view: result.view ? viewFromIpc(result.view) : null,
-    };
+    return await invoke<BackupResult>("backup_card");
+  } catch (err) {
+    throw asError(err);
+  }
+}
+
+export async function revealPath(path: string): Promise<void> {
+  try {
+    await invoke("reveal_path", { path });
   } catch (err) {
     throw asError(err);
   }
@@ -148,6 +234,11 @@ export async function readAdaptor(): Promise<CardView> {
   }
 }
 
-export function onUsbProgress(handler: (status: HardwareStatus) => void): Promise<UnlistenFn> {
-  return listen<HardwareStatus>("usb-progress", (event) => handler(event.payload));
+export async function onUsbProgress(handler: (status: HardwareStatus) => void): Promise<UnlistenFn> {
+  if (!isTauri()) return () => undefined;
+  try {
+    return await listen<HardwareStatus>("usb-progress", (event) => handler(event.payload));
+  } catch {
+    return () => undefined;
+  }
 }

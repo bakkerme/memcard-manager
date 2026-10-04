@@ -5,7 +5,7 @@ export function PixelIcon({
   frames,
   frameIndex,
   dim,
-  size = 64,
+  size,
 }: {
   frames: RgbaFrame[];
   frameIndex: number;
@@ -30,7 +30,7 @@ export function PixelIcon({
       width={16}
       height={16}
       className={dim ? "pixel-icon dim" : "pixel-icon"}
-      style={{ width: size, height: size }}
+      style={size == null ? undefined : { width: size, height: size }}
       aria-hidden
     />
   );

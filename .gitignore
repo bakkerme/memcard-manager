@@ -5,3 +5,17 @@ src-tauri/target
 *.local
 .vite
 coverage
+
+# Local agent tooling and design-session scratch files
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/.grok/
+/generated-image.png
+/.impeccable/*
+!/.impeccable/design.json
+!/.impeccable/review/
+/.impeccable/review/*
+!/.impeccable/review/design-pass-*.png
+!/.impeccable/review/design-pass-verdict.md

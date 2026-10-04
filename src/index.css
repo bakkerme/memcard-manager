@@ -1,20 +1,43 @@
+@font-face {
+  font-family: "Encode Sans Expanded";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/fonts/encode-sans-expanded-600.ttf") format("truetype");
+}
+
 :root {
-  color-scheme: dark;
-  --bg: #101218;
-  --bg-elevated: #181b24;
-  --fill: #222632;
-  --fill-hover: #2a2f3d;
-  --stroke: #323748;
-  --stroke-strong: #4d9fff;
-  --text: #e8eaf0;
-  --text-muted: #9aa3b5;
-  --text-faint: #6d7588;
-  --danger: #e85d5d;
-  --ghost: #8b91a3;
-  --accent: #4d9fff;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+  --bg: #dde4ed;
+  --bg-accent: #e7edf4;
+  --panel: #e1e8f1;
+  --panel-strong: #e7edf4;
+  --line: #bdcddd;
+  --line-strong: #c3cedc;
+  --text: #18375d;
+  --text-muted: #4d6788;
+  --text-faint: #7488a2;
+  --accent: #1e71ef;
+  --accent-soft: #cddff7;
+  --accent-ring: #6ea6f8;
+  --good: #1aa65f;
+  --good-soft: #e5f6ec;
+  --occupancy-gold: #e8b931;
+  --danger: #d4536c;
+  --danger-soft: #fdecef;
+  --shadow: inset 0 1px 0 #ffffff99, 0 8px 24px #1c304e06;
+  --shadow-tile: inset 0 1px 0 #ffffffb3, 0 2px 4px #1c304e0a;
+  --radius-xl: 12px;
+  --radius-lg: 10px;
+  --radius-md: 8px;
+  --radius-sm: 8px;
+  --radius-well: 6px;
+  --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-brand: "Encode Sans Expanded", "Encode Sans", "Helvetica Neue", Helvetica, sans-serif;
+  font-family: var(--font);
   background: var(--bg);
   color: var(--text);
+  font-synthesis: none;
 }
 
 * {
@@ -28,6 +51,11 @@ body,
   min-height: 100%;
 }
 
+body {
+  background: linear-gradient(125deg, #cdd7e3 0%, var(--bg) 48%, #d3deeb 100%);
+  background-attachment: fixed;
+}
+
 button,
 input {
   font: inherit;
@@ -36,3 +64,47 @@ input {
 button {
   cursor: pointer;
 }
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, white);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b7c4d4;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+body::before, body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: -1;
+  width: 300px;
+  height: 180px;
+  border: 24px solid #a8bad02b;
+  transform: rotate(-55deg);
+}
+body { isolation: isolate; }
+body::before { top: -140px; right: -40px; }
+body::after { bottom: -160px; left: -60px; transform: rotate(28deg); }
