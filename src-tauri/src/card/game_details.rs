@@ -3,6 +3,7 @@
 //! for pinned layout sources, licenses, supported releases and validation boundaries.
 use serde::Serialize;
 
+mod mega_man_legends2;
 mod summaries;
 
 #[derive(Debug, Clone, Serialize)]
@@ -78,6 +79,9 @@ impl Format {
             "final-fantasy-tactics" => {
                 suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'A'..=b'O')
             }
+            "mega-man-legends-2" => {
+                suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'0'..=b'4')
+            }
             _ => suffix.is_empty(),
         }
     }
@@ -116,6 +120,13 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SCUS-94228" => ("spyro-the-dragon", "Spyro the Dragon", 1, "BA", "SPYRO"),
         "SLUS-00402" => ("tekken-3", "Tekken 3", 1, "BA", "TEKKEN-3"),
         "SLUS-00707" => ("silent-hill", "Silent Hill", 1, "BA", "SILENT"),
+        "SLUS-01140" => (
+            "mega-man-legends-2",
+            "Mega Man Legends 2",
+            1,
+            "BA",
+            "-DASH2",
+        ),
         _ => return None,
     };
     Some(Format {
@@ -151,6 +162,10 @@ pub(super) fn decode(
     }
     if format.slug == "digimon-world-2" {
         return super::digimon_world2::decode(data).map(GameDetails::Digimon);
+    }
+    if format.slug == "mega-man-legends-2" {
+        return mega_man_legends2::decode(&format, code, identifier, data)
+            .map(GameDetails::Summary);
     }
     summaries::decode(&format, code, identifier, data).map(GameDetails::Summary)
 }

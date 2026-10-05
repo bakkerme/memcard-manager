@@ -2,7 +2,7 @@ use super::*;
 use crate::card::engine::{CardFormat, Ps1Card, BLOCK_SIZE, HEADER_SIZE, MCS_HEADER_SIZE};
 use sha2::{Digest, Sha256};
 
-const RELEASES: [(&str, &str, &str); 12] = [
+const RELEASES: [(&str, &str, &str); 13] = [
     ("SCES-00867", "BE", "FF7-S01"),
     ("SLUSP00892", "BA", "042610"),
     ("SLES-02965", "BE", "00000-00"),
@@ -15,6 +15,7 @@ const RELEASES: [(&str, &str, &str); 12] = [
     ("SCUS-94228", "BA", "SPYRO"),
     ("SLUS-00402", "BA", "TEKKEN-3"),
     ("SLUS-00707", "BA", "SILENT00"),
+    ("SLUS-01140", "BA", "-DASH20"),
 ];
 
 fn payload(code: &str) -> Vec<u8> {
@@ -23,6 +24,12 @@ fn payload(code: &str) -> Vec<u8> {
     d[..2].copy_from_slice(b"SC");
     d[2] = 0x11;
     d[3] = f.blocks as u8;
+    if f.slug == "mega-man-legends-2" {
+        let (title, _, malformed) =
+            encoding_rs::SHIFT_JIS.encode("ＭＥＧＡＭＡＮ　ＬＥＧＥＮＤＳ２［１］００：００：００");
+        assert!(!malformed);
+        d[4..4 + title.len()].copy_from_slice(&title);
+    }
     if f.slug == "final-fantasy-vii" {
         d[0x10a4] = 2;
     }
@@ -47,7 +54,7 @@ fn value<'a>(fields: &'a [Field], label: &str) -> &'a str {
 }
 
 #[test]
-fn proposal_has_twelve_distinct_decoders_with_serializable_profiles() {
+fn enabled_summary_decoders_have_serializable_profiles() {
     let mut games = std::collections::HashSet::new();
     for (code, region, id) in RELEASES {
         let d = payload(code);
@@ -60,7 +67,150 @@ fn proposal_has_twelve_distinct_decoders_with_serializable_profiles() {
         assert!(!s.profiles.is_empty());
         assert_eq!(d, before);
     }
-    assert_eq!(games.len(), 12);
+    assert_eq!(games.len(), RELEASES.len());
+}
+
+fn mml2_checksums(data: &mut [u8]) {
+    for (start, end) in [(0, 0x17c), (0x200, 0x27c), (0x280, 0x3fc), (0x400, 0xbfc)] {
+        let mut sum = 0u32;
+        for offset in (start..end).step_by(4) {
+            sum = sum.wrapping_add(u32::from_le_bytes(
+                data[offset..offset + 4].try_into().unwrap(),
+            ));
+        }
+        data[end..end + 4].copy_from_slice(&sum.to_le_bytes());
+    }
+}
+
+#[test]
+fn mml2_fields_use_traced_offsets_and_preserve_unknown_names() {
+    let mut d = payload("SLUS-01140");
+    d[0x12f] = 8;
+    d[0x12e] = 1;
+    d[0x138..0x13c].copy_from_slice(&(60u32 * 3600 + 59).to_le_bytes());
+    d[0x13c..0x140].copy_from_slice(&7u32.to_le_bytes()); // Not a required duplicate.
+    d[0x200..0x204].copy_from_slice(&11950u32.to_le_bytes());
+    d[0x290..0x292].copy_from_slice(&96u16.to_le_bytes());
+    d[0x292..0x294].copy_from_slice(&128u16.to_le_bytes());
+    d[0x2b4..0x2b7].copy_from_slice(&[1, 2, 3]);
+    d[0x2b8..0x2bc].copy_from_slice(&[29, 14, 0xff, 0xff]);
+    mml2_checksums(&mut d);
+    let before = d.clone();
+    let s = summary("SLUS-01140", "BA", "-DASH24", &d);
+    assert_eq!(s.game, "mega-man-legends-2");
+    assert_eq!(s.title, "Mega Man Legends 2");
+    assert_eq!(s.release, "US · SLUS-01140");
+    assert_eq!(s.checksum_ok, Some(true));
+    let p = &s.profiles[0];
+    assert_eq!(p.number, 5);
+    assert!(!p.empty);
+    assert_eq!(value(&p.fields, "Saved location"), "Nino Pad");
+    assert_eq!(value(&p.fields, "Playtime (hh:mm:ss)"), "01:00:00");
+    assert_eq!(value(&p.fields, "Zenny"), "11950");
+    assert_eq!(value(&p.fields, "Health (game units)"), "96 / 128");
+    for (label, expected) in [
+        ("Difficulty", "Normal"),
+        ("Equipped helmet", "Normal Helmet"),
+        ("Equipped shoes", "Hydrojets"),
+        ("Equipped armor", "Padded Armor Omega"),
+        ("Buster part 1", "Accessory Pack"),
+        ("Buster part 2", "Buster Unit"),
+        ("Buster part 3", "Unknown (ID 0xFF)"),
+    ] {
+        assert_eq!(value(&p.fields, label), expected);
+    }
+    assert_eq!(d, before);
+
+    d[0x12f] = 0xff;
+    d[0x12e] = 0xff;
+    d[0x138..0x13c].copy_from_slice(&u32::MAX.to_le_bytes());
+    let s = summary("SLUS-01140", "BA", "-DASH20", &d);
+    assert_eq!(
+        value(&s.profiles[0].fields, "Saved location"),
+        "Unknown (ID 0xFF)"
+    );
+    assert_eq!(
+        value(&s.profiles[0].fields, "Difficulty"),
+        "Unknown (ID 0xFF)"
+    );
+    assert_eq!(
+        value(&s.profiles[0].fields, "Playtime (hh:mm:ss)"),
+        "19884:06:28"
+    );
+}
+
+#[test]
+fn mml2_preview_and_noncontiguous_difficulty_ids_decode_independently() {
+    let mut d = payload("SLUS-01140");
+    // Preview labels come from 0x12f, not the raw map ID at 0x128.
+    d[0x128] = 23;
+    for (location, expected_location, difficulty, expected_difficulty) in [
+        (1, "Flutter", 0, "Easy"),
+        (3, "Yosyonke Pad", 1, "Normal"),
+        (22, "Elysium", 3, "Hard"),
+        (25, "Kimotoma City", 4, "Very Hard"),
+        (0, "Unknown (ID 0x00)", 2, "Unknown (ID 0x02)"),
+        (26, "Unknown (ID 0x1A)", 5, "Unknown (ID 0x05)"),
+    ] {
+        d[0x12f] = location;
+        d[0x12e] = difficulty;
+        mml2_checksums(&mut d);
+        let before = d.clone();
+        let details = summary("SLUS-01140", "BA", "-DASH20", &d);
+        let fields = &details.profiles[0].fields;
+        assert_eq!(value(fields, "Saved location"), expected_location);
+        assert_eq!(value(fields, "Difficulty"), expected_difficulty);
+        assert_eq!(details.checksum_ok, Some(true));
+        assert_eq!(d, before);
+    }
+}
+
+#[test]
+fn mml2_checks_all_four_segments_with_wrapping_sums_and_allows_warnings() {
+    let mut d = payload("SLUS-01140");
+    d[0x400..0xbfc].fill(0xff); // Sum exceeds u32; game uses modulo 2^32.
+    mml2_checksums(&mut d);
+    assert_eq!(
+        summary("SLUS-01140", "BA", "-DASH20", &d).checksum_ok,
+        Some(true)
+    );
+    for offset in [0x50, 0x200, 0x290, 0x400, 0x17c, 0x27c, 0x3fc, 0xbfc] {
+        let mut damaged = d.clone();
+        damaged[offset] ^= 1;
+        let s = summary("SLUS-01140", "BA", "-DASH20", &damaged);
+        assert_eq!(s.checksum_ok, Some(false), "{offset:x}");
+        assert_eq!(s.profiles[0].checksum_ok, Some(false));
+        assert!(!s.profiles[0].fields.is_empty());
+    }
+    for offset in [0x180, 0x1ff, 0xc00, 0x1fff] {
+        let mut changed = d.clone();
+        changed[offset] ^= 1;
+        assert_eq!(
+            summary("SLUS-01140", "BA", "-DASH20", &changed).checksum_ok,
+            Some(true)
+        );
+    }
+}
+
+#[test]
+fn mml2_only_accepts_the_supported_us_adventure_layout() {
+    let d = payload("SLUS-01140");
+    for id in [
+        "-DASH2", "-DASH25", "-DASH2A", "-DASH200", "DASH20", "-DASH10",
+    ] {
+        assert!(decode("SLUS-01140", "BA", id, &d).is_err(), "{id}");
+    }
+    for id in ["-DASH20", "-DASH21", "-DASH22", "-DASH23", "-DASH24"] {
+        assert!(decode("SLUS-01140", "BA", id, &d).is_ok());
+    }
+    let mut wrong = d.clone();
+    wrong[2] = 0x12;
+    assert!(decode("SLUS-01140", "BA", "-DASH20", &wrong).is_err());
+    wrong = d.clone();
+    wrong[4..68].fill(0);
+    assert!(decode("SLUS-01140", "BA", "-DASH20", &wrong).is_err());
+    wrong[4..68].fill(0xff); // Malformed Shift-JIS.
+    assert!(decode("SLUS-01140", "BA", "-DASH20", &wrong).is_err());
 }
 
 #[test]
@@ -175,6 +325,42 @@ fn mcs(code: &str, region: &str, id: &str) -> Vec<u8> {
     bytes[10..10 + name.len()].copy_from_slice(name.as_bytes());
     bytes.extend(d);
     bytes
+}
+
+#[test]
+fn mml2_card_inspection_normalizes_mcs_and_preserves_malformed_saves() {
+    let mut bytes = mcs("SLUS-01140", "BA", "-DASH21");
+    mml2_checksums(&mut bytes[MCS_HEADER_SIZE..]);
+    let before = bytes.clone();
+    let mut card = Ps1Card::create_formatted("test");
+    card.set_save_bytes(3, &bytes).unwrap();
+    let raw = card.save_raw(false);
+    let view = card.view();
+    assert_eq!(view.slots.len(), 15);
+    let save = &view.saves[0];
+    assert_eq!(save.identifier, "-DASH21");
+    assert!(save.game_details_error.is_none());
+    let dto = serde_json::to_value(&save.game_details).unwrap();
+    assert_eq!(dto["game"], "mega-man-legends-2");
+    assert_eq!(dto["profiles"][0]["number"], 2);
+    assert_eq!(dto["checksumOk"], true);
+    let reopened = Ps1Card::open(&raw, "test", false).unwrap();
+    assert_eq!(
+        serde_json::to_value(&reopened.view().saves[0].game_details).unwrap(),
+        dto
+    );
+    assert_eq!(card.save_raw(false), raw);
+    assert_eq!(bytes, before);
+
+    bytes[MCS_HEADER_SIZE + 2] = 0x12;
+    let mut card = Ps1Card::create_formatted("malformed");
+    card.set_save_bytes(3, &bytes).unwrap();
+    let malformed = card.save_raw(false);
+    let view = card.view();
+    assert_eq!(view.slots.len(), 15);
+    assert!(view.saves[0].game_details.is_none());
+    assert!(view.saves[0].game_details_error.is_some());
+    assert_eq!(card.save_raw(false), malformed);
 }
 
 #[test]

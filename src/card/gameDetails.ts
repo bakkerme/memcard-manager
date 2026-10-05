@@ -7,7 +7,7 @@ export interface DigimonWorld2Details {
 export type SummaryGame = "final-fantasy-vii" | "final-fantasy-viii" | "final-fantasy-ix"
   | "final-fantasy-tactics" | "chrono-cross" | "castlevania-symphony-of-the-night"
   | "gran-turismo" | "gran-turismo-2" | "ctr-crash-team-racing" | "spyro-the-dragon"
-  | "tekken-3" | "silent-hill";
+  | "tekken-3" | "silent-hill" | "mega-man-legends-2";
 export interface GameSummary {
   game: SummaryGame;
   title: string;

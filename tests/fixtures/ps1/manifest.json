@@ -891,6 +891,429 @@
       "uploader": "WLau",
       "completionClaim": "All secrets unlocked",
       "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "mml2/BASLUS-01140-DASH20.mcs",
+      "private": true,
+      "code": "SLUS-01140",
+      "sha256": "13210887c585cbaed345e51ce1763aad2b368e1e658ad7c20354086591c65ce6",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 1",
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Nino Pad"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "03:41:26"
+        },
+        {
+          "profile": 0,
+          "label": "Zenny",
+          "value": "11950"
+        },
+        {
+          "profile": 0,
+          "label": "Health (game units)",
+          "value": "128 / 128"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Normal"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped helmet",
+          "value": "Normal Helmet"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped shoes",
+          "value": "Jet Skates"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped armor",
+          "value": "Padded Armor"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 1",
+          "value": "Accessory Pack"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 2",
+          "value": "Buster Unit"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 3",
+          "value": "None"
+        }
+      ],
+      "source": "User-supplied original US save, retained locally only",
+      "evidence": "Save packing/restoring code traced independently. Both location/time previews checked in DuckStation; first save loaded and equipped gear names checked in-game. Other equipment names use published modifier ID mappings; difficulty names remain unverified."
+    },
+    {
+      "filename": "mml2/BASLUS-01140-DASH21.mcs",
+      "private": true,
+      "code": "SLUS-01140",
+      "sha256": "630f4ed27e0b579c155f04b0057f4cbf5df7c125d45d8fd3e4c421a368b5440c",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 2",
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Nino Pad"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "04:47:52"
+        },
+        {
+          "profile": 0,
+          "label": "Zenny",
+          "value": "31700"
+        },
+        {
+          "profile": 0,
+          "label": "Health (game units)",
+          "value": "128 / 128"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Normal"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped helmet",
+          "value": "Normal Helmet"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped shoes",
+          "value": "Hydrojets"
+        },
+        {
+          "profile": 0,
+          "label": "Equipped armor",
+          "value": "Padded Armor Omega"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 1",
+          "value": "Accessory Pack"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 2",
+          "value": "Blaster Unit"
+        },
+        {
+          "profile": 0,
+          "label": "Buster part 3",
+          "value": "None"
+        }
+      ],
+      "source": "User-supplied original US save, retained locally only",
+      "evidence": "Save packing/restoring code traced independently. Both location/time previews checked in DuckStation; first save loaded and equipped gear names checked in-game. Other equipment names use published modifier ID mappings; difficulty names remain unverified."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.25998.gme",
+      "code": "SLUS-01140",
+      "sha256": "4dffaac21ccd771cfb4afaca31dc9ed4835553d9373c8b0f56ca8b6bf3d410a8",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Flutter"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Easy"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/25998",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.25999.gme",
+      "code": "SLUS-01140",
+      "sha256": "07c19f00e1b3d3956680d8f15cea09c118397108d3edfd02c5ef030444a13168",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Elysium"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Easy"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/25999",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26000.gme",
+      "code": "SLUS-01140",
+      "sha256": "9d5c9aa3580d85aea96b716089d01ceb34ea489e2c072f0949e823684f7110cb",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Yosyonke Pad"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Normal"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26000",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26001.gme",
+      "code": "SLUS-01140",
+      "sha256": "a7214804dd47083d217d3258cde3db9161ff78ff1238f953fa3e60d4eb9cddfe",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 1"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Elysium"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26001",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26002.gme",
+      "code": "SLUS-01140",
+      "sha256": "a6547b9c7c01600e4da063dbf4d9e91c1d8ecccd6573e3a46d11ad15a2e13d3a",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Yosyonke Pad"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26002",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26003.gme",
+      "code": "SLUS-01140",
+      "sha256": "76c76385bc98974932bb4c92cc27397d193ad2d0fb5ed403d54fb8ff17f77bf4",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Yosyonke Pad"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Very Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26003",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26004.gme",
+      "code": "SLUS-01140",
+      "sha256": "2fb58089bd0cd2e9fcd3e049c1b380c92d4504d272f1b0e75f7e045a87660c4f",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Elysium"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Very Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26004",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.26005.gme",
+      "code": "SLUS-01140",
+      "sha256": "42db7e2cd964b183f3f071092439b4dc58a7ed8eaf1f4d5261d13444b195e2d9",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 3"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Elysium"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "00:00:00"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/26005",
+      "uploader": "Eevee-Trainer",
+      "evidence": "Explicitly mode-labelled upload; modified max-stat save with reset display timer. Starting saves establish modes 0/1/3/4. Endgame Normal upload stores 3 (Hard), so the original selected mode is not inferred."
+    },
+    {
+      "filename": "mml2/mega-man-legends-2.6812.gme",
+      "code": "SLUS-01140",
+      "sha256": "573496f1dda1de65ecafae8331841541436c40602ec6d1d7de617a89944b7e6a",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "name": "Save 1"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Elysium"
+        },
+        {
+          "profile": 0,
+          "label": "Difficulty",
+          "value": "Hard"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm:ss)",
+          "value": "10:53:26"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/6812",
+      "uploader": "Sangogi",
+      "evidence": "S-license completion upload; independent time/stat regression."
     }
   ]
 }
