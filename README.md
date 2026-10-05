@@ -10,6 +10,7 @@ A desktop PlayStation 1 memory card manager built with Tauri, React, and Rust. B
 
 - **Fifteen-block gallery:** animated pixel icons, empty blocks, deleted saves, and linked continuation blocks in their physical positions, including non-contiguous chains.
 - **Save inspector:** title, region, product code, identifier, linked blocks, and directory XOR checksum status.
+- **Read-only game details:** the original twelve-game proposal now has useful summaries: FFVII, FFVIII, FFIX, Final Fantasy Tactics, Chrono Cross, Symphony of the Night, Gran Turismo 1/2, CTR, Spyro, Tekken 3 and Silent Hill. Choose **View game details** in card, local-save or snapshot inspectors. Multiple profiles and linked blocks are preserved, and checksum mismatches are reported. Support is limited to the exact tested releases in [save-details.md](docs/save-details.md), including English PAL FFVII (`SCES-00867`). Full inventory/editor coverage is not implemented.
 - **Digimon World 2 pilot:** select an original US save (`SLUS-01193`) and choose **View game details** in the right inspector. Browse its three in-game profiles, tamer, rank, saved location, playtime, Bits, Digi-Beetle, and Digimon roster with stats and techniques. Also available for local backups and snapshots. Read-only; a mismatched game checksum is reported. Playtime matches the game’s hours/minutes display, including its 99:59 cap. Inventory and story progress are not decoded yet.
 - **Whole-card backup:** named, timestamped `.mcr` captures in the shared collection’s `card-backups/` folder, with selectable color thumbnails and a dedicated browser. Earlier backups are never overwritten.
 - **Compose a card:** select saves and export a new raw `.mcr` with their linked blocks packed together.
@@ -77,6 +78,8 @@ npm run tauri -- build --bundles app # macOS app bundle
 Hardware integration tests are ignored by default and require a real adaptor and PS1 card. Application code is in `src/`; the Rust parser, backup/library logic, and USB implementation are in `src-tauri/src/`. [PRODUCT.md](PRODUCT.md) records scope and [DESIGN.md](DESIGN.md) records the visual system.
 
 ## License and credits
+
+The twelve new summary decoders use pinned format references with license notices and documented validation boundaries in [docs/save-details.md](docs/save-details.md). Real shared completion/endgame save provenance and local test instructions are in [tests/fixtures/ps1](tests/fixtures/ps1/README.md).
 
 The read-only Digimon World 2 decoder and name mappings are adapted from [acemon33/DW2-TT](https://github.com/acemon33/DW2-TT/tree/6325d60a628db4b0576d67162d059e653d59ea74), licensed GPL-3.0. Layout and checksum: `dw2_exp_multiplier/Entity/SaveFile.cs`; player-name encoding: `dw2_exp_multiplier/DigimonWorld2Tool/TextConversion.cs`; names and locations: `dw2_exp_multiplier/Resources/Vanilla/data.xml` and `config.xml`. Support is limited to the original US release; other regions and modified game formats need separate validation.
 

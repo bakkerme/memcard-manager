@@ -50,6 +50,7 @@ Confirmed in shipping v1:
 - Adaptor **read** only. No hardware write is implemented. The adaptor has one physical slot; the sidebar lists Slot 1 only when that adaptor is present, with no second-slot row.
 - Parser ported from MemcardRex Core by Shendo. License: GPL-3.0-or-later.
 - Inspector already exposes title, region, product code, identifier, and linked slot chain.
+- Read-only summaries for the original twelve-game coverage proposal, available in card, local-save and snapshot inspectors. Exact tested product codes, implemented fields, checksum support and regional limits are recorded in `docs/save-details.md`. English PAL FFVII (`SCES-00867`) is included. Multiple in-game profiles and linked blocks remain distinct. Full game editing and broader region/revision support are outside this first field set.
 - Read-only game-details pilot for original US Digimon World 2 (`SLUS-01193`): a button in the card and backup inspectors opens three in-game profiles with tamer, rank, saved location, playtime, Bits, Digi-Beetle, and Digimon roster stats/techniques. The game checksum is checked; malformed layouts show an error without preventing card browsing. Playtime matches the game’s hours/minutes display with its 99:59 cap. Inventory, story progress, other regions, and game editing are outside this pilot.
 
 Confirmed product direction (not all shipping yet):

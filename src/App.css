@@ -1092,6 +1092,7 @@
 .game-dialog-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
 .game-dialog-heading p { margin: 7px 0 0; color: var(--text-muted); font-size: 13px; }
 .game-profiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 24px 0; }
+.game-profiles[data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .game-profile { display: grid; gap: 5px; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--panel); color: var(--text); text-align: left; cursor: pointer; }
 .game-profile span { font-size: 12px; color: var(--text-muted); }
 .game-profile strong { font-size: 14px; overflow-wrap: anywhere; }
@@ -1128,6 +1129,7 @@
   .game-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 20px; }
   .game-dialog-heading h2 { font-size: 18px; }
   .game-profiles { gap: 6px; }
+  .game-profiles[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-profile { padding: 10px; }
   .game-dialog .game-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-location { grid-column: auto; }

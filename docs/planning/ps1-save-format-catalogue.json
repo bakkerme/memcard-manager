@@ -1,0 +1,540 @@
+{
+  "title": "PS1 save-format catalogue",
+  "project": "memcard-viewer",
+  "researchDate": "2026-10-04",
+  "implementationStatusDate": "2026-10-05",
+  "scope": "Original PlayStation memory-card saves only; 26 research entries, 24 with public implementation references and two historical editor leads.",
+  "evidenceBoundary": "Original survey preserved. The twelve-game proposal is now implemented as narrow read-only summaries for the exact real-save-tested product codes documented in docs/save-details.md. User PAL FFVII and public completion/endgame saves were used; upstream region claims do not imply support. Selected uploader values and checksums were checked without console or emulator playback.",
+  "originalCoverageProposal": [
+    "Final Fantasy VII",
+    "Final Fantasy VIII",
+    "Final Fantasy IX",
+    "Final Fantasy Tactics",
+    "Chrono Cross",
+    "Castlevania: Symphony of the Night",
+    "Gran Turismo",
+    "Gran Turismo 2",
+    "CTR: Crash Team Racing",
+    "Spyro the Dragon",
+    "Tekken 3",
+    "Silent Hill"
+  ],
+  "proposalNote": "Implemented as a first useful field set at the user request; full editor field coverage and unvalidated regions remain research work.",
+  "validationChecklist": [
+    "Confirm the exact product code, region and revision before decoding.",
+    "Check layout and checksums; keep unknown or malformed revisions explicit.",
+    "Compare selected fields with known in-game values and retain regression fixtures.",
+    "Preserve multiple in-game profiles and linked blocks when decoding card saves and MCS snapshots.",
+    "Verify source and asset licenses before adapting code or mappings.",
+    "Keep capture timestamps distinct from original save dates."
+  ],
+  "architectureDirection": "Use a shared read-only decoder interface with explicit per-game/revision detection. Normalize card containers and reconstruct linked save payloads before decoding. Start with a small useful field set and compare it across snapshots.",
+  "excluded": "Generic memory-card managers, savestate-only tools, ROM editors, remaster-only editors. This shortlist is not an exhaustive census.",
+  "games": [
+    {
+      "game": "Castlevania: Symphony of the Night",
+      "genre": "Action / adventure",
+      "evidence": "Source available",
+      "fields": "Map discovery, location, playtime, stats, inventory, relics, familiars and bestiary.",
+      "regions": "EU / US / JP",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/castlevania-symphony-of-the-night/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00067 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Name, character, level, playtime, Gold, map discovery and kills; checksum unverified"
+    },
+    {
+      "game": "Kagero: Deception II",
+      "genre": "Action / adventure",
+      "evidence": "Source available",
+      "fields": "Chapter, playtime, endings, kill counts, Ark and traps.",
+      "regions": "EU / US / JP",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/kagero-deception-ii/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Metal Gear Solid",
+      "genre": "Action / adventure",
+      "evidence": "Source available",
+      "fields": "Playtime, location, disc, clear count, difficulty, health, weapons and items.",
+      "regions": "SLUS-00594 / SLES-01370",
+      "note": "Shendo’s MGSEdit source explicitly supports these two product codes. Rejects photo and VR-training saves. Repository is archived.",
+      "links": [
+        [
+          "MGSEdit source",
+          "https://github.com/ShendoXT/memcardrex-plugins/tree/master/MGSEdit%20(codename%20Liquid)"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Tomb Raider II",
+      "genre": "Action / adventure",
+      "evidence": "Source available",
+      "fields": "Location, playtime, secrets, weapons, ammunition, kills and other statistics.",
+      "regions": "EU / US / JP; French, German, Italian",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tomb-raider-ii-starring-lara-croft/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Tekken",
+      "genre": "Fighting",
+      "evidence": "Source available",
+      "fields": "Character unlocks, costumes, arcade completion, time records and versus wins.",
+      "regions": "EU / US / JP",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tekken/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Tekken 2",
+      "genre": "Fighting",
+      "evidence": "Source available",
+      "fields": "Playtime, character unlocks, time attack, survival and character usage records.",
+      "regions": "EU / US / JP",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tekken-2/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Tekken 3",
+      "genre": "Fighting",
+      "evidence": "Source available",
+      "fields": "Unlocks, character usage, versus records, time attack, survival and Tekken Force.",
+      "regions": "EU / US / JP / AU",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tekken-3/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00402 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Playtime, 21 character unlocks, Tekken Ball/Theatre; character arcade usage and versus wins/losses; deobfuscation and checksum"
+    },
+    {
+      "game": "Resident Evil",
+      "genre": "Horror",
+      "evidence": "Source available",
+      "fields": "Character, location, playtime, save usage, inventory, item box and event flags.",
+      "regions": "EU / US / JP; French, German",
+      "note": "Validate original versus Director's Cut revisions separately; broad region listings do not prove every revision.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/resident-evil/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Silent Hill",
+      "genre": "Horror",
+      "evidence": "Source available",
+      "fields": "Location, difficulty, playtime, inventory, endings and results statistics.",
+      "regions": "EU / US / JP",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/silent-hill/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00707 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Eleven in-game save positions, empty state, playtime, difficulty, saves, health, location ID, Normal/Next Fear; shared ending unlocks; slot, preview and options checksums"
+    },
+    {
+      "game": "Crash Bandicoot",
+      "genre": "Platformer",
+      "evidence": "Source available",
+      "fields": "Completion, current level, gems, keys and level flags.",
+      "regions": "EU / US / JP / AU",
+      "note": "This is the original Crash Bandicoot; this source does not establish support for Crash 2 or Warped.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/crash-bandicoot/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Rayman",
+      "genre": "Platformer",
+      "evidence": "Source available",
+      "fields": "Current level, unlocked powers, lives and rescued Electoons by level.",
+      "regions": "EU / US / JP",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/rayman/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Spyro the Dragon",
+      "genre": "Platformer",
+      "evidence": "Source available",
+      "fields": "Per-profile location, lives, level unlocks, dragons, gems and eggs.",
+      "regions": "SCUS-94228 / SCES-01438 / SCPS-10083",
+      "note": "Original survey (2026-10-04): Shendo’s SpyroEdit supports the first game only. Do not confuse it with the unrelated live level-editing tool of the same name. Archived source.",
+      "links": [
+        [
+          "SpyroEdit source",
+          "https://github.com/ShendoXT/memcardrex-plugins/tree/master/SpyroEdit"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCUS-94228 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Three profiles with empty state, location, lives, dragons, gems, eggs; 35 per-level dragon/gem records; per-profile checksums"
+    },
+    {
+      "game": "Chrono Cross",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, stars, recruited characters, equipment, elements and inventory.",
+      "regions": "US / JP",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/chrono-cross/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUSP01041 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Playtime, Gold, total/current stars, location ID; additive checksum"
+    },
+    {
+      "game": "Digimon World 2",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Digimon roster, names, levels, stats, techniques, bits, items and Digi-Beetle parts.",
+      "regions": "Save-specific regional coverage not established",
+      "note": "DW2-TT includes real memory-card and raw-save readers. Its US/Japanese patch support is not proof that all save variants work.",
+      "links": [
+        [
+          "DW2-TT",
+          "https://github.com/acemon33/DW2-TT"
+        ],
+        [
+          "Save data structures",
+          "https://github.com/acemon33/DW2-TT/blob/6325d60a628db4b0576d67162d059e653d59ea74/dw2_exp_multiplier/Entity/SaveFile.cs"
+        ],
+        [
+          "Playtime conversion (decompilation)",
+          "https://github.com/Wyrelade/Digimon-World-2-Decomp/blob/cff2114139f0d93dd8fa94fa09600462ed9a35a2/src/stag1100/stag1100_301C.c"
+        ]
+      ],
+      "implementationStatus": "US pilot implemented",
+      "implementedFields": "Three profiles; tamer, rank, saved location, Bits, Digi-Beetle name; roster names, species, levels, HP/MP, stats and techniques; playtime (hours/minutes, capped at 99:59); game checksum.",
+      "validatedRelease": "Original US SLUS-01193, using blue.mcr",
+      "remainingFields": "Inventory, Digi-Beetle equipment and story-progress interpretation."
+    },
+    {
+      "game": "Final Fantasy IX",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, party, abilities, Tetra Master, chocographs and side quests.",
+      "regions": "EU / US / JP; French, German, Italian, Spanish",
+      "note": "Original survey (2026-10-04): Use original PS1 paths; the similarly named PC Memoria mod has a different save format.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/final-fantasy-ix/saveEditor/template.ts"
+        ],
+        [
+          "Memoria save editor",
+          "https://github.com/gjoerulv/Memoria_FF9SaveEditor"
+        ],
+        [
+          "Cross-platform editor",
+          "https://github.com/nintendogamer15/ffix-save-editor"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLES-02965 (English PAL)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Disc, saved location preview, playtime, Gil, save count, location ID; nine stored character names and levels; checksum"
+    },
+    {
+      "game": "Final Fantasy Tactics",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, units, jobs, abilities, inventory, propositions and map progress.",
+      "regions": "US / JP",
+      "note": "Original survey (2026-10-04): PSXMCL also exposes typed save records; do not substitute War of the Lions or Ivalice Chronicles formats.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/final-fantasy-tactics/saveEditor/template.ts"
+        ],
+        [
+          "PSXMCL library",
+          "https://github.com/aldirafa/PSXMCL"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCUS-94221 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Name, playtime, funds, location ID; registered unit names, levels and job IDs; parity checksum"
+    },
+    {
+      "game": "Final Fantasy VII",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, party, levels, materia, inventory, chocobos and progress flags.",
+      "regions": "EU / US / JP; French, German, Spanish",
+      "note": "Original survey (2026-10-04): Strong first candidate: detailed format documentation plus multiple implementations.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/final-fantasy-vii/saveEditor/template.ts"
+        ],
+        [
+          "Black Chocobo",
+          "https://github.com/sithlord48/blackchocobo"
+        ],
+        [
+          "ff7tk",
+          "https://github.com/sithlord48/ff7tk"
+        ],
+        [
+          "Save map",
+          "https://wiki.ffrtt.ru/index.php/FF7/Savemap"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCES-00867 (English PAL)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Disc, playtime, Gil, GP, saved location preview, raw story value; nine stored character records with names, levels, HP, MP, XP and party membership; checksum"
+    },
+    {
+      "game": "Final Fantasy VIII",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, party, Guardian Forces, junctions, Triple Triad and SeeD rank.",
+      "regions": "EU / US / JP; French, German, Italian, Spanish",
+      "note": "Original survey (2026-10-04): Detailed format documentation and an established dedicated editor.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/final-fantasy-viii/saveEditor/template.ts"
+        ],
+        [
+          "Hyne",
+          "https://github.com/myst6re/hyne"
+        ],
+        [
+          "Save format",
+          "https://wiki.ffrtt.ru/index.php/FF8/GameSaveFormat"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUSP00892 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Disc, playtime, Squall/Laguna Gil, location ID; eight character records with levels, HP and XP; acquired Guardian Forces and XP; both checksum copies"
+    },
+    {
+      "game": "Grandia",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Location, playtime, party, equipment, weapon and magic levels, skills and inventory.",
+      "regions": "EU / US / JP; French, German",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/grandia/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "The Legend of Dragoon",
+      "genre": "RPG",
+      "evidence": "Source available",
+      "fields": "Character levels, Dragoon levels, XP, HP/MP/SP and equipment.",
+      "regions": "Regional coverage not established",
+      "note": "Go editor has explicit binary attribute mappings; documentation is sparse. Treat region detection as follow-up work.",
+      "links": [
+        [
+          "Dragoon-Editor",
+          "https://github.com/mcred/Dragoon-Editor"
+        ],
+        [
+          "Character layout",
+          "https://github.com/mcred/Dragoon-Editor/blob/master/internal/app/characters/Character.go"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "CTR: Crash Team Racing",
+      "genre": "Racing / sports",
+      "evidence": "Source available",
+      "fields": "Adventure profiles, completion, trophies, relics, unlocks, time trials and records.",
+      "regions": "EU / US / JP",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/ctr-crash-team-racing/saveEditor/template.ts"
+        ],
+        [
+          "CTREdit plugin",
+          "https://github.com/ShendoXT/memcardrex-plugins/tree/master/CTREdit"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCUS-94426 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Four adventure profiles with names, empty state, completion, trophies, relics, race CTR tokens, keys and gems; checksum; ghosts excluded"
+    },
+    {
+      "game": "Gran Turismo",
+      "genre": "Racing / sports",
+      "evidence": "Source available",
+      "fields": "Garage, credits, licences, race progression, records and in-game days.",
+      "regions": "EU / US / JP",
+      "note": "Original survey (2026-10-04): Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/gran-turismo/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCUS-94194 (NTSC-U)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Playtime, credits, days, garage count; passed/gold tests for B/A/IA licences; checksum"
+    },
+    {
+      "game": "Gran Turismo 2",
+      "genre": "Racing / sports",
+      "evidence": "Source available",
+      "fields": "Garage, car data, credits, licences, days, races, wins and completion.",
+      "regions": "All versions/regions claimed by editor",
+      "note": "Original survey (2026-10-04): Python implementation available. Validate revision and mod handling; this survey did not audit code reuse licensing.",
+      "links": [
+        [
+          "GT2SaveEditor",
+          "https://github.com/zyzalfors/GT2SaveEditor"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCES-02380 (English PAL)",
+      "implementationDocumentation": "docs/save-details.md",
+      "regressionManifest": "tests/fixtures/ps1/manifest.json",
+      "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
+      "implementedFields": "Credits, days, races, wins, garage count, career progress; passed/gold tests for all six licences; CRC32"
+    },
+    {
+      "game": "Tony Hawk’s Pro Skater / Tony Hawk’s Skateboarding",
+      "genre": "Racing / sports",
+      "evidence": "Source available",
+      "fields": "Career tapes, skate parks and named high-score records.",
+      "regions": "EU / US / JP",
+      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "links": [
+        [
+          "Field definitions",
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tony-hawk-s-skateboarding/saveEditor/template.ts"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Resident Evil 2",
+      "genre": "Horror",
+      "evidence": "Legacy editor lead",
+      "fields": "Save editing confirmed by author; field coverage not audited.",
+      "regions": "Raw PS1 save; regions not confirmed",
+      "note": "Historical RoxFox64 editor: author confirms PS1 support after extracting the save from the card, but reports losing its source. Download availability not verified.",
+      "links": [
+        [
+          "Author’s confirmation",
+          "https://www.tapatalk.com/groups/residentevil123/resident-evil-2-save-editor-t1103.html"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    },
+    {
+      "game": "Suikoden II",
+      "genre": "RPG",
+      "evidence": "Legacy editor lead",
+      "fields": "Money, playtime and character stats, according to the author.",
+      "regions": "MCR input; regions not confirmed",
+      "note": "Author-hosted download exists. Source code and full format documentation were not located in this survey; inspect before committing support.",
+      "links": [
+        [
+          "Author’s downloads",
+          "https://gjoerulv.com/"
+        ],
+        [
+          "Author’s description",
+          "https://forums.qhimm.com/index.php?topic=14069.0"
+        ]
+      ],
+      "implementationStatus": "Research candidate"
+    }
+  ]
+}

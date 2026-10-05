@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { SaveInfo } from "../card";
-import { formatPlaytime, type DigimonWorld2Digimon } from "../card/gameDetails";
+import { formatPlaytime, type DigimonWorld2Digimon, type GameSummary } from "../card/gameDetails";
 
 const numbers = new Intl.NumberFormat();
 function position(status: number): string {
@@ -16,9 +16,12 @@ export function GameDetailsButton({ save }: { save: SaveInfo }) {
   const trigger = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const descriptionId = useId();
-  const details = save.gameDetails;
-  const available = details?.game === "digimon-world-2" || !!save.gameDetailsError;
+  const summary = save.gameDetails?.game !== "digimon-world-2" ? save.gameDetails : undefined;
+  const details = save.gameDetails?.game === "digimon-world-2" ? save.gameDetails : undefined;
+  const available = !!save.gameDetails || !!save.gameDetailsError;
   const profile = details?.profiles[profileIndex];
+  const title = summary?.title ?? (details ? "Digimon World 2" : save.title);
+  const release = summary?.release ?? (details ? "US · SLUS-01193" : save.prodCode);
 
   useEffect(() => {
     setOpen(false);
@@ -43,14 +46,14 @@ export function GameDetailsButton({ save }: { save: SaveInfo }) {
     <button ref={trigger} type="button" className="btn" onClick={() => setOpen(true)} aria-haspopup="dialog">
       View game details
     </button>
-    <p className="muted">Digimon World 2 · US</p>
+    <p className="muted">{title} · {release}</p>
     <dialog ref={dialog} className="game-dialog" aria-labelledby={titleId} aria-describedby={descriptionId}
       onCancel={event => { event.preventDefault(); close(); }} onClose={() => setOpen(false)}>
       <div className="game-dialog-heading">
-        <div><h2 id={titleId}>Digimon World 2</h2><p id={descriptionId}>US save · Read-only game details{save.deleted ? " · Deleted save" : ""}</p></div>
+        <div><h2 id={titleId}>{title}</h2><p id={descriptionId}>{release} · Read-only game details{save.deleted ? " · Deleted save" : ""}</p></div>
         <button type="button" className="btn" autoFocus onClick={close}>Close</button>
       </div>
-      {save.gameDetailsError ? <p className="game-details-warning" role="alert">{save.gameDetailsError}</p> : details && <>
+      {save.gameDetailsError ? <p className="game-details-warning" role="alert">{save.gameDetailsError}</p> : summary ? <SummaryDetails details={summary} profileIndex={profileIndex} setProfileIndex={setProfileIndex} /> : details && <>
         {!details.checksumOk && <p className="game-details-warning" role="status">The game checksum does not match. These values may be unreliable; try another backup of this save.</p>}
         <div className="game-profiles" role="group" aria-label="In-game saves">
           {details.profiles.map((p, index) => <button key={p.number} type="button" className="game-profile"
@@ -77,6 +80,44 @@ export function GameDetailsButton({ save }: { save: SaveInfo }) {
       </>}
     </dialog>
   </section>;
+}
+
+function SummaryDetails({ details, profileIndex, setProfileIndex }: {
+  details: GameSummary; profileIndex: number; setProfileIndex: (index: number) => void;
+}) {
+  const profile = details.profiles[profileIndex];
+  const checksum = details.checksumOk;
+  const recordLabel = details.game === "spyro-the-dragon" ? "Levels"
+    : details.game === "final-fantasy-tactics" ? "Units"
+    : details.game === "gran-turismo" || details.game === "gran-turismo-2" ? "Licences"
+    : details.game === "final-fantasy-viii" ? "Characters and Guardian Forces"
+    : details.game === "tekken-3" ? "Character records" : "Characters";
+  return <>
+    {checksum === false && <p className="game-details-warning" role="status">The game checksum does not match. These values may be unreliable; try another backup of this save.</p>}
+    <p className="muted">Game checksum: {checksum == null ? "Not verified for this format" : checksum ? "Matches" : "Does not match"}</p>
+    {details.profiles.length > 1 && <div className="game-profiles" data-count={details.profiles.length} role="group" aria-label="In-game saves">
+      {details.profiles.map((p, index) => <button key={p.number} type="button" className="game-profile"
+        aria-pressed={profileIndex === index} onClick={() => setProfileIndex(index)}>
+        <span>Save {p.number}</span><strong>{p.empty ? "Empty" : p.name || "Saved game"}</strong>
+      </button>)}
+    </div>}
+    {!profile || profile.empty ? <div className="game-profile-empty"><h3>No in-game save</h3><p>This profile has no saved adventure.</p></div> : <>
+      {profile.name && <h3>{profile.name}</h3>}
+      <dl className="game-summary">{profile.fields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{formatFieldValue(field.value)}</dd></div>)}</dl>
+      {profile.records.length > 0 && <section className="game-roster" aria-label="Saved records">
+        <h3>{recordLabel} <span>({profile.records.length})</span></h3>
+        {profile.records.map((record, index) => <details className="game-digimon" key={`${index}-${record.name}`}>
+          <summary><strong>{record.name || `Record ${index + 1}`}</strong></summary>
+          <dl className="game-digimon-stats">{record.fields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{formatFieldValue(field.value)}</dd></div>)}</dl>
+        </details>)}
+      </section>}
+    </>}
+    {details.notes.map(note => <p className="game-details-footnote" key={note}>{note}</p>)}
+  </>;
+}
+
+function formatFieldValue(value: string): string {
+  return /^\d+$/.test(value) ? numbers.format(Number(value)) : value;
 }
 
 function DigimonRow({ digimon: d }: { digimon: DigimonWorld2Digimon }) {

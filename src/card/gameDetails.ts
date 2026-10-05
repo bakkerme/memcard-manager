@@ -1,10 +1,31 @@
-/** Read-only data decoded by the Rust backend. Only original US DW2 saves are supported. */
+/** Read-only data decoded by the Rust backend after release and layout detection. */
 export interface DigimonWorld2Details {
   game: "digimon-world-2";
   checksumOk: boolean;
   profiles: DigimonWorld2Profile[];
 }
-export type GameDetails = DigimonWorld2Details;
+export type SummaryGame = "final-fantasy-vii" | "final-fantasy-viii" | "final-fantasy-ix"
+  | "final-fantasy-tactics" | "chrono-cross" | "castlevania-symphony-of-the-night"
+  | "gran-turismo" | "gran-turismo-2" | "ctr-crash-team-racing" | "spyro-the-dragon"
+  | "tekken-3" | "silent-hill";
+export interface GameSummary {
+  game: SummaryGame;
+  title: string;
+  release: string;
+  checksumOk: boolean | null;
+  profiles: GameProfile[];
+  notes: string[];
+}
+export interface GameField { label: string; value: string }
+export interface GameProfile {
+  number: number;
+  name: string;
+  empty: boolean;
+  checksumOk: boolean | null;
+  fields: GameField[];
+  records: { name: string; fields: GameField[] }[];
+}
+export type GameDetails = DigimonWorld2Details | GameSummary;
 
 export interface DigimonWorld2Profile {
   number: number;

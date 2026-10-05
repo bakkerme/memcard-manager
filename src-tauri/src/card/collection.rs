@@ -404,13 +404,17 @@ mod tests {
     struct Scratch(PathBuf);
     impl Scratch {
         fn new() -> Self {
+            // Concurrent tests must not share a path even when clock readings
+            // coincide; another Scratch's Drop would remove this test's files.
+            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
             let path = std::env::temp_dir().join(format!(
-                "memcard-collection-{}-{}",
+                "memcard-collection-{}-{}-{}",
                 std::process::id(),
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
-                    .as_nanos()
+                    .as_nanos(),
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
             ));
             std::fs::create_dir_all(&path).unwrap();
             Self(path)

@@ -263,7 +263,10 @@ mod tests {
         let GameDetails::DigimonWorld2 {
             checksum_ok,
             profiles,
-        } = save.game_details.as_ref().unwrap();
+        } = match save.game_details.as_ref().unwrap() {
+            super::super::game_details::GameDetails::Digimon(details) => details,
+            _ => panic!("expected Digimon World 2 details"),
+        };
         assert!(*checksum_ok);
         let dto = serde_json::to_value(save).unwrap();
         assert_eq!(dto["gameDetails"]["game"], "digimon-world-2");
@@ -305,7 +308,7 @@ mod tests {
         assert!(view
             .saves
             .iter()
-            .filter(|s| s.master_slot != 8)
+            .filter(|s| super::super::game_details::format(&s.prod_code).is_none())
             .all(|s| s.game_details.is_none() && s.game_details_error.is_none()));
     }
 
@@ -415,7 +418,7 @@ mod tests {
             .unwrap()
             .view();
         let save = view.saves.iter().find(|s| s.master_slot == 8).unwrap();
-        assert!(save.game_details.is_none() && save.game_details_error.is_none());
+        assert!(save.game_details.is_none() && save.game_details_error.is_some());
     }
 
     #[test]

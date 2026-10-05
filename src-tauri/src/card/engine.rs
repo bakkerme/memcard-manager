@@ -82,7 +82,7 @@ pub struct SaveInfo {
     pub deleted: bool,
     pub frame_count: u8,
     pub frames: Vec<Vec<u8>>,
-    pub game_details: Option<super::digimon_world2::GameDetails>,
+    pub game_details: Option<super::game_details::GameDetails>,
     pub game_details_error: Option<String>,
 }
 
@@ -626,18 +626,56 @@ impl Ps1Card {
                     prod_code.clone()
                 };
             }
-            let (game_details, game_details_error) = if prod_code == "SLUS-01193"
-                && region_raw == "BA"
+            let (game_details, game_details_error) = if let Some(format) =
+                super::game_details::format(&prod_code)
             {
-                if linked.len() != 2
-                    || linked[0] == linked[1]
-                    || size_bytes != 16_384
-                    || self.header(linked[1])[8] != 0xff
-                {
+                let chain_valid = linked.len() == format.blocks
+                    && header[7] == 0 // A PS1 save size must fit the supported card geometry.
+                    && size_bytes as usize == format.blocks * BLOCK_SIZE
+                    && linked.iter().enumerate().all(|(index, &slot)| {
+                        let h = self.header(slot);
+                        let pointer = u16::from_le_bytes([h[8], h[9]]);
+                        let deleted = self.slot_type[i] == SlotType::DeletedInitial;
+                        let expected_type = if index == 0 {
+                            if deleted {
+                                0xa1
+                            } else {
+                                0x51
+                            }
+                        } else if index + 1 == linked.len() {
+                            if deleted {
+                                0xa3
+                            } else {
+                                0x53
+                            }
+                        } else if deleted {
+                            0xa2
+                        } else {
+                            0x52
+                        };
+                        h[0] == expected_type
+                            && if index + 1 == linked.len() {
+                                pointer == 0xffff
+                            } else {
+                                pointer as usize == linked[index + 1]
+                            }
+                    })
+                    && linked
+                        .iter()
+                        .enumerate()
+                        .all(|(index, slot)| !linked[..index].contains(slot));
+                if !format.accepts_identifier(&identifier) {
+                    (None, Some("This file is not a supported adventure/profile save (it may contain settings or a replay).".into()))
+                } else if !chain_valid {
                     (None, Some("This save has an incomplete or unexpected block chain. Try another backup of this save.".into()))
                 } else {
                     let bytes = self.get_save_bytes(i);
-                    match super::digimon_world2::decode(&bytes[MCS_HEADER_SIZE..]) {
+                    match super::game_details::decode(
+                        &prod_code,
+                        &region_raw,
+                        &identifier,
+                        &bytes[MCS_HEADER_SIZE..],
+                    ) {
                         Ok(details) => (Some(details), None),
                         Err(error) => (None, Some(error)),
                     }

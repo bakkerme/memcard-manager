@@ -6,6 +6,9 @@ src-tauri/target
 .vite
 coverage
 
+# Privately retained user saves and shared saves without redistribution licenses.
+/tests/fixtures/ps1/local/
+
 # Local agent tooling and design-session scratch files
 /.agents/
 /.claude/

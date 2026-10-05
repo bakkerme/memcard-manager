@@ -1,0 +1,896 @@
+{
+  "acquiredAt": "2026-10-05",
+  "hashAlgorithm": "SHA-256",
+  "redistribution": "Binary saves are excluded from Git; public availability is not a redistribution license.",
+  "fixtures": [
+    {
+      "filename": "BESCES-00867FF7-S01.mcs",
+      "private": true,
+      "code": "SCES-00867",
+      "sha256": "92a60f05874ff3150214c173cfee9c8e9f22648cdb046eb058433df012650935",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Disc",
+          "value": "2"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm)",
+          "value": "35:37"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Gold Saucer Area"
+        },
+        {
+          "profile": 0,
+          "record": "Cloud",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 0
+        }
+      ],
+      "source": "User-supplied PAL save, retained locally only",
+      "evidence": "Byte-level regression; playtime has not been independently compared in the game."
+    },
+    {
+      "filename": "BESCES-00867FF7-S02.mcs",
+      "private": true,
+      "code": "SCES-00867",
+      "sha256": "77fcdaed75bb6bb21c31cabd0ce8d5962477c40ed9ccc3603aacb9bd04a16f2c",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Disc",
+          "value": "2"
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm)",
+          "value": "31:31"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Mt. Corel"
+        },
+        {
+          "profile": 0,
+          "record": "Cloud",
+          "label": "Level",
+          "value": "47",
+          "recordIndex": 0
+        }
+      ],
+      "source": "User-supplied PAL save, retained locally only",
+      "evidence": "Byte-level regression; playtime has not been independently compared in the game."
+    },
+    {
+      "filename": "castlevania-symphony-of-the-night.37.gme",
+      "private": false,
+      "code": "SLUS-00067",
+      "sha256": "c91b45c969e856b0f7a45ed679c1e6ed39ecaafb8622235fae2db481d01ec9c5",
+      "checksumOk": null,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Map discovery",
+          "value": "200.6%"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/196885-castlevania-symphony-of-the-night/saves/37",
+      "uploader": "MTsuboi",
+      "completionClaim": "200.6% map exploration",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "chrono-cross.978.gme",
+      "private": false,
+      "code": "SLUSP01041",
+      "sha256": "7754bda24029fd9e18740e63e34cb47d6808c0bb9a4592f14c16b5dcfdb99c47",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Stars",
+          "value": "48"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/196917-chrono-cross/saves/978",
+      "uploader": "carlde21",
+      "completionClaim": "Near final boss, 48 stars",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "ctr-crash-team-racing.26802.gme",
+      "private": false,
+      "code": "SCUS-94426",
+      "sha256": "dbd69a92a031e69ff2564a7a8ab3a699dad76592d62d97f569d66b9285cdb14c",
+      "checksumOk": true,
+      "profileCount": 4,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Completion",
+          "value": "101%"
+        },
+        {
+          "profile": 0,
+          "label": "Relics",
+          "value": "18 / 18"
+        },
+        {
+          "profile": 1,
+          "empty": false
+        },
+        {
+          "profile": 1,
+          "label": "Completion",
+          "value": "101%"
+        },
+        {
+          "profile": 1,
+          "label": "Relics",
+          "value": "18 / 18"
+        },
+        {
+          "profile": 2,
+          "empty": false
+        },
+        {
+          "profile": 2,
+          "label": "Completion",
+          "value": "101%"
+        },
+        {
+          "profile": 2,
+          "label": "Relics",
+          "value": "18 / 18"
+        },
+        {
+          "profile": 3,
+          "empty": false
+        },
+        {
+          "profile": 3,
+          "label": "Completion",
+          "value": "101%"
+        },
+        {
+          "profile": 3,
+          "label": "Relics",
+          "value": "18 / 18"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/196989-ctr-crash-team-racing/saves/26802",
+      "uploader": "DrexielEXE",
+      "completionClaim": "Four 101% profiles and platinum relics",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "final-fantasy-ix.1983.gme",
+      "private": false,
+      "code": "SLES-02965",
+      "sha256": "558064c86082ba4295d19937ebb471027dfbc1f7ac401ca7d36cb734f4bab168",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Disc",
+          "value": "4"
+        },
+        {
+          "profile": 0,
+          "label": "Saved location",
+          "value": "Crystal World"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197338-final-fantasy-ix/saves/1983",
+      "uploader": "AstroBlue",
+      "completionClaim": "Disc 4 in Crystal World; endgame party",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "final-fantasy-tactics.6618.gme",
+      "private": false,
+      "code": "SCUS-94221",
+      "sha256": "baff2c8731785618448c00071e9d38dafd12524ce58cf5800cf64b56f2f78744",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Playtime (hh:mm)",
+          "value": "43:46"
+        },
+        {
+          "profile": 0,
+          "record": "Ramza",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 0
+        },
+        {
+          "profile": 0,
+          "record": "Beowulf",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 1
+        },
+        {
+          "profile": 0,
+          "record": "Rad",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 2
+        },
+        {
+          "profile": 0,
+          "record": "Alicia",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 3
+        },
+        {
+          "profile": 0,
+          "record": "Lavian",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 4
+        },
+        {
+          "profile": 0,
+          "record": "Boco",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 5
+        },
+        {
+          "profile": 0,
+          "record": "Agrias",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 6
+        },
+        {
+          "profile": 0,
+          "record": "Mustadio",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 7
+        },
+        {
+          "profile": 0,
+          "record": "Reis",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 8
+        },
+        {
+          "profile": 0,
+          "record": "Rafa",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 9
+        },
+        {
+          "profile": 0,
+          "record": "Malak",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 10
+        },
+        {
+          "profile": 0,
+          "record": "Orlandu",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 11
+        },
+        {
+          "profile": 0,
+          "record": "Meliadoul",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 12
+        },
+        {
+          "profile": 0,
+          "record": "Worker 8",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 13
+        },
+        {
+          "profile": 0,
+          "record": "Cloud",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 14
+        },
+        {
+          "profile": 0,
+          "record": "Hariara",
+          "label": "Level",
+          "value": "50",
+          "recordIndex": 15
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197339-final-fantasy-tactics/saves/6618",
+      "uploader": "BloodAgar",
+      "completionClaim": "Endgame units at level 50",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "final-fantasy-viii.13.gme",
+      "private": false,
+      "code": "SLUSP00892",
+      "sha256": "fa9dcbff0094a1930721ff240286174d9bd0ebca9eb250aa2d1c6873e996bc4d",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Disc",
+          "value": "4"
+        },
+        {
+          "profile": 0,
+          "label": "Guardian Forces",
+          "value": "16 / 16"
+        },
+        {
+          "profile": 0,
+          "record": "Squall",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 0
+        },
+        {
+          "profile": 0,
+          "record": "Zell",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 1
+        },
+        {
+          "profile": 0,
+          "record": "Irvine",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 2
+        },
+        {
+          "profile": 0,
+          "record": "Quistis",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 3
+        },
+        {
+          "profile": 0,
+          "record": "Rinoa",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 4
+        },
+        {
+          "profile": 0,
+          "record": "Selphie",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 5
+        },
+        {
+          "profile": 0,
+          "record": "Seifer",
+          "label": "Level",
+          "value": "10",
+          "recordIndex": 6
+        },
+        {
+          "profile": 0,
+          "record": "Edea",
+          "label": "Level",
+          "value": "27",
+          "recordIndex": 7
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197343-final-fantasy-viii/saves/13",
+      "uploader": "Space_Ace",
+      "completionClaim": "Endgame; main characters level 100 and all Guardian Forces",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "final-fantasy-viii.724.gme",
+      "private": false,
+      "code": "SLUSP00892",
+      "sha256": "0a943cccc7b34149e6e6a31e92ae554a9dae90a656bc7a1b26658a937067e84d",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Disc",
+          "value": "4"
+        },
+        {
+          "profile": 0,
+          "label": "Guardian Forces",
+          "value": "16 / 16"
+        },
+        {
+          "profile": 0,
+          "record": "Squall",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 0
+        },
+        {
+          "profile": 0,
+          "record": "Zell",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 1
+        },
+        {
+          "profile": 0,
+          "record": "Irvine",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 2
+        },
+        {
+          "profile": 0,
+          "record": "Quistis",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 3
+        },
+        {
+          "profile": 0,
+          "record": "Rinoa",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 4
+        },
+        {
+          "profile": 0,
+          "record": "Selphie",
+          "label": "Level",
+          "value": "100",
+          "recordIndex": 5
+        },
+        {
+          "profile": 0,
+          "record": "Seifer",
+          "label": "Level",
+          "value": "9",
+          "recordIndex": 6
+        },
+        {
+          "profile": 0,
+          "record": "Edea",
+          "label": "Level",
+          "value": "27",
+          "recordIndex": 7
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197343-final-fantasy-viii/saves/724",
+      "uploader": "TrAnCe_KuJa14",
+      "completionClaim": "Disc 4, prepared for Omega Weapon",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "gran-turismo-2.29094.gme",
+      "private": false,
+      "code": "SCES-02380",
+      "sha256": "e7904625581e3567d239482993140b6fb750c940d6294a37c08575f639277d11",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Credits",
+          "value": "8275000"
+        },
+        {
+          "profile": 0,
+          "label": "Races",
+          "value": "286"
+        },
+        {
+          "profile": 0,
+          "label": "Wins",
+          "value": "286"
+        },
+        {
+          "profile": 0,
+          "label": "Garage cars",
+          "value": "97"
+        },
+        {
+          "profile": 0,
+          "label": "Career progress (219 events)",
+          "value": "100.00%"
+        },
+        {
+          "profile": 0,
+          "record": "B licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 0
+        },
+        {
+          "profile": 0,
+          "record": "A licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 1
+        },
+        {
+          "profile": 0,
+          "record": "IC licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 2
+        },
+        {
+          "profile": 0,
+          "record": "IB licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 3
+        },
+        {
+          "profile": 0,
+          "record": "IA licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 4
+        },
+        {
+          "profile": 0,
+          "record": "S licence",
+          "label": "Gold",
+          "value": "10 / 10",
+          "recordIndex": 5
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197469-gran-turismo-2/saves/29094",
+      "uploader": "fireYtail",
+      "completionClaim": "Complete career, 60 gold licences, 97 cars; 286 wins",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "gran-turismo.26853.gme",
+      "private": false,
+      "code": "SCUS-94194",
+      "sha256": "afb1a33851f1516b3f1ca083e152ad037f42c0a6857372b77146345245b6d056",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Credits",
+          "value": "2000000000"
+        },
+        {
+          "profile": 0,
+          "record": "B licence",
+          "label": "Gold",
+          "value": "8 / 8",
+          "recordIndex": 0
+        },
+        {
+          "profile": 0,
+          "record": "A licence",
+          "label": "Gold",
+          "value": "8 / 8",
+          "recordIndex": 1
+        },
+        {
+          "profile": 0,
+          "record": "IA licence",
+          "label": "Gold",
+          "value": "8 / 8",
+          "recordIndex": 2
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/197468-gran-turismo/saves/26853",
+      "uploader": "Sal_89",
+      "completionClaim": "Complete career, gold licences and two billion credits",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "silent-hill-1999.1860.gme",
+      "private": false,
+      "code": "SLUS-00707",
+      "sha256": "21ab81ae6f9ece22b0f0d7d475e335bcb984822bd2e0131614cb479e72a8faa8",
+      "checksumOk": true,
+      "profileCount": 11,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 0,
+          "label": "Mode",
+          "value": "Next Fear"
+        },
+        {
+          "profile": 1,
+          "empty": false
+        },
+        {
+          "profile": 1,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 1,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 2,
+          "empty": false
+        },
+        {
+          "profile": 2,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 2,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 3,
+          "empty": false
+        },
+        {
+          "profile": 3,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 3,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 4,
+          "empty": false
+        },
+        {
+          "profile": 4,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 4,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 5,
+          "empty": false
+        },
+        {
+          "profile": 5,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 5,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 6,
+          "empty": false
+        },
+        {
+          "profile": 6,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 6,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 7,
+          "empty": false
+        },
+        {
+          "profile": 7,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 7,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 8,
+          "empty": false
+        },
+        {
+          "profile": 8,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 8,
+          "label": "Mode",
+          "value": "Normal"
+        },
+        {
+          "profile": 9,
+          "empty": false
+        },
+        {
+          "profile": 9,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 9,
+          "label": "Mode",
+          "value": "Next Fear"
+        },
+        {
+          "profile": 10,
+          "empty": false
+        },
+        {
+          "profile": 10,
+          "label": "Unlocked endings",
+          "value": "Good+, Good, Bad+, Bad, UFO"
+        },
+        {
+          "profile": 10,
+          "label": "Mode",
+          "value": "Next Fear"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/198641-silent-hill/saves/1860",
+      "uploader": "Darsel",
+      "completionClaim": "All endings and weapons unlocked; multiple saved checkpoints",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "spyro-the-dragon.25.gme",
+      "private": false,
+      "code": "SCUS-94228",
+      "sha256": "98810b8d8404cc1cb528221637776d3796da7a966e7c5229900b3be80eabf760",
+      "checksumOk": true,
+      "profileCount": 3,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Dragons",
+          "value": "80 / 80"
+        },
+        {
+          "profile": 0,
+          "label": "Gems",
+          "value": "14000 / 14000"
+        },
+        {
+          "profile": 0,
+          "label": "Eggs",
+          "value": "12 / 12"
+        },
+        {
+          "profile": 1,
+          "empty": true
+        },
+        {
+          "profile": 2,
+          "empty": true
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/198754-spyro-the-dragon/saves/25",
+      "uploader": "WLau",
+      "completionClaim": "120% with all treasure, dragons and eggs",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    },
+    {
+      "filename": "tekken-3.29.gme",
+      "private": false,
+      "code": "SLUS-00402",
+      "sha256": "04d38f6b1b7145cee220b04d13d801138691b29c661a0f7b004eec2ebe693c40",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "empty": false
+        },
+        {
+          "profile": 0,
+          "label": "Tekken Ball",
+          "value": "Unlocked"
+        },
+        {
+          "profile": 0,
+          "label": "Theatre",
+          "value": "Unlocked"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/198900-tekken-3/saves/29",
+      "uploader": "WLau",
+      "completionClaim": "All secrets unlocked",
+      "evidence": "Selected completion fields cross-checked with uploader description; other values are byte-level regressions. No emulator or console playback."
+    }
+  ]
+}

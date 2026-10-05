@@ -7,6 +7,7 @@ pub use collection::{
 mod digimon_world2;
 mod digimon_world2_names;
 mod engine;
+mod game_details;
 mod library;
 mod snapshot;
 mod sync;
