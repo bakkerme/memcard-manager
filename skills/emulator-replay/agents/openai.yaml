@@ -1,0 +1,4 @@
+interface:
+  display_name: "Emulator Replay Qualification"
+  short_description: "Qualify repeatable controller input and state replay"
+  default_prompt: "Use $emulator-replay to qualify a reproducible emulator input and replay test with retained evidence."

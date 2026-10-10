@@ -1,0 +1,19 @@
+{
+  "buildId": 70,
+  "channel": "dev",
+  "version": "d42cdae5",
+  "changeset": "d42cdae5bcfbb7e6565b52d4e14e9ca1ede9bfc4",
+  "timestamp": 1791404927,
+  "updateInfo": [
+    {
+      "method": "appdistrib",
+      "channel": "dev",
+      "updateCatalog": "https://distrib.app/storage/manifests/pcsx-redux/dev-linux-arm64/manifest.json",
+      "updateInfoBase": "https://distrib.app/storage/manifests/pcsx-redux/dev-linux-arm64/",
+      "updateStorageUrl": "https://distrib.app/"
+    }
+  ],
+  "url": "https://distrib.app/storage/assets/8fd/737/d3d/b33c10bb3df955de9abd29bcc75f153caeee2d9a8209c027c2f445e/PCSX-Redux-d42cdae5-linux-aarch64.zip",
+  "sha256": "f9568b93db98b41e742f95630bc3e6c2cb7cf940f32f1cb59c4e754d828a4ee6",
+  "archiveMember": "PCSX-Redux-HEAD-aarch64.AppImage"
+}

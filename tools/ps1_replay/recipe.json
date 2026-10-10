@@ -1,0 +1,144 @@
+{
+  "name": "mml2-us-equipment-replay",
+  "version": 2,
+  "discSerial": "SLUS-01140",
+  "saveIdentifier": "BASLUS-01140-DASH20",
+  "status": "calibrated",
+  "expected": {
+    "map": 23,
+    "secondary": 0,
+    "difficulty": 1,
+    "zenny": 11950,
+    "helmet": 1,
+    "shoes": 1,
+    "armor": 2,
+    "part1": 29,
+    "part2": 14,
+    "part3": 0
+  },
+  "boot": [
+    {
+      "action": "frames",
+      "frames": 1800
+    },
+    {
+      "action": "press",
+      "button": "START",
+      "frames": 12
+    },
+    {
+      "action": "frames",
+      "frames": 600
+    },
+    {
+      "action": "press",
+      "button": "START",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 180
+    },
+    {
+      "action": "frames",
+      "frames": 120
+    },
+    {
+      "action": "press",
+      "button": "START",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 120
+    },
+    {
+      "action": "press",
+      "button": "CROSS",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 240
+    },
+    {
+      "action": "press",
+      "button": "CROSS",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 240
+    },
+    {
+      "action": "press",
+      "button": "CROSS",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 240
+    },
+    {
+      "action": "press",
+      "button": "CROSS",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 900
+    },
+    {
+      "action": "frames",
+      "frames": 600
+    }
+  ],
+  "equipment": [
+    {
+      "action": "press",
+      "button": "SELECT",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 120
+    },
+    {
+      "action": "press",
+      "button": "DOWN",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 12
+    },
+    {
+      "action": "press",
+      "button": "DOWN",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 12
+    },
+    {
+      "action": "press",
+      "button": "CROSS",
+      "frames": 6
+    },
+    {
+      "action": "frames",
+      "frames": 120
+    }
+  ],
+  "buildId": 70,
+  "cardPreparation": "mirror-sector-0-to-scratch-sector-63-before-measured-boot",
+  "expectedVisibleGear": [
+    "Normal Helmet",
+    "Padded Armor",
+    "Jet Skates",
+    "Accessory Pack",
+    "Buster Unit"
+  ],
+  "sceneNote": "Save menu names Nino Pad; status menu names Nino Island / Flying Ship Dock."
+}

@@ -9,6 +9,10 @@ coverage
 # Privately retained user saves and shared saves without redistribution licenses.
 /tests/fixtures/ps1/local/
 
+# Private emulator research inputs; never redistribute with the harness.
+/Test Roms/
+/Mega Man Legends 2 (USA).7z
+
 # Local agent tooling and design-session scratch files
 /.agents/
 /.claude/

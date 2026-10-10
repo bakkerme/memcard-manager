@@ -1,0 +1,9 @@
+FROM docker.io/library/ubuntu:24.04@sha256:08571ca13e00ca07a2a84eab83a959b4242e22cceb16486a11bef1428c9e93a7
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pil unzip xvfb xauth mesa-utils libgl1-mesa-dri libegl1 libopengl0 libglu1-mesa libxrandr2 libxinerama1 libxcursor1 libxi6 libasound2t64 libpulse0 libnss3 libfuse2t64 libgtk-3-0t64 ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY build-lock.json /opt/harness/build-lock.json
+COPY .cache/pcsx-redux.zip /tmp/redux.zip
+RUN python3 -c "import json,hashlib; lock=json.load(open('/opt/harness/build-lock.json')); assert hashlib.sha256(open('/tmp/redux.zip','rb').read()).hexdigest() == lock['sha256']" && cd /opt && unzip /tmp/redux.zip && chmod +x PCSX-Redux-HEAD-aarch64.AppImage && ./PCSX-Redux-HEAD-aarch64.AppImage --appimage-extract >/dev/null && rm /tmp/redux.zip PCSX-Redux-HEAD-aarch64.AppImage
+ENV LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS=4 SDL_AUDIODRIVER=dummy DISPLAY=:99 HOME=/work/home
+WORKDIR /work
+ENTRYPOINT ["python3", "/tools/ps1_replay/runner.py"]

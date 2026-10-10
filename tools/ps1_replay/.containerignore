@@ -1,0 +1,5 @@
+*
+!Containerfile
+!build-lock.json
+!.cache
+!.cache/pcsx-redux.zip
