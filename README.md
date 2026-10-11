@@ -78,6 +78,20 @@ npm run tauri -- build --bundles app # macOS app bundle
 
 Hardware integration tests are ignored by default and require a real adaptor and PS1 card. Application code is in `src/`; the Rust parser, backup/library logic, and USB implementation are in `src-tauri/src/`. [PRODUCT.md](PRODUCT.md) records scope and [DESIGN.md](DESIGN.md) records the visual system.
 
+## Container-based research
+
+Clone this repository and use `$emulator-replay` in Codex for emulator-backed
+save research. The checked-in skill lives in
+[`.agents/skills/emulator-replay/`](.agents/skills/emulator-replay/SKILL.md), so
+Codex can discover it without a separate installation. Its
+[repository workflow](.agents/skills/emulator-replay/references/repository-research.md)
+routes to the isolated Linux harness and the verified Legends 2 example.
+
+The research path uses Python and Podman, independently of the desktop app.
+Provide private BIOS/disc/card inputs explicitly. The existing pilot is native
+Linux ARM64; other architectures or games require new qualification. See the
+[harness instructions](tools/ps1_replay/README.md) for setup, replay, and evidence.
+
 ## License and credits
 
 The twelve new summary decoders use pinned format references with license notices and documented validation boundaries in [docs/save-details.md](docs/save-details.md). Real shared completion/endgame save provenance and local test instructions are in [tests/fixtures/ps1](tests/fixtures/ps1/README.md).

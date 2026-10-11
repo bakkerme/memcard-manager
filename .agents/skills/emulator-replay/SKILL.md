@@ -7,6 +7,10 @@ description: "Build, debug, and qualify reproducible emulator automation using s
 
 Turn a game interaction into a reproducible, bounded integration test. Separate successful automation from proof that it reached the intended scene.
 
+## Research from a repository clone
+
+When the checkout contains `tools/ps1_replay/host.py`, first read [the repository research workflow](references/repository-research.md). Use the checked-in harness and explicit input paths to run the research in a Linux worker. A clone supplies instructions and tooling; it does not supply private assets, an engine, or a qualified baseline. Keep this routing conditional so the skill remains usable for other emulators and repositories.
+
 ## Establish the contract
 
 Inspect existing tooling and evidence before building another harness. Identify the emulator, host/guest architecture, runtime, required assets, region/revision, selected save, expected visible scene, stable values, and requested scope. Choose explicit trial count, frame checkpoints, and wall-clock deadlines; three fresh-process trials and five minutes per trial are useful pilot defaults when the task leaves them open.

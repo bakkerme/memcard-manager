@@ -12,9 +12,10 @@ pinned official ARM64 build 70 (`d42cdae5`). Each reached relative frame 288 wit
 identical framebuffer hashes and matching known-save RAM. All originals,
 prepared disposable cards and baseline artifacts remained unchanged.
 See [the test report](../../docs/research/linux-replay-first-test.md).
-The reusable [emulator-replay skill](../../skills/emulator-replay/SKILL.md)
+The reusable [emulator-replay skill](../../.agents/skills/emulator-replay/SKILL.md)
 captures the qualification workflow with separate Redux notes and a Legends 2
-case study. Its directory can be copied into a Codex skills directory.
+case study. Codex discovers it from the repository's `.agents/skills/` directory
+after cloning; no separate user-level skill installation is required.
 
 Build 79 (`6eda90ff`) has a reproduced black-screen loading regression in this
 setup. Build 70 also needs its fixed 663-frame BIOS startup before state restore;
@@ -32,28 +33,65 @@ baseline card, with no additional preparation.
 
 ## Build and reproduce
 
-Requires local Podman with a running Linux ARM64 VM. Default asset paths match
-this project's private fixtures and the existing DuckStation BIOS directory.
+Start from a clone and invoke `$emulator-replay` with the requested game/save,
+research question, and supplied asset paths. See the skill's
+[repository research workflow](../../.agents/skills/emulator-replay/references/repository-research.md)
+for the host/worker boundary and container preflight.
+
+Requires Python 3 on the coordinator host and Podman backed by native Linux
+ARM64. On Linux this can be a local engine; on macOS use a Linux ARM64 Podman VM.
+An agent inside another container also needs an accessible engine with access
+to the mount paths. An ordinary container without an engine cannot launch this
+worker. The pinned build and recipe have not been qualified on AMD64 or under
+cross-architecture emulation.
+
+Default asset paths match the original author's private fixtures and DuckStation
+directory. Use explicit overrides for a fresh clone. `--disc` is a directory
+containing exactly one cue and its extracted bin dependencies; `--card` is the
+whole-card QA image containing the known position-1 save, not an individual MCS.
 ROMs, BIOS, cards, downloaded binaries, states, RAM and screenshots are excluded
 from Git and are never included in the container image.
 
 ```sh
-podman machine start
+git clone https://github.com/bakkerme/memcard-manager.git
+cd memcard-manager
+python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v
+# On macOS, inspect/start the existing ARM64 Podman VM if stopped.
+podman info
+PS1_RESEARCH_BIOS=/absolute/path/ps-22a.bin
+PS1_RESEARCH_DISC='/absolute/path/Mega Man Legends 2 (USA)'
+PS1_RESEARCH_CARD=/absolute/path/mml2-viewer-qa.mcr
+PS1_RESEARCH_RUN=tools/ps1_replay/runs/reproduction
 python3 tools/ps1_replay/host.py build
-python3 tools/ps1_replay/host.py bootstrap --run tools/ps1_replay/runs/reproduction
+python3 tools/ps1_replay/host.py bootstrap --run "$PS1_RESEARCH_RUN" \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
 ```
 
-Inspect `reproduction/baseline/gameplay.png`, then record the observation and
-run qualification:
+Build needs network access to obtain the locked official emulator artifact and
+container dependencies. Measured workers run with networking disabled. A fresh
+clone must create and visually verify its own gameplay baseline; the report's
+historical result is not a passing verdict for a new environment.
+
+Inspect `$PS1_RESEARCH_RUN/baseline/gameplay.png`, then record the observation and
+run qualification using the same inputs and image:
 
 ```sh
-python3 tools/ps1_replay/review.py baseline --run tools/ps1_replay/runs/reproduction --reviewer NAME --note 'Observed the known Nino Pad ship-deck scene'
-python3 tools/ps1_replay/host.py qualify --run tools/ps1_replay/runs/reproduction
+python3 tools/ps1_replay/review.py baseline --run "$PS1_RESEARCH_RUN" --reviewer NAME --note 'Observed the known Nino Pad ship-deck scene'
+python3 tools/ps1_replay/host.py qualify --run "$PS1_RESEARCH_RUN" \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
 ```
 
-Inspect all three Equipment captures before writing the passing verdict with
-`review.py equipment` as shown below. Each rerun needs a new directory; existing
-trial evidence is never overwritten.
+Inspect all three `$PS1_RESEARCH_RUN/trial-N/equipment.png` captures, then record
+the final review:
+
+```sh
+python3 tools/ps1_replay/review.py equipment --run "$PS1_RESEARCH_RUN" --reviewer NAME --note 'Equipment and known gear visibly match in all three captures'
+```
+
+Read `$PS1_RESEARCH_RUN/result.json` and retain the complete ignored evidence
+directory outside the disposable worker. Each rerun needs a new directory;
+existing trial evidence is never overwritten. If a VM was started for this run,
+restore its initial state after the owned worker has exited.
 
 The downloader uses the immutable artifact URL and SHA-256 in `build-lock.json`.
 The image verifies the archive again and extracts the AppImage without FUSE.
@@ -74,6 +112,10 @@ Start with a new empty run directory:
 ```sh
 python3 tools/ps1_replay/host.py calibrate --run tools/ps1_replay/runs/calibration
 ```
+
+For a fresh clone, add the same explicit `--bios`, `--disc`, and `--card` options
+to every `calibrate`, `bootstrap`, `qualify`, or `diagnose` invocation. The
+shorter examples below assume the local default assets are present.
 
 In another terminal, after `CALIBRATION_READY`, use the same adapter:
 

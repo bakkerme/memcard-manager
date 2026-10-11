@@ -21,6 +21,14 @@ npm run build   # tsc --noEmit && vite build
 - Sample card: `blue.mcr` at project root. Open it via file-open or adaptor **Read** path.
 - Hardware tests in `src-tauri/src/usb.rs` are `#[ignore]` — they need a real adaptor + card. Don't run them in CI-style verification.
 
+## Container research
+
+- The repository includes the discoverable `.agents/skills/emulator-replay/` skill. For emulator-backed save research, use `$emulator-replay` and its `references/repository-research.md` workflow.
+- Research runs in an isolated Linux worker through `tools/ps1_replay/host.py`; it does not require the desktop app, Node.js, Rust, or USB hardware. The checked-in Legends 2 recipe/build are qualified on native Linux ARM64 only.
+- Supply BIOS, extracted cue/bin files, and the private QA card explicitly through `--bios`, `--disc`, and `--card`. A fresh clone contains no private inputs, baseline states, or prior screenshots. Mount originals read-only; retain new evidence in ignored `tools/ps1_replay/runs/` directories.
+- Inspect the engine, architecture, and mount visibility before launching a worker. An agent running inside another container must have access to a suitable Podman engine and paths visible to that engine; cloning alone does not provide them.
+- Coordinator tests need only Python 3: `python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v`. Passing them does not qualify a real emulator run. Keep research results and production parser changes distinct.
+
 ## Layout
 
 - `src/` — React UI. `src/card/` (engine, api, demo), `src/components/` (`PixelIcon.tsx`), `App.tsx`, `icons.tsx`, `index.css`, `App.css`.

@@ -14,7 +14,10 @@ coverage
 /Mega Man Legends 2 (USA).7z
 
 # Local agent tooling and design-session scratch files
-/.agents/
+/.agents/*
+!/.agents/skills/
+/.agents/skills/*
+!/.agents/skills/emulator-replay/
 /.claude/
 /.codex/
 /.cursor/
