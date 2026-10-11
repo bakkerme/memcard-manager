@@ -112,10 +112,16 @@ mod tests {
     use super::*;
     use crate::card::engine::{BLOCK_SIZE, MCS_HEADER_SIZE};
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn exports_linked_saves_skips_unchanged_and_updates_changed() {
-        let source =
-            std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let source = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         let mut card = Ps1Card::open(&source, "blue.mcr", false).unwrap();
         let original = card.raw.clone();
         let directory = std::env::temp_dir().join(format!(
@@ -189,9 +195,16 @@ mod tests {
         assert!(!component(b"../escape").contains('/'));
         assert_eq!(component(b"BASLUS-12345\0\0"), "BASLUS-12345");
     }
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn case_only_save_names_remain_separate() {
-        let raw = std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let raw = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         let source = Ps1Card::open(&raw, "blue", false).unwrap();
         let save = source
             .view()
@@ -232,9 +245,16 @@ mod tests {
         dir
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn snapshots_preserve_conflicting_cards_dedupe_moves_and_allow_reverting() {
-        let raw = std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let raw = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         let original = Ps1Card::open(&raw, "first", false).unwrap();
         let mut card = super::super::compose_new_card(&original, &[13], Some("card-a")).unwrap();
         let dir = test_dir();
@@ -307,9 +327,16 @@ mod tests {
         std::fs::remove_dir_all(dir).unwrap();
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn migrates_legacy_backup_and_stops_before_overwrite_if_history_is_blocked() {
-        let raw = std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let raw = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         let source = Ps1Card::open(&raw, "blue", false).unwrap();
         let mut card = super::super::compose_new_card(&source, &[13], None).unwrap();
         let dir = test_dir();

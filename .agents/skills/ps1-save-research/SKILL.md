@@ -11,6 +11,8 @@ Produce a partial, reproducible specification whose claims can be traced to exac
 
 Identify the requested field or format, game product code, region/revision, save identifier, container, and available observations. Inspect existing readers/specifications before reverse engineering a supported field again. Hash originals, work on copies, and retain provenance. A clone supplies tools and skills, not private assets or prior experiment evidence.
 
+For standalone parser output without the desktop application, read [the parser harness boundary](references/standalone-parsers.md). Use the supplied Python plug-in harness when available and keep file-contract tests distinct from independent field evidence.
+
 In memcard-manager, read [the repository guide](references/repository-guide.md) for extraction, existing readers, and the container boundary. Begin with file analysis when no working emulator is available; report dynamic verification as untested rather than blocking all research.
 
 Distinguish whole-card containers, individual-save wrappers, reconstructed SC payloads, game-data substructures, virtual RAM, and emulator states. Establish one declared offset origin for each artifact. Reconstruct linked blocks through validated directory entries in chain order, including non-contiguous chains; never assume the save is a contiguous card slice. Account for wrapper/header bytes explicitly. A filename or byte pattern alone does not establish region or format.

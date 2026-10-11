@@ -32,7 +32,9 @@ npm ci
 npm run tauri -- dev
 ```
 
-Open `blue.mcr` from the project root with **Open card…** under **Virtual Cards** in the sidebar. Card files and captures opened from **Card backups** stay loaded as separate virtual cards; select a row to switch, or its X to close it without changing the file. Import save, Backup, and Sync live in the top bar. Connecting or reconnecting the adaptor automatically reads **Slot 1**. Select Slot 1 to return to its loaded snapshot, or use its reload button for a fresh read. A card read does not automatically back up saves.
+Open `Test Save Files/blue.mcr` with **Open card…** under **Virtual Cards** in the sidebar. Card files and captures opened from **Card backups** stay loaded as separate virtual cards; select a row to switch, or its X to close it without changing the file. Import save, Backup, and Sync live in the top bar. Connecting or reconnecting the adaptor automatically reads **Slot 1**. Select Slot 1 to return to its loaded snapshot, or use its reload button for a fresh read. A card read does not automatically back up saves.
+
+The sample card is a private local fixture and is not included in a clone. Rust tests that require it are ignored by default; after supplying `Test Save Files/blue.mcr`, run `cargo test --manifest-path src-tauri/Cargo.toml --features private-fixtures` to include them. Hardware tests remain ignored.
 
 The web preview runs with `npm run dev` at `http://localhost:1420`. Card parsing, filesystem operations, and USB access require the desktop app. For a layout preview with explicitly synthetic icons and save data, visit `http://localhost:1420/?demo=1` in development mode.
 

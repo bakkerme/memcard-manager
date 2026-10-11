@@ -99,8 +99,8 @@ mod tests {
     use std::path::Path;
 
     fn blue() -> Vec<u8> {
-        std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr"))
-            .expect("blue.mcr next to src-tauri")
+        std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"))
+            .expect("blue.mcr in Test Save Files")
     }
 
     #[test]
@@ -129,6 +129,10 @@ mod tests {
         );
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn write_backup_round_trips_blue() {
         let source = Ps1Card::open(&blue(), "blue.mcr", false).unwrap();

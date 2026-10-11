@@ -280,6 +280,10 @@ fn scan(root: &Path, directory: &Path, depth: usize, view: &mut LibraryView) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn reads_sync_saves_and_persists_directory_without_modifying_files() {
         let root = std::env::temp_dir().join(format!(
@@ -292,8 +296,10 @@ mod tests {
         ));
         let dir = root.join("saves");
         std::fs::create_dir_all(&dir).unwrap();
-        let bytes =
-            std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let bytes = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         let card = Ps1Card::open(&bytes, "blue", false).unwrap();
         let config = root.join("settings/library.json");
         assert!(configured_directory(&config).unwrap().is_none());

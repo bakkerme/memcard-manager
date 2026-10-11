@@ -834,10 +834,14 @@ mod tests {
     use std::path::Path;
 
     fn blue() -> Vec<u8> {
-        std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr"))
-            .expect("blue.mcr next to src-tauri")
+        std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"))
+            .expect("blue.mcr in Test Save Files")
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn open_blue_full_card() {
         let view = Ps1Card::open(&blue(), "blue.mcr", false).unwrap().view();
@@ -937,6 +941,10 @@ mod tests {
             .all(|s| s.slot_type == SlotType::Formatted && s.xor_ok));
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn compose_packs_from_slot_zero() {
         let source = Ps1Card::open(&blue(), "blue.mcr", false).unwrap();
@@ -987,6 +995,10 @@ mod tests {
         );
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn compose_fails_over_fifteen_blocks() {
         let source = Ps1Card::open(&blue(), "blue.mcr", false).unwrap();
@@ -994,6 +1006,10 @@ mod tests {
         assert!(err.0.contains("15"));
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn gme_round_trip() {
         let source = Ps1Card::open(&blue(), "blue.mcr", false).unwrap();
@@ -1014,6 +1030,10 @@ mod tests {
         );
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn vgs_round_trip() {
         let source = Ps1Card::open(&blue(), "blue.mcr", false).unwrap();

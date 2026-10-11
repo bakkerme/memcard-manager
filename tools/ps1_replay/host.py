@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/start the local Podman worker; all experiment coordination stays in Linux."""
+"""Build/start a Docker or Podman worker; experiment coordination stays in Linux."""
 import argparse
 import hashlib
 import json
@@ -40,40 +40,68 @@ def download():
     shutil.copyfile(cache, ROOT / '.cache/pcsx-redux.zip')
 
 
-def image_info():
-    return json.loads(call(['podman', 'image', 'inspect', image_name()], capture_output=True, text=True).stdout)[0]
+def image_info(engine):
+    return json.loads(call([engine, 'image', 'inspect', image_name()], capture_output=True, text=True).stdout)[0]
 
 
-def main():
+def image_metadata(info, engine):
+    # Docker local builds have no Digest key and may have no registry digest.
+    digests = info.get('RepoDigests') or []
+    return {'engine': engine, 'imageId': info['Id'],
+            'digest': info.get('Digest') or (digests[0] if digests else None),
+            'architecture': info['Architecture']}
+
+
+def preflight(engine):
+    template = '{{.Architecture}}' if engine == 'docker' else '{{.Host.Arch}}'
+    arch = call([engine, 'info', '--format', template], capture_output=True,
+                text=True, timeout=30).stdout.strip().lower()
+    if arch not in ('arm64', 'aarch64'):
+        raise RuntimeError(f'{engine} engine reports {arch!r}; this pinned worker requires native Linux ARM64')
+    return {'engine': engine, 'architecture': arch}
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--engine', choices=('podman', 'docker'), default='podman',
+                        help='Container CLI (default: podman); place before the subcommand')
     sub = parser.add_subparsers(dest='mode', required=True)
+    sub.add_parser('preflight')
     sub.add_parser('build')
     for mode in ('calibrate', 'bootstrap', 'qualify', 'diagnose'):
         p = sub.add_parser(mode)
         p.add_argument('--run', required=True, type=Path)
-        p.add_argument('--disc', type=Path, default=REPO / 'Test Roms/Mega Man Legends 2 (USA)')
-        p.add_argument('--bios', type=Path, default=Path.home() / 'Library/Application Support/DuckStation/bios/ps-22a.bin')
-        p.add_argument('--card', type=Path, default=REPO / 'tests/fixtures/ps1/local/mml2/mml2-viewer-qa.mcr')
+        p.add_argument('--disc', type=Path, required=True, help='Explicit complete cue/bin directory')
+        p.add_argument('--bios', type=Path, required=True, help='Explicit BIOS file visible to the engine')
+        p.add_argument('--card', type=Path, required=True, help='Explicit whole-card seed file')
         p.add_argument('--name', default='ps1-replay')
         if mode == 'diagnose':
             p.add_argument('--state', required=True, type=Path)
     p = sub.add_parser('command')
     p.add_argument('--name', default='ps1-replay')
     p.add_argument('arguments', nargs=argparse.REMAINDER)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.mode == 'command':
-        call(['podman', 'exec', args.name, 'python3', '/tools/ps1_replay/runner.py', 'command', *args.arguments])
+        call([args.engine, 'exec', args.name, 'python3', '/tools/ps1_replay/runner.py', 'command', *args.arguments])
+        return
+    environment = preflight(args.engine)
+    if args.mode == 'preflight':
+        print(json.dumps(environment, indent=2))
         return
     if args.mode == 'build':
         download()
-        call(['podman', 'build', '--platform', 'linux/arm64', '-t', image_name(),
+        call([args.engine, 'build', '--platform', 'linux/arm64', '-t', image_name(),
               '-f', str(ROOT / 'Containerfile'), str(ROOT)])
-        info = image_info()
-        print(json.dumps({'imageId': info['Id'], 'digest': info['Digest']}, indent=2))
+        info = image_info(args.engine)
+        if info['Architecture'] != 'arm64':
+            parser.error('Built worker image must be ARM64')
+        print(json.dumps(image_metadata(info, args.engine), indent=2))
         return
     for path in (args.disc, args.bios, args.card):
         if not path.exists():
             parser.error(f'Missing input: {path}')
+    if not args.disc.is_dir() or not args.bios.is_file() or not args.card.is_file():
+        parser.error('--disc must be a directory; --bios and --card must be files')
     if args.mode == 'diagnose' and not args.state.is_file():
         parser.error(f'Missing diagnostic state: {args.state}')
     if args.mode == 'qualify':
@@ -84,11 +112,11 @@ def main():
     else:
         if args.run.exists() and any(args.run.iterdir()):
             parser.error('Calibration/bootstrap requires a new empty run directory')
-    args.run.mkdir(parents=True, exist_ok=True)
-    info = image_info()
+    info = image_info(args.engine)
     if info['Architecture'] != 'arm64':
         parser.error('Worker image must be native ARM64')
-    metadata = {'imageId': info['Id'], 'digest': info['Digest'], 'architecture': info['Architecture'],
+    args.run.mkdir(parents=True, exist_ok=True)
+    metadata = {**image_metadata(info, args.engine),
                 'cpuLimit': 4, 'memoryLimitBytes': 3 * 1024**3, 'network': 'none'}
     (args.run / 'container.json').write_text(json.dumps(metadata, indent=2) + '\n')
     mounts = [(ROOT / name, '/tools/ps1_replay/' + name, 'ro') for name in
@@ -99,7 +127,7 @@ def main():
               (args.run, '/work', 'rw')]
     if args.mode == 'diagnose':
         mounts.append((args.state, '/inputs/diagnostic.state', 'ro'))
-    argv = ['podman', 'run', '--rm', '--name', args.name, '--cpus', '4', '--memory', '3g',
+    argv = [args.engine, 'run', '--rm', '--platform', 'linux/arm64', '--name', args.name, '--cpus', '4', '--memory', '3g',
             '--network', 'none', '--entrypoint', 'python3']
     for path, dest, mode in mounts:
         argv += ['-v', f'{path.resolve()}:{dest}:{mode}']
@@ -110,6 +138,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         print(str(error), file=sys.stderr)
         raise SystemExit(1)

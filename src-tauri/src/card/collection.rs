@@ -426,11 +426,17 @@ mod tests {
         }
     }
     fn blue() -> Ps1Card {
-        let bytes =
-            std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../blue.mcr")).unwrap();
+        let bytes = std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .unwrap();
         Ps1Card::open(&bytes, "blue.mcr", false).unwrap()
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn reuses_the_selected_legacy_folder_and_preserves_backups() {
         let tmp = Scratch::new();
@@ -526,6 +532,10 @@ mod tests {
         assert!(!config.exists());
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn shared_root_preserves_card_bytes_and_mcs_history() {
         let tmp = Scratch::new();
@@ -552,6 +562,10 @@ mod tests {
         assert_eq!(again.snapshots_added, 0);
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn migrates_legacy_files_and_history_without_moving_originals() {
         let tmp = Scratch::new();
@@ -615,6 +629,10 @@ mod tests {
         );
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn legacy_saves_folder_can_become_root_without_recursive_copies() {
         let tmp = Scratch::new();
@@ -633,6 +651,10 @@ mod tests {
         assert!(!saves_directory(&tmp.0).join("card-backups").exists());
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn unreadable_card_is_reported_without_hiding_other_backups() {
         let tmp = Scratch::new();
@@ -650,6 +672,10 @@ mod tests {
         .is_err());
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn discovers_old_backups_inside_the_chosen_root() {
         let tmp = Scratch::new();

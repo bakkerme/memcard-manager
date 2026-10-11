@@ -10,6 +10,7 @@ __pycache__/
 # Privately retained user saves and shared saves without redistribution licenses.
 /tests/fixtures/ps1/local/
 /Test Save Files/
+/blue.mcr
 /tools/save_research/runs/
 
 # Private emulator research inputs; never redistribute with the harness.

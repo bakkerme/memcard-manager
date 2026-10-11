@@ -9,7 +9,7 @@ Turn a game interaction into a reproducible, bounded integration test. Separate 
 
 ## Research from a repository clone
 
-When the checkout contains `tools/ps1_replay/host.py`, first read [the repository research workflow](references/repository-research.md). Use the checked-in harness and explicit input paths to run the research in a Linux worker. A clone supplies instructions and tooling; it does not supply private assets, an engine, or a qualified baseline. Keep this routing conditional so the skill remains usable for other emulators and repositories.
+When the checkout contains `tools/ps1_replay/host.py`, first read [the repository research workflow](references/repository-research.md). Use the checked-in harness and explicit input paths to run the research in a Linux worker. A clone supplies instructions and tooling; it does not supply private assets, an engine, or a qualified baseline. The repository worker supports Docker CE and Podman through an explicit `--engine` option; keep the same selection for build, launch and commands. Keep this routing conditional so the skill remains usable for other emulators and repositories.
 
 ## Establish the contract
 

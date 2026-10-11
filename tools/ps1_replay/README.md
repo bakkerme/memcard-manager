@@ -38,15 +38,48 @@ research question, and supplied asset paths. See the skill's
 [repository research workflow](../../.agents/skills/emulator-replay/references/repository-research.md)
 for the host/worker boundary and container preflight.
 
-Requires Python 3 on the coordinator host and Podman backed by native Linux
-ARM64. On Linux this can be a local engine; on macOS use a Linux ARM64 Podman VM.
+Requires Python 3 on the coordinator host and Docker CE or Podman backed by native
+Linux ARM64. Select Docker with `host.py --engine docker SUBCOMMAND`; the default
+remains Podman. Use the same engine for build, worker launch and commands.
+On Linux this can be a local engine; on macOS use a Linux ARM64 Podman VM.
 An agent inside another container also needs an accessible engine with access
 to the mount paths. An ordinary container without an engine cannot launch this
 worker. The pinned build and recipe have not been qualified on AMD64 or under
 cross-architecture emulation.
 
-Default asset paths match the original author's private fixtures and DuckStation
-directory. Use explicit overrides for a fresh clone. `--disc` is a directory
+For a DGX Spark with Docker CE, begin with:
+
+```sh
+python3 tools/ps1_replay/host.py --engine docker preflight
+python3 tools/ps1_replay/host.py --engine docker build
+```
+
+`preflight` checks engine access and daemon architecture, not game boot or mount
+visibility. Docker command construction/metadata handling is regression-tested;
+the historical emulator pass used Podman. Bootstrap and inspect gameplay on the
+Spark before unattended research. No NVIDIA GPU access is required by this
+software-rendered worker. Local Docker builds can have no registry digest;
+the actual immutable image ID is recorded in that case.
+
+For unattended Docker research, prefer a rootless daemon under a dedicated
+research account without sudo access. The coordinator inherits the Docker CLI
+context and environment: select the rootless context before preflight/build and
+keep it selected for every launch and command. Existing images in a different
+daemon must be rebuilt or explicitly imported into this daemon.
+
+Check `docker info` for the `rootless` security option, cgroup v2 and the systemd
+cgroup driver. The worker requests four CPUs and 3 GB of memory; rootless Docker
+requires the corresponding cgroup controllers to be delegated for those limits
+to work. Architecture preflight does not certify resource enforcement. Verify
+the limits and writable run mount during the server pilot before overnight work.
+See Docker's [rootless setup](https://docs.docker.com/engine/security/rootless/)
+and [resource-limit requirements](https://docs.docker.com/engine/security/rootless/tips/#limiting-resources).
+Do not grant unrestricted access to the root daemon through socket permissions
+or passwordless `sudo docker` as a substitute for this boundary. Engine access
+belongs to the coordinator; never mount its socket into a research worker.
+
+Every worker launch requires explicit `--bios`, `--disc` and `--card` paths.
+`--disc` is a directory
 containing exactly one cue and its extracted bin dependencies; `--card` is the
 whole-card QA image containing the known position-1 save, not an individual MCS.
 ROMs, BIOS, cards, downloaded binaries, states, RAM and screenshots are excluded
@@ -110,12 +143,12 @@ traffic stays on container loopback, with `--network none` and no published port
 Start with a new empty run directory:
 
 ```sh
-python3 tools/ps1_replay/host.py calibrate --run tools/ps1_replay/runs/calibration
+python3 tools/ps1_replay/host.py calibrate --run tools/ps1_replay/runs/calibration \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
 ```
 
-For a fresh clone, add the same explicit `--bios`, `--disc`, and `--card` options
-to every `calibrate`, `bootstrap`, `qualify`, or `diagnose` invocation. The
-shorter examples below assume the local default assets are present.
+Supply the same explicit assets to every `calibrate`, `bootstrap`, `qualify`,
+or `diagnose` invocation, using the variables set in the example above.
 
 In another terminal, after `CALIBRATION_READY`, use the same adapter:
 
@@ -144,7 +177,8 @@ the exact `boot` and `equipment` steps in `recipe.json`, set `status` to
 python3 tools/ps1_replay/host.py command baseline
 python3 tools/ps1_replay/host.py command quit
 python3 tools/ps1_replay/review.py baseline --run tools/ps1_replay/runs/calibration --reviewer NAME --note 'Observed Nino Pad gameplay and known gear'
-python3 tools/ps1_replay/host.py qualify --run tools/ps1_replay/runs/calibration
+python3 tools/ps1_replay/host.py qualify --run tools/ps1_replay/runs/calibration \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
 ```
 
 Inspect `baseline/gameplay.png` before recording its review. A uniformly black
@@ -182,7 +216,9 @@ patching memory. Use distinct names for captures and register dumps.
 To reopen a paired failed state/card for diagnosis:
 
 ```sh
-python3 tools/ps1_replay/host.py diagnose --run tools/ps1_replay/runs/diagnostic --state /absolute/path/state.bin --card /absolute/path/card.mcr
+python3 tools/ps1_replay/host.py diagnose --run tools/ps1_replay/runs/diagnostic \
+  --state /absolute/path/state.bin --card /absolute/path/card.mcr \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC"
 ```
 
 This mode restores a cold emulator intentionally so startup/restoration failures

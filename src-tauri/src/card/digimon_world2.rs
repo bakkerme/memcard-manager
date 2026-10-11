@@ -250,12 +250,25 @@ mod tests {
     use super::*;
 
     fn card() -> Ps1Card {
-        Ps1Card::open(include_bytes!("../../../blue.mcr"), "blue.mcr", false).unwrap()
+        Ps1Card::open(
+            &std::fs::read(
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../Test Save Files/blue.mcr"),
+            )
+            .expect("private-fixtures requires Test Save Files/blue.mcr"),
+            "blue.mcr",
+            false,
+        )
+        .unwrap()
     }
     fn payload() -> Vec<u8> {
         card().get_save_bytes(8)[128..].to_vec()
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn real_us_save_has_three_profiles_and_one_agumon() {
         let view = card().view();
@@ -312,6 +325,10 @@ mod tests {
             .all(|s| s.game_details.is_none() && s.game_details_error.is_none()));
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn changed_data_warns_without_repairing_bytes() {
         let mut data = payload();
@@ -345,6 +362,10 @@ mod tests {
         }
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn playtime_is_read_from_each_profile_in_little_endian_order() {
         let mut data = payload();
@@ -366,6 +387,10 @@ mod tests {
         assert_eq!(data, before);
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn all_profiles_and_unknown_values_are_preserved() {
         let mut data = payload();
@@ -383,6 +408,10 @@ mod tests {
         assert_eq!(name(&[0, 0xfd, 0x0a, 0xff, 0x0b]), "0 A");
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn malformed_layout_is_rejected() {
         for length in [0, 1, 8192, 16383, 16385] {
@@ -399,9 +428,16 @@ mod tests {
         assert!(decode(&data).is_err());
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn malformed_chain_and_other_releases_do_not_decode() {
-        let original = include_bytes!("../../../blue.mcr");
+        let original = std::fs::read(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../Test Save Files/blue.mcr"),
+        )
+        .expect("private-fixtures requires Test Save Files/blue.mcr");
         let mut raw = original.to_vec();
         raw[128 + 8 * 128 + 8] = 0xff;
         let view = Ps1Card::open(&raw, "broken.mcr", false).unwrap().view();
@@ -421,6 +457,10 @@ mod tests {
         assert!(save.game_details.is_none() && save.game_details_error.is_some());
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn exported_mcs_details_match_card_details() {
         let source = card();
@@ -440,6 +480,10 @@ mod tests {
         );
     }
 
+    #[cfg_attr(
+        not(feature = "private-fixtures"),
+        ignore = "requires private Test Save Files/blue.mcr; enable private-fixtures"
+    )]
     #[test]
     fn details_survive_relocation_and_non_contiguous_chain() {
         let source = card();

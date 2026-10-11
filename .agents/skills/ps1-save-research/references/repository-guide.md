@@ -2,6 +2,10 @@
 
 In a clone of memcard-manager, work from the root and use the checked-in `.agents/skills/ps1-save-research/` skill. Private inputs are supplied separately; no author home directory or prior state is needed. Begin with Python file analysis in the research environment. Emulator experiments use the isolated worker described by the sibling emulator-replay skill, with explicit asset paths and engine/architecture checks.
 
+For parser-only output, use the [standalone harness boundary](standalone-parsers.md); `tools/save_research/` is independent of the desktop application.
+
+In a standalone server bundle, start with `jobs.json`, the root-level suites and `tools/save_research/README.md`; run `validate_bundle.py` before research. Production Rust/frontend sources below are repository references and are intentionally omitted from that minimal bundle. The copied specs and Python readers remain available.
+
 ## Existing sources of truth
 
 - `src-tauri/src/card/engine.rs` and `mod.rs`: card/container identification, directory/block-chain reconstruction, and save extraction. Reuse these boundaries; do not assume every save occupies one contiguous block.
@@ -25,7 +29,7 @@ The helper `scripts/compare_payloads.py` compares bytes after extraction; it nev
 
 Python-only analysis and the comparison helper need no Node.js, Rust, BIOS, game disc, desktop focus, or emulator. Card extraction through existing Rust tooling may need its normal Rust dependencies; do not install the desktop stack merely to run normalized-payload comparisons.
 
-Dynamic research needs user-supplied region-matched BIOS/disc/card inputs and a suitable engine. A Codex agent in an outer container must have engine access and mount paths visible to that engine. A fresh clone alone does not provide that infrastructure. If unavailable, continue useful static work and distinguish untested runtime claims.
+Dynamic research needs user-supplied region-matched BIOS/disc/card inputs and a suitable Docker CE or Podman engine. A Codex agent in an outer container must have engine access and mount paths visible to that engine. A fresh clone alone does not provide that infrastructure. If unavailable, continue useful static work and distinguish untested runtime claims.
 
 When generating new saves, use the experiment protocol and a separate save-persistence qualification. The existing three-trial Equipment replay intentionally performs no in-game save and requires unchanged disposable cards. Its historical pass is not proof of saving, another title, or another architecture.
 
