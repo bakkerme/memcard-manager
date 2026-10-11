@@ -24,6 +24,16 @@ For the existing example, `--disc` points to a directory with exactly one cue an
 
 A fresh environment must bootstrap its own paused gameplay state/card, inspect the captured scene, and record that observation before qualification. Use the same explicit inputs, pinned image, and frozen recipe for subsequent trials. Inspect all final captures before recording a pass. The historical report is a case study, not evidence for a new run.
 
+## Readiness pilots and preservation failures
+
+For a request to test the setup, distinguish bundle integrity, engine access,
+boot, load, input/replay and preservation. Retain a failed startup probe and use
+bounded diagnosis within the requested pilot rather than treating it as the end
+of all readiness work. Read [the startup preservation protocol](startup-preservation.md)
+for reproducible boot-only scratch writes and a frozen initialized disposable
+baseline. Exact whole-card equality remains required during measured replay.
+The existing Legends 2 preparation does not certify another game's startup.
+
 ## Research output
 
 Retain the complete private evidence bundle and report the requested finding with its exact game/build/input scope. Version the reusable recipe, harness changes, and a concise report when requested; exclude asset bytes, RAM, states, screenshots, and local caches. A production reader change should follow from verified field evidence and its own parser tests rather than automatically shipping every experimental observation.

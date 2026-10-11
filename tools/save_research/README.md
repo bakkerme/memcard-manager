@@ -68,6 +68,13 @@ python3 -m unittest discover -s tools/save_research -p 'test_*.py'
 python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py'
 ```
 
+For a server readiness pilot, use the
+[startup preservation protocol and suggested prompt](../ps1_replay/README.md#readiness-pilots-and-startup-card-writes).
+Report bundle integrity, engine access, boot, load, input/replay and preservation
+as separate gates. A failed startup preservation probe calls for bounded
+diagnosis, not relabeling the run as passed or abandoning unrelated checks.
+This does not qualify in-game saving or authorize the overnight batch.
+
 ## Identify discs directly
 
 ```sh

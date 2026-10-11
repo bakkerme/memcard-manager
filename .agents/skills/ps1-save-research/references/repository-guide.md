@@ -31,6 +31,8 @@ Python-only analysis and the comparison helper need no Node.js, Rust, BIOS, game
 
 Dynamic research needs user-supplied region-matched BIOS/disc/card inputs and a suitable Docker CE or Podman engine. A Codex agent in an outer container must have engine access and mount paths visible to that engine. A fresh clone alone does not provide that infrastructure. If unavailable, continue useful static work and distinguish untested runtime claims.
 
+For a requested readiness pilot, follow the sibling emulator-replay [startup preservation protocol](../../emulator-replay/references/startup-preservation.md). Retain failed probes and diagnose reproducible boot-only scratch writes within the pilot before freezing an initialized disposable baseline. Require exact whole-card equality afterward and keep unrelated file-analysis checks available. Readiness is separate from save/load persistence.
+
 When generating new saves, use the experiment protocol and a separate save-persistence qualification. The existing three-trial Equipment replay intentionally performs no in-game save and requires unchanged disposable cards. Its historical pass is not proof of saving, another title, or another architecture.
 
 ## Publishable versus private artifacts

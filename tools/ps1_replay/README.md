@@ -31,6 +31,32 @@ and exact preparation offsets. This avoids incidental BIOS scratch writes
 changing the measured card image. Trials use exact copies of the initialized
 baseline card, with no additional preparation.
 
+## Readiness pilots and startup card writes
+
+A request to check that the setup works includes bounded diagnosis of a failed
+startup gate within the requested pilot. Retain the strict failure and continue
+independent readiness checks; a reproducible write confined to the card's
+write-test frame is a candidate initialization step, not an automatic blocker
+for the entire task. It is not a passing preservation result either.
+
+For a new game or card, follow the skill's
+[startup preservation protocol](../../.agents/skills/emulator-replay/references/startup-preservation.md).
+Reproduce the write during boot only, record the exact before/after bytes and
+hashes, verify every byte outside the scratch frame and every original is
+unchanged, and freeze the observed initialized disposable card before measured
+replay. Subsequent runs still require exact whole-card equality. The Legends 2
+three-byte preparation above is not a generic rule for other cards or games.
+
+Suggested prompt for a single readiness pilot:
+
+> Validate the bundle, engine access and one game's boot/load/input/replay within
+> a single pilot. Retain failures and diagnose startup issues within that scope.
+> If boot alone reproducibly changes only the documented scratch frame, record
+> and freeze the observed initialized disposable card, then repeat replay with
+> exact whole-card preservation. Keep originals unchanged and report each gate
+> separately. Unexplained writes remain blockers for the affected gate. Do not
+> launch the overnight batch.
+
 ## Build and reproduce
 
 Start from a clone and invoke `$emulator-replay` with the requested game/save,

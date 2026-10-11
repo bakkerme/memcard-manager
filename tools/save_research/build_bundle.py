@@ -268,6 +268,10 @@ The included replay recipe is specific to US Legends 2, not a generic loader.
 Adapt and qualify each new game. Default server engine is Docker CE on ARM64;
 pass --engine docker explicitly to host.py. File parsing needs only Python;
 emulator research also needs matching discs, BIOS and an accessible engine.
+Readiness pilots include bounded startup diagnosis within the requested scope.
+For card writes, read .agents/skills/emulator-replay/references/startup-preservation.md.
+Retain failed probes; only an evidenced boot-initialized disposable baseline can
+precede exact whole-card preservation during replay. Report each gate separately.
 Produce per-release parser code, a partial spec/ledger and validation report.
 Do not schedule or launch an overnight job merely because this bundle exists.
 ''')
@@ -297,6 +301,15 @@ extraction/conversion. Disc IDs are read from SYSTEM.CNF, with ISO directory and
 PS-X EXE header checks. A serial match does not certify revision or save loading.
 Add BIOS inputs explicitly; supplied BIOS compatibility is not assumed. Refresh
 updates BIOS paths/hashes too. Never replace input files during an active run.
+
+For a requested single-game readiness pilot, read the startup preservation
+protocol in .agents/skills/emulator-replay/references/startup-preservation.md
+and the suggested prompt in tools/ps1_replay/README.md. Retain failed probes and
+diagnose startup issues within that pilot; report bundle, engine, boot, load,
+input/replay and preservation separately. Reproducible boot-only scratch writes
+may establish an initialized disposable baseline, followed by exact whole-card
+checks. Unexplained writes remain blockers for the affected gate. Do not infer
+save/load persistence or launch the overnight batch from readiness alone.
 
 Run each root-level suite after implementing its parsers/PRODUCT-CODE.py:
 

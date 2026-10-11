@@ -30,6 +30,7 @@ npm run build   # tsc --noEmit && vite build
 - Supply BIOS, extracted cue/bin files, and the private QA card explicitly through `--bios`, `--disc`, and `--card`. A fresh clone contains no private inputs, baseline states, or prior screenshots. Mount originals read-only; retain new evidence in ignored `tools/ps1_replay/runs/` directories.
 - Inspect the engine, architecture, and mount visibility before launching a worker. An agent running inside another container must have access to a suitable Docker CE or Podman engine and paths visible to that engine; cloning alone does not provide them.
 - Coordinator tests need only Python 3: `python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v`. Passing them does not qualify a real emulator run. Keep research results and production parser changes distinct.
+- Readiness pilots include bounded startup diagnosis within their requested scope. For card preservation failures, follow `.agents/skills/emulator-replay/references/startup-preservation.md`; retain the failed probe and require exact equality after an evidenced initialization boundary.
 
 ## Layout
 

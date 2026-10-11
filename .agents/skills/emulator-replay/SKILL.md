@@ -42,7 +42,7 @@ Changing build, settings, recipe, adapter timing, or input assets invalidates th
 
 Compare raw framebuffer hashes as well as stable RAM and visible labels/gear. Identical black screens can be consistently wrong. Bind visual review to exact capture hashes; inspect every final trial. A mismatch stays unresolved until inspected and explained. If tolerance is appropriate for an intentionally nondeterministic game, define a new acceptance contract explicitly rather than silently weakening an exact-match test.
 
-For unexpected save-media changes, inspect exact byte differences and format semantics. Preserve originals and failed evidence. If a documented BIOS initialization touches unused scratch space, a guarded, logged preparation of disposable copies before measurement may be justified. Record source/prepared hashes and save-payload invariants, reject unfamiliar contents, and use exact baseline copies afterward. Never generalize that preparation to other formats or ignore differences after execution.
+For startup card-preservation failures in a readiness pilot, read [the startup preservation protocol](references/startup-preservation.md). Retain the strict failed probe and diagnose within the requested pilot: boot-only evidence may justify freezing an observed initialized disposable card before measured replay. Keep originals unchanged and require exact whole-card equality afterward, including scratch bytes. Unexplained writes still fail the affected gate; report independent readiness gates separately. Do not infer save/load persistence or generalize a case-specific preparation.
 
 ## Evidence and failure handling
 
