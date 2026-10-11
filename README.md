@@ -80,8 +80,14 @@ Hardware integration tests are ignored by default and require a real adaptor and
 
 ## Container-based research
 
-Clone this repository and use `$emulator-replay` in Codex for emulator-backed
-save research. The checked-in skill lives in
+Clone this repository and use
+[`$ps1-save-research`](.agents/skills/ps1-save-research/SKILL.md) in Codex to map
+save layouts, fields, checksums, and flags. It starts with read-only file
+analysis and adds controlled emulator experiments when needed, with a Python
+payload comparison helper and a ledger of evidence and unresolved hypotheses.
+
+Use `$emulator-replay` for emulator setup and reproducible input/replay. That
+checked-in skill lives in
 [`.agents/skills/emulator-replay/`](.agents/skills/emulator-replay/SKILL.md), so
 Codex can discover it without a separate installation. Its
 [repository workflow](.agents/skills/emulator-replay/references/repository-research.md)

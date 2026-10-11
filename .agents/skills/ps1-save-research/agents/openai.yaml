@@ -1,0 +1,4 @@
+interface:
+  display_name: "PS1 Save Reverse Engineering"
+  short_description: "Map save fields with controlled, traceable evidence"
+  default_prompt: "Use $ps1-save-research to investigate the supplied PS1 saves, document verified fields, and plan controlled container experiments."

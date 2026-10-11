@@ -23,6 +23,7 @@ npm run build   # tsc --noEmit && vite build
 
 ## Container research
 
+- For save-format reverse engineering, unknown fields/checksums, and controlled persistence experiments, use the discoverable `$ps1-save-research` skill in `.agents/skills/ps1-save-research/`. Begin with supplied files and existing specs/readers; use the emulator workflow when runtime evidence is needed. Retain new private evidence in ignored `tools/save_research/runs/` directories.
 - The repository includes the discoverable `.agents/skills/emulator-replay/` skill. For emulator-backed save research, use `$emulator-replay` and its `references/repository-research.md` workflow.
 - Research runs in an isolated Linux worker through `tools/ps1_replay/host.py`; it does not require the desktop app, Node.js, Rust, or USB hardware. The checked-in Legends 2 recipe/build are qualified on native Linux ARM64 only.
 - Supply BIOS, extracted cue/bin files, and the private QA card explicitly through `--bios`, `--disc`, and `--card`. A fresh clone contains no private inputs, baseline states, or prior screenshots. Mount originals read-only; retain new evidence in ignored `tools/ps1_replay/runs/` directories.
