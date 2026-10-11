@@ -3,6 +3,7 @@
 //! for pinned layout sources, licenses, supported releases and validation boundaries.
 use serde::Serialize;
 
+mod ape_escape;
 mod mega_man_legends2;
 mod summaries;
 
@@ -118,6 +119,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
             "-SLOTS",
         ),
         "SCUS-94228" => ("spyro-the-dragon", "Spyro the Dragon", 1, "BA", "SPYRO"),
+        "SCUS-94423" => ("ape-escape", "Ape Escape", 1, "BA", "SYS"),
         "SLUS-00402" => ("tekken-3", "Tekken 3", 1, "BA", "TEKKEN-3"),
         "SLUS-00707" => ("silent-hill", "Silent Hill", 1, "BA", "SILENT"),
         "SLUS-01140" => (
@@ -166,6 +168,9 @@ pub(super) fn decode(
     if format.slug == "mega-man-legends-2" {
         return mega_man_legends2::decode(&format, code, identifier, data)
             .map(GameDetails::Summary);
+    }
+    if format.slug == "ape-escape" {
+        return ape_escape::decode(&format, code, data).map(GameDetails::Summary);
     }
     summaries::decode(&format, code, identifier, data).map(GameDetails::Summary)
 }

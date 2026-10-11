@@ -2,7 +2,7 @@ use super::*;
 use crate::card::engine::{CardFormat, Ps1Card, BLOCK_SIZE, HEADER_SIZE, MCS_HEADER_SIZE};
 use sha2::{Digest, Sha256};
 
-const RELEASES: [(&str, &str, &str); 13] = [
+const RELEASES: [(&str, &str, &str); 14] = [
     ("SCES-00867", "BE", "FF7-S01"),
     ("SLUSP00892", "BA", "042610"),
     ("SLES-02965", "BE", "00000-00"),
@@ -16,6 +16,7 @@ const RELEASES: [(&str, &str, &str); 13] = [
     ("SLUS-00402", "BA", "TEKKEN-3"),
     ("SLUS-00707", "BA", "SILENT00"),
     ("SLUS-01140", "BA", "-DASH20"),
+    ("SCUS-94423", "BA", "SYS"),
 ];
 
 fn payload(code: &str) -> Vec<u8> {
@@ -24,6 +25,16 @@ fn payload(code: &str) -> Vec<u8> {
     d[..2].copy_from_slice(b"SC");
     d[2] = 0x11;
     d[3] = f.blocks as u8;
+    if f.slug == "ape-escape" {
+        let (title, _, malformed) = encoding_rs::SHIFT_JIS.encode("Ａｐｅ　Ｅｓｃａｐｅ");
+        assert!(!malformed);
+        d[4..4 + title.len()].copy_from_slice(&title);
+        d[0x50..0x58].copy_from_slice(b"\x01\x00CRD0\x00\x00");
+        for i in 0..4 {
+            let base = 0x180 + i * 0x7a0;
+            d[base..base + 2].copy_from_slice(&0xffffu16.to_le_bytes());
+        }
+    }
     if f.slug == "mega-man-legends-2" {
         let (title, _, malformed) =
             encoding_rs::SHIFT_JIS.encode("ＭＥＧＡＭＡＮ　ＬＥＧＥＮＤＳ２［１］００：００：００");
@@ -51,6 +62,149 @@ fn summary(code: &str, region: &str, id: &str, d: &[u8]) -> SaveDetails {
 
 fn value<'a>(fields: &'a [Field], label: &str) -> &'a str {
     &fields.iter().find(|f| f.label == label).unwrap().value
+}
+
+fn ape_profile() -> Vec<u8> {
+    let mut d = payload("SCUS-94423");
+    let p = &mut d[0x180..0x920];
+    p[..2].copy_from_slice(&11u16.to_le_bytes());
+    p[2] = 4;
+    p[3] = 68;
+    p[4] = 7;
+    p[8..12].copy_from_slice(&[0, 2, 0xff, 1]);
+    p[0x18..0x1e].copy_from_slice(&[0x15, 0x38, 0x3b, 0x34, 0x6b, 0]); // File1
+    p[0x68..0x6e].copy_from_slice(&[3, 1, 12, 1, 0xff, 0]);
+    p[0x690..0x710].fill(0xff);
+    for (index, count, room) in [(1, 3, 1), (2, 4, 2), (3, 4, 3), (4, 6, 6), (5, 6, 11)] {
+        p[0x28 + index] = 1;
+        p[0x48 + index] = count;
+        p[0x2f4 + room * 8..0x2f4 + room * 8 + count as usize].fill(2);
+    }
+    d
+}
+
+#[test]
+fn ape_profiles_collectibles_equipment_and_read_only() {
+    let d = ape_profile();
+    let before = d.clone();
+    let s = summary("SCUS-94423", "BA", "SYS", &d);
+    assert_eq!(s.checksum_ok, None);
+    assert_eq!(s.profiles.len(), 4);
+    let p = &s.profiles[0];
+    assert_eq!(p.name, "File1");
+    for (label, expected) in [
+        ("Completion", "10.2%"),
+        ("Saved stage", "Dark Ruins"),
+        ("Monkeys captured", "23 / 204"),
+        ("Monkeys remaining", "181"),
+        ("Specter Coins", "2 / 60"),
+        ("Extra lives", "3"),
+        ("Energy chips", "68"),
+        ("Circle gadget", "None"),
+        ("Cross gadget", "Time Net"),
+    ] {
+        assert_eq!(value(&p.fields, label), expected);
+    }
+    assert_eq!(p.records.len(), 22);
+    assert_eq!(value(&p.records[0].fields, "Monkeys remaining"), "1");
+    assert_eq!(value(&p.records[0].fields, "Best time"), "Not recorded");
+    assert!(s.profiles[1..]
+        .iter()
+        .all(|p| p.empty && p.fields.is_empty() && p.records.is_empty()));
+    assert!(!s.notes.iter().any(|n| n.starts_with("Save 1:")));
+    assert_eq!(d, before);
+}
+
+#[test]
+fn ape_completion_medal_boundaries_rewards_and_unknowns() {
+    let mut d = ape_profile();
+    let p = &mut d[0x180..0x920];
+    // Same stage: equal-to-gold is silver; one tick below is gold.
+    p[0x694..0x698].copy_from_slice(&1800u32.to_le_bytes());
+    p[0x668..0x66c].copy_from_slice(&0x1010u32.to_le_bytes());
+    p[0x46] = 2;
+    p[0x670] = 5;
+    p[0x671] = 5;
+    p[0x674] = 5;
+    let s = summary("SCUS-94423", "BA", "SYS", &d);
+    assert_eq!(value(&s.profiles[0].fields, "Completion"), "17.8%");
+    assert_eq!(value(&s.profiles[0].fields, "Specter Coins"), "12 / 60");
+    assert_eq!(
+        value(&s.profiles[0].records[0].fields, "Best time"),
+        "00:30.00"
+    );
+    assert_eq!(
+        value(&s.profiles[0].records[0].fields, "Time-trial medal"),
+        "Silver"
+    );
+    for (ticks, expected, display) in [
+        (1799, "Gold", "00:29.98"),
+        (2100, "Bronze", "00:35.00"),
+        (2700, "No medal", "00:45.00"),
+        (3659, "No medal", "01:00.98"),
+        (u32::MAX, "Not recorded", "Not recorded"),
+    ] {
+        d[0x180 + 0x694..0x180 + 0x698].copy_from_slice(&ticks.to_le_bytes());
+        let s = summary("SCUS-94423", "BA", "SYS", &d);
+        assert_eq!(
+            value(&s.profiles[0].records[0].fields, "Time-trial medal"),
+            expected
+        );
+        assert_eq!(
+            value(&s.profiles[0].records[0].fields, "Best time"),
+            display
+        );
+    }
+    d[0x180 + 0x18] = 0xcc;
+    d[0x180 + 8] = 0xfe;
+    d[0x180 + 7] = 0x80;
+    d[0x180 + 0x49] = 250;
+    d[0x180 + 0x29] = 0xff;
+    let s = summary("SCUS-94423", "BA", "SYS", &d);
+    assert!(s.profiles[0].name.starts_with("[0xCC]"));
+    assert_eq!(
+        value(&s.profiles[0].fields, "Triangle gadget"),
+        "Unknown (ID 0xFE)"
+    );
+    assert_eq!(
+        value(&s.profiles[0].fields, "Monkeys remaining"),
+        "Unknown (stored count exceeds total)"
+    );
+    assert_eq!(
+        value(&s.profiles[0].records[0].fields, "Progress"),
+        "Unknown (0xFF)"
+    );
+    assert!(s
+        .notes
+        .iter()
+        .any(|n| n.contains("unknown gadget unlock bits")));
+    assert!(s.notes.iter().any(|n| n.contains("inconsistent")));
+}
+
+#[test]
+fn ape_rejects_settings_regions_layouts_and_negative_markers() {
+    let d = ape_profile();
+    for (code, region, id) in [
+        ("SCUS-94423", "BA", "PKT"),
+        ("SCUS-94423", "BE", "SYS"),
+        ("SCES-01564", "BE", "SYS"),
+        ("SCUS-94423", "BA", "SYS1"),
+    ] {
+        assert!(decode(code, region, id, &d).is_err());
+    }
+    for (offset, b) in [
+        (2, 0x12),
+        (3, 2),
+        (4, b'X'),
+        (0x50, 2),
+        (0x52, b'X'),
+        (0x181, 0x80),
+    ] {
+        let mut bad = d.clone();
+        bad[offset] = b;
+        assert!(decode("SCUS-94423", "BA", "SYS", &bad).is_err());
+    }
+    assert!(decode("SCUS-94423", "BA", "SYS", &d[..8191]).is_err());
 }
 
 #[test]

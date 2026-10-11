@@ -88,6 +88,7 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
   const profile = details.profiles[profileIndex];
   const checksum = details.checksumOk;
   const recordLabel = details.game === "spyro-the-dragon" ? "Levels"
+    : details.game === "ape-escape" ? "Levels and challenges"
     : details.game === "final-fantasy-tactics" ? "Units"
     : details.game === "gran-turismo" || details.game === "gran-turismo-2" ? "Licences"
     : details.game === "final-fantasy-viii" ? "Characters and Guardian Forces"

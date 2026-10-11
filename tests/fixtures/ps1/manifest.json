@@ -1314,6 +1314,155 @@
       "source": "https://gamefaqs.gamespot.com/ps/197897-mega-man-legends-2/saves/6812",
       "uploader": "Sangogi",
       "evidence": "S-license completion upload; independent time/stat regression."
+    },
+    {
+      "filename": "ape-escape/ape-escape.mcs",
+      "private": true,
+      "sha256": "1bd7886ce5c1ed87ed2fdd73659cd135eb33aedbd14d1152e23a2709d6962473",
+      "checks": [
+        {
+          "profile": 0,
+          "name": "File1",
+          "label": "Completion",
+          "value": "10.2%"
+        },
+        {
+          "profile": 0,
+          "label": "Saved stage",
+          "value": "Dark Ruins"
+        },
+        {
+          "profile": 0,
+          "label": "Monkeys captured",
+          "value": "23 / 204"
+        },
+        {
+          "profile": 0,
+          "label": "Specter Coins",
+          "value": "2 / 60"
+        },
+        {
+          "profile": 0,
+          "label": "Extra lives",
+          "value": "3"
+        },
+        {
+          "profile": 0,
+          "record": "Fossil Field",
+          "recordIndex": 0,
+          "label": "Monkeys remaining",
+          "value": "1"
+        },
+        {
+          "profile": 1,
+          "empty": true
+        },
+        {
+          "profile": 2,
+          "empty": true
+        },
+        {
+          "profile": 3,
+          "empty": true
+        }
+      ],
+      "code": "SCUS-94423",
+      "checksumOk": null,
+      "profileCount": 4,
+      "acquiredAt": "2026-10-11"
+    },
+    {
+      "filename": "ape-escape/ape-escape.164.gme",
+      "sha256": "f82cc96a840e36bf5ebd419230041b540a6bfcbf93a82635c6fd6b2fc75a224d",
+      "source": "https://gamefaqs.gamespot.com/ps/196614-ape-escape/saves/164",
+      "uploader": "WLau",
+      "description": "Uploader labels profiles 100% and 83.3%; independently reproduced from the traced game formula.",
+      "checks": [
+        {
+          "profile": 0,
+          "name": "WLaw1",
+          "label": "Completion",
+          "value": "100.0%"
+        },
+        {
+          "profile": 0,
+          "label": "Saved stage",
+          "value": "Peak Point Matrix"
+        },
+        {
+          "profile": 0,
+          "label": "Monkeys captured",
+          "value": "204 / 204"
+        },
+        {
+          "profile": 0,
+          "label": "Specter Coins",
+          "value": "60 / 60"
+        },
+        {
+          "profile": 0,
+          "label": "Time-trial medals",
+          "value": "19 gold · 0 silver · 0 bronze"
+        },
+        {
+          "profile": 1,
+          "name": "WLau2",
+          "label": "Completion",
+          "value": "83.3%"
+        },
+        {
+          "profile": 1,
+          "label": "Saved stage",
+          "value": "Monkey Madness"
+        },
+        {
+          "profile": 2,
+          "empty": true
+        },
+        {
+          "profile": 3,
+          "empty": true
+        }
+      ],
+      "code": "SCUS-94423",
+      "checksumOk": null,
+      "profileCount": 4,
+      "acquiredAt": "2026-10-11"
+    },
+    {
+      "filename": "ape-escape/ape-escape.4583.gme",
+      "sha256": "e9ee52d815ffd8c080ca2a34019ab35d8c10642eabc7b668b29e265a4894d8ed",
+      "source": "https://gamefaqs.gamespot.com/ps/196614-ape-escape/saves/4583",
+      "uploader": "XoVoLcom28182",
+      "description": "Uploader completion labels differ from stored data; values below are byte-level regressions, not endorsement of those labels.",
+      "checks": [
+        {
+          "profile": 0,
+          "label": "Completion",
+          "value": "100.0%"
+        },
+        {
+          "profile": 1,
+          "label": "Completion",
+          "value": "100.0%"
+        },
+        {
+          "profile": 2,
+          "name": "END[0xCC]1",
+          "label": "Completion",
+          "value": "89.2%"
+        },
+        {
+          "profile": 3,
+          "name": "END[0xCC]2",
+          "label": "Completion",
+          "value": "98.5%"
+        }
+      ],
+      "code": "SCUS-94423",
+      "checksumOk": null,
+      "profileCount": 4,
+      "acquiredAt": "2026-10-11"
     }
   ]
 }

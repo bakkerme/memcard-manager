@@ -1,6 +1,6 @@
 # Read-only PS1 game details
 
-The original twelve-game coverage proposal and a Mega Man Legends 2 pilot are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
+The original twelve-game coverage proposal, a Mega Man Legends 2 pilot and an Ape Escape reader are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
 
 These are narrow decoders for original PS1 saves. They do not edit, repair, convert regions, or write back to hardware. An unknown game remains browseable using ordinary save metadata. Known releases with unsupported identifiers or malformed layouts show a details error. A checksum mismatch warns while leaving decoded values available; an unknown checksum is explicitly unverified.
 
@@ -23,6 +23,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Tekken 3 | SLUS-00402 / NTSC-U | 1 | Playtime, 21 character unlocks, Tekken Ball/Theatre; character arcade usage and versus wins/losses; deobfuscation and checksum |
 | Silent Hill | SLUS-00707 / NTSC-U | 1 | Eleven in-game save positions, empty state, playtime, difficulty, saves, health, location ID, Normal/Next Fear; shared ending unlocks; slot, preview and options checksums |
 | Mega Man Legends 2 | SLUS-01140 / NTSC-U | 1 | Saved location preview, playtime to seconds, Zenny, current/maximum health in stored units, named saved difficulty, named equipped helmet/shoes/armor and three buster-part slots; all four additive checksums |
+| Ape Escape | SCUS-94423 / NTSC-U | 1 | Four profiles; completion, saved stage, overall and per-level monkeys/coins remaining, best times, trial medals and exclusive targets, race coin rewards, gadgets/button assignments, extra lives, chips and pellets; checksum unverified |
 
 FFVIII and Chrono Cross use **P-bearing save product codes**: these are the filenames stored by the game, not replacement disc serials. GT/GT2 settings and CTR ghosts do not share the adventure decoder. The existing original-US Digimon World 2 decoder (`SLUS-01193`, two blocks, three profiles) keeps its JSON shape and detailed roster.
 
@@ -37,6 +38,7 @@ FFVIII and Chrono Cross use **P-bearing save product codes**: these are the file
 - Silent Hill preserves all eleven positions inside each individual SILENTxx file. It does not merge files or playthroughs. Shared options/previews are checked as well as populated slots.
 - Mega Man Legends 2 accepts only `-DASH20` through `-DASH24`, the observed one-frame SC header and normalized US title marker. Its display time uses 60-Hz ticks; the second counter is not treated as a required duplicate. All 25 save-preview location IDs use the game's name table. Easy/Normal/Hard/Very Hard map to 0/1/3/4; internal level 2 stays unknown. Difficulty is the saved level, which can change with license tests; equipment names cover 45 documented entries (the first save's equipped gear is also checked in-game); health is not converted to bars. Two private saves and nine public cards exercise positions 1, 2, 3 and 5, locations Flutter/Yosyonke Pad/Nino Pad/Elysium and all four starting modes; other location labels are table-derived, and other revisions are unverified.
 - Full inventories, abilities, detailed story flags, compressed Chrono Cross records, car tuning and race records remain outside this first field set. The dialog names the remaining fields per game.
+- Ape Escape accepts only the exact `SYS` identifier, one-frame SC header, normalized US title and version-1 `CRD0` marker. Four profiles use a 0x7a0 stride. Completion follows traced game code, including strict medal thresholds and race/challenge bonuses. Ordinary totals are 204 monkeys and 60 coins (50 level coins plus ten race rewards). Empty timers use `0xffffffff`; zero is preserved. Unknown name glyphs, gadget IDs and inconsistent counters stay explicit. No playtime, health, individual monkey names, minigame records or game checksum is inferred. See its [partial format specification](formats/ape-escape.md).
 
 ## Layout sources and attribution
 
@@ -56,10 +58,12 @@ Mega Man Legends 2 uses an independently derived [partial format specification](
 
 Downloaded cards and the user's saves stay in the ignored local fixture folder; public availability is not a redistribution license. Default tests use constructed data and existing licensed/project fixtures. [Acquisition and test instructions](../tests/fixtures/ps1/README.md) explain the explicit local corpus check.
 
-Checks cover all thirteen summary dispatches, serialization, read-only behavior, malformed/truncated data, region/identifier rejection, timing, profile numbering/empties, checksum vectors and the FFVIII quirk. Mega Man Legends 2 tests also cover four independent checksum ranges, wrapping sums, unchecked gaps, unknown IDs and the separate time counter. The local corpus checks known values and checksums, checksum damage, raw/GME/VGS normalization and MCS re-import, including both private Legends 2 saves when present. It does not run ignored hardware tests.
+Checks cover all fourteen summary dispatches, serialization, read-only behavior, malformed/truncated data, region/identifier rejection, timing, profile numbering/empties, checksum vectors and the FFVIII quirk. Mega Man Legends 2 tests also cover four independent checksum ranges, wrapping sums, unchecked gaps, unknown IDs and the separate time counter. The local corpus checks known values and checksums, checksum damage, raw/GME/VGS normalization and MCS re-import, including both private Legends 2 saves when present. It does not run ignored hardware tests.
 
 The rebuilt macOS desktop app was also checked using a temporary card containing copies of the two Legends 2 saves. The first save's dialog showed Nino Pad, 03:41:26, 11,950 Zenny, health 128/128, matching checksums and the expected stored equipment/difficulty IDs. A subsequent Equipment-screen check verified the five nonzero gear names, now supplied by the decoder using published ID mappings. The location/difficulty update was also verified in the rebuilt desktop dialog: Nino Pad and Normal. Original save files were not modified.
 
 ## Research formats
 
 [Mega Man Legends 2 (US)](formats/mega-man-legends-2.md) has a partial independently derived save specification and a standalone read-only JSON inspection tool. The verified summary fields are enabled in the production game-details dialog; the tool additionally exposes unresolved bytes for research.
+
+[Ape Escape (original US)](formats/ape-escape.md) has an independently traced partial specification and read-only JSON research decoder. The supplied MCS and two independent GameFAQs cards exercise seven populated profiles and both empty/full progress. The corpus checks exact computed values plus container normalization and MCS re-import; checksum support remains unverified. New save persistence is not qualified.
