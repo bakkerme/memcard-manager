@@ -4,7 +4,10 @@
 use serde::Serialize;
 
 mod ape_escape;
+mod archive_summaries;
+mod level_summaries;
 mod mega_man_legends2;
+mod overnight;
 mod summaries;
 
 #[derive(Debug, Clone, Serialize)]
@@ -64,6 +67,13 @@ impl Format {
         };
         match self.slug {
             "digimon-world-2" => true, // Existing pilot validates its own layout.
+            "azure-dreams" => suffix == "00",
+            "yu-gi-oh-forbidden-memories" => suffix.is_empty(),
+            "klonoa" => suffix.is_empty(),
+            "digimon-digital-card-battle" => suffix == "_A",
+            "mega-man-legends" => matches!(suffix, "-DASH00" | "-DASH01"),
+            "kula-world" => suffix.is_empty(),
+            "tomb-raider" => suffix.is_empty(),
             "final-fantasy-vii" | "final-fantasy-viii" => {
                 suffix.len() == 2
                     && suffix.bytes().all(|b| b.is_ascii_digit())
@@ -91,6 +101,27 @@ impl Format {
 pub(super) fn format(code: &str) -> Option<Format> {
     let (slug, title, blocks, region, identifier_prefix) = match code {
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
+        "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
+        "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
+        "SLES-03900" => (
+            "digimon-digital-card-battle",
+            "Digimon Digital Card Battle",
+            2,
+            "BE",
+            "",
+        ),
+        "SCUS-94570" => ("crash-bash", "Crash Bash", 1, "BA", ""),
+        "SCES-00934" => ("pac-man-world", "Pac-Man World", 1, "BE", "PACMAN20"),
+        "SLUS-00603" => ("mega-man-legends", "Mega Man Legends", 1, "BA", ""),
+        "SLES-01219" => ("azure-dreams", "Azure Dreams", 3, "BE", ""),
+        "SLUS-01411" => (
+            "yu-gi-oh-forbidden-memories",
+            "Yu-Gi-Oh! Forbidden Memories",
+            1,
+            "BA",
+            "-YUGIOH",
+        ),
+        "SLUS-00585" => ("klonoa", "Klonoa: Door to Phantomile", 1, "BA", "KLONOA"),
         "SCES-00867" => ("final-fantasy-vii", "Final Fantasy VII", 1, "BE", "FF7-S"),
         "SLUSP00892" => ("final-fantasy-viii", "Final Fantasy VIII", 1, "BA", "0426"),
         "SLES-02965" => ("final-fantasy-ix", "Final Fantasy IX", 1, "BE", "00000-"),
@@ -171,6 +202,21 @@ pub(super) fn decode(
     }
     if format.slug == "ape-escape" {
         return ape_escape::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if matches!(
+        format.slug,
+        "azure-dreams" | "yu-gi-oh-forbidden-memories" | "klonoa"
+    ) {
+        return overnight::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if matches!(
+        format.slug,
+        "digimon-digital-card-battle" | "crash-bash" | "pac-man-world" | "mega-man-legends"
+    ) {
+        return archive_summaries::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if matches!(format.slug, "kula-world" | "tomb-raider") {
+        return level_summaries::decode(&format, code, data).map(GameDetails::Summary);
     }
     summaries::decode(&format, code, identifier, data).map(GameDetails::Summary)
 }
