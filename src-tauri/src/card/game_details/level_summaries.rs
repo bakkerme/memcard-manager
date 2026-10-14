@@ -196,6 +196,7 @@ pub(super) fn decode(fmt: &Format, code: &str, d: &[u8]) -> Result<SaveDetails, 
 #[cfg(test)]
 mod tests {
     use crate::card::game_details;
+    use sha2::Digest;
 
     #[test]
     #[ignore = "Requires the ignored overnight snapshot and PS1_RESEARCH_SNAPSHOT"]
@@ -219,6 +220,8 @@ mod tests {
         ] {
             let mcs =
                 std::fs::read(root.join("recovery/inputs").join(format!("{sha}.mcs"))).unwrap();
+            assert_eq!(format!("{:x}", sha2::Sha256::digest(&mcs)), sha, "{code}");
+            assert!(mcs.len() >= 128, "{code}");
             let d = &mcs[128..];
             let game_details::GameDetails::Summary(s) =
                 game_details::decode(code, region, identifier, d)

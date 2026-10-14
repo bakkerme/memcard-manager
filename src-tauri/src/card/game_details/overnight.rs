@@ -326,6 +326,7 @@ mod tests {
 mod local_corpus {
     use super::*;
     use crate::card::game_details;
+    use sha2::Digest;
 
     #[test]
     #[ignore = "Requires the ignored overnight snapshot and PS1_RESEARCH_SNAPSHOT"]
@@ -355,6 +356,8 @@ mod local_corpus {
         ] {
             let path = root.join("recovery/inputs").join(format!("{sha}.mcs"));
             let mcs = std::fs::read(&path).unwrap();
+            assert_eq!(format!("{:x}", sha2::Sha256::digest(&mcs)), sha, "{code}");
+            assert!(mcs.len() >= 128, "{code}");
             let d = &mcs[128..];
             let game_details::GameDetails::Summary(s) =
                 game_details::decode(code, region, identifier, d).unwrap()
