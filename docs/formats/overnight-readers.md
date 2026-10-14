@@ -59,6 +59,9 @@ bounded read-only summaries.
   at `+0xe0`. A valid latest-history index selects the preview. The selected
   record uses thirteen little-endian words with a wrapping left-shift/add
   checksum at `+0x34`; options and other records are outside that check.
+  The UI rolls up checks for occupied profiles with valid history selectors;
+  an invalid selector or all-empty profiles leave the overall preview status
+  unknown. A mismatch in any selected preview reports a mismatch.
   Rescued total is the sum of twelve bytes at record `+24..+36`, not the
   previously hypothesized popcount. The stage index uses the game's sparse
   fourteen-entry mapping before a Vision label is formed.

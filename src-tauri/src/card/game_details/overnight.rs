@@ -180,9 +180,31 @@ pub(super) fn decode(f: &Format, code: &str, d: &[u8]) -> Result<SaveDetails, St
                     ],
                 );
                 p.empty = stage == -1;
-                p.checksum_ok = Some(ok);
+                // An empty profile has no preview to verify. An invalid history
+                // selector displays record zero as a fallback, not a known
+                // selected record.
+                if !p.empty && history < 4 {
+                    p.checksum_ok = Some(ok);
+                } else if !p.empty {
+                    result.notes.push(format!(
+                        "Profile {} has an invalid history selector; record zero is shown as a fallback and its checksum status is unknown.",
+                        i + 1
+                    ));
+                }
                 result.profiles.push(p);
             }
+            let occupied = result
+                .profiles
+                .iter()
+                .filter(|p| !p.empty)
+                .collect::<Vec<_>>();
+            result.checksum_ok = if occupied.iter().any(|p| p.checksum_ok == Some(false)) {
+                Some(false)
+            } else if !occupied.is_empty() && occupied.iter().all(|p| p.checksum_ok == Some(true)) {
+                Some(true)
+            } else {
+                None
+            };
             result.notes.push("The selected record checksum covers its preview record only; options and other history records are outside this check.".into());
             result
                 .notes
@@ -319,6 +341,51 @@ mod tests {
         )
         .unwrap();
         assert_eq!(s.profiles[0].checksum_ok, Some(false));
+    }
+
+    #[test]
+    fn klonoa_preview_checksum_rollup_respects_empty_and_unknown_profiles() {
+        let mut d = sample("SLUS-00585", "KLONOA  -Door To Phantomile-");
+        let f = game_details::format("SLUS-00585").unwrap();
+        // An unknown stage still has a checkable selected preview record.
+        d[0x206..0x208].copy_from_slice(&99u16.to_le_bytes());
+        let mut first_check = 0u32;
+        for j in (0..0x34).step_by(4) {
+            first_check = first_check
+                .wrapping_shl(1)
+                .wrapping_add(word(&d, 0x204 + j));
+        }
+        d[0x238..0x23c].copy_from_slice(&first_check.to_le_bytes());
+        let third = 0x204 + 2 * 0xf8;
+        d[third + 2..third + 4].copy_from_slice(&(-1i16).to_le_bytes());
+        d[third + 0x34] = 0xff; // Empty data must not produce a mismatch.
+        let second = 0x204 + 0xf8;
+        d[second + 0xe2..second + 0xe4].copy_from_slice(&9u16.to_le_bytes());
+
+        let s = decode(&f, "SLUS-00585", &d).unwrap();
+        assert_eq!(s.profiles[0].checksum_ok, Some(true));
+        assert_eq!(s.profiles[0].fields[0].value, "Unknown stage (99)");
+        assert_eq!(s.profiles[1].checksum_ok, None);
+        assert!(s.profiles[2].empty);
+        assert_eq!(s.profiles[2].checksum_ok, None);
+        assert_eq!(s.checksum_ok, None);
+
+        d[0x238] ^= 1;
+        let s = decode(&f, "SLUS-00585", &d).unwrap();
+        assert_eq!(s.checksum_ok, Some(false));
+        d[0x238] ^= 1;
+        d[second + 0xe2..second + 0xe4].copy_from_slice(&0u16.to_le_bytes());
+        let s = decode(&f, "SLUS-00585", &d).unwrap();
+        assert_eq!(s.checksum_ok, Some(true));
+
+        d[0x206..0x208].copy_from_slice(&(-1i16).to_le_bytes());
+        d[second + 2..second + 4].copy_from_slice(&(-1i16).to_le_bytes());
+        let s = decode(&f, "SLUS-00585", &d).unwrap();
+        assert_eq!(s.checksum_ok, None);
+        assert!(s
+            .profiles
+            .iter()
+            .all(|p| p.empty && p.checksum_ok.is_none()));
     }
 }
 
