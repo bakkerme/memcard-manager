@@ -87,6 +87,11 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
 }) {
   const profile = details.profiles[profileIndex];
   const checksum = details.checksumOk;
+  const checksumLabel = details.game === "klonoa" ? "Selected preview checksums" : "Game checksum";
+  const checksumSubject = details.game === "klonoa" ? "A selected preview checksum" : "The game checksum";
+  const checksumStatus = checksum == null
+    ? details.game === "klonoa" ? "Unknown" : "Not verified for this format"
+    : checksum ? "Matches" : "Does not match";
   const recordLabel = details.game === "spyro-the-dragon" ? "Levels"
     : details.game === "ape-escape" ? "Levels and challenges"
     : details.game === "final-fantasy-tactics" ? "Units"
@@ -94,8 +99,8 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
     : details.game === "final-fantasy-viii" ? "Characters and Guardian Forces"
     : details.game === "tekken-3" ? "Character records" : "Characters";
   return <>
-    {checksum === false && <p className="game-details-warning" role="status">The game checksum does not match. These values may be unreliable; try another backup of this save.</p>}
-    <p className="muted">Game checksum: {checksum == null ? "Not verified for this format" : checksum ? "Matches" : "Does not match"}</p>
+    {checksum === false && <p className="game-details-warning" role="status">{checksumSubject} does not match. These values may be unreliable; try another backup of this save.</p>}
+    <p className="muted">{checksumLabel}: {checksumStatus}</p>
     {details.profiles.length > 1 && <div className="game-profiles" data-count={details.profiles.length} role="group" aria-label="In-game saves">
       {details.profiles.map((p, index) => <button key={p.number} type="button" className="game-profile"
         aria-pressed={profileIndex === index} onClick={() => setProfileIndex(index)}>

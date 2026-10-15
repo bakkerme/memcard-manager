@@ -1,8 +1,10 @@
 # Read-only PS1 game details
 
-The original twelve-game coverage proposal, a Mega Man Legends 2 pilot and an Ape Escape reader are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
+The original twelve-game coverage proposal, a Mega Man Legends 2 pilot, an Ape Escape reader, and nine October 2026 exact-release readers are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
 
 These are narrow decoders for original PS1 saves. They do not edit, repair, convert regions, or write back to hardware. An unknown game remains browseable using ordinary save metadata. Known releases with unsupported identifiers or malformed layouts show a details error. A checksum mismatch warns while leaving decoded values available; an unknown checksum is explicitly unverified.
+
+The [overnight reader audit](formats/overnight-readers.md) gives the new release matrix, field boundaries, provenance and limitations.
 
 ## Supported releases and fields
 
@@ -24,6 +26,15 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Silent Hill | SLUS-00707 / NTSC-U | 1 | Eleven in-game save positions, empty state, playtime, difficulty, saves, health, location ID, Normal/Next Fear; shared ending unlocks; slot, preview and options checksums |
 | Mega Man Legends 2 | SLUS-01140 / NTSC-U | 1 | Saved location preview, playtime to seconds, Zenny, current/maximum health in stored units, named saved difficulty, named equipped helmet/shoes/armor and three buster-part slots; all four additive checksums |
 | Ape Escape | SCUS-94423 / NTSC-U | 1 | Four profiles; completion, saved stage, overall and per-level monkeys/coins remaining, best times, trial medals and exclusive targets, race coin rewards, gadgets/button assignments, extra lives, chips and pellets; checksum unverified |
+| Azure Dreams | SLES-01219 / PAL | 3 | Time, money, buildings and game count; XOR integrity |
+| Yu-Gi-Oh! Forbidden Memories | SLUS-01411 / NTSC-U | 1 | Deck, chest and owned card counts, StarChips, separate banks; integrity unverified in app |
+| Klonoa: Door to Phantomile | SLUS-00585 / NTSC-U | 1 | Three profiles, selected stage/lives/rescued total and options; selected-record checksum |
+| Digimon Digital Card Battle | SLES-03900 / PAL | 2 | Time, area, seen and owned cards, completion preview; byte integrity |
+| Crash Bash | SCUS-94570 / NTSC-U | 1 | Four profiles, completion preview and collectible group totals; checksum |
+| Pac-Man World | SCES-00934 / PAL | 1 | Three profiles, lives, time, friends and score; checksum |
+| Mega Man Legends | SLUS-00603 / NTSC-U | 1 | Time, Zenny, buster-part counts and raw location IDs; integrity unverified in app |
+| Kula World | SCES-01000 / PAL | 1 | Four slots, mode, score, level, fruit and elapsed seconds; integrity unverified |
+| Tomb Raider | SLES-00024 / PAL | 1 | Current level and level-start inventory; checksum |
 
 FFVIII and Chrono Cross use **P-bearing save product codes**: these are the filenames stored by the game, not replacement disc serials. GT/GT2 settings and CTR ghosts do not share the adventure decoder. The existing original-US Digimon World 2 decoder (`SLUS-01193`, two blocks, three profiles) keeps its JSON shape and detailed roster.
 

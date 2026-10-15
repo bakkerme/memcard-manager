@@ -674,3 +674,67 @@ fn shared_completion_corpus() {
     }
     assert!(tested.len() >= 11, "Missing a public game's real save");
 }
+
+#[test]
+fn overnight_readers_accept_only_observed_release_layouts() {
+    let releases = [
+        ("SLES-01219", "BE", "00", 3, 0x13, "Azure Dreams"),
+        (
+            "SLUS-01411",
+            "BA",
+            "-YUGIOH",
+            1,
+            0x13,
+            "Yu-Gi-Oh! Forbidden Memories",
+        ),
+        (
+            "SLUS-00585",
+            "BA",
+            "KLONOA",
+            1,
+            0x13,
+            "KLONOA  -Door To Phantomile-",
+        ),
+        ("SLES-03900", "BE", "_A", 2, 0x13, "DCB[1]"),
+        ("SCUS-94570", "BA", "", 1, 0x12, "CRASH BASH"),
+        ("SCES-00934", "BE", "PACMAN20", 1, 0x11, "PAC-MAN WORLD"),
+        (
+            "SLUS-00603",
+            "BA",
+            "-DASH00",
+            1,
+            0x11,
+            "MEGAMAN LEGENDS[1]00:00:00",
+        ),
+        ("SCES-01000", "BE", "KULA", 1, 0x11, "KULA WORLD"),
+        ("SLES-00024", "BE", "TOMBRAID", 1, 0x11, "Tomb Raider"),
+    ];
+    for (code, region, id, blocks, revision, name) in releases {
+        let mut d = vec![0u8; blocks * BLOCK_SIZE];
+        d[..4].copy_from_slice(&[b'S', b'C', revision, blocks as u8]);
+        let (encoded, _, invalid) = encoding_rs::SHIFT_JIS.encode(name);
+        assert!(!invalid);
+        d[4..4 + encoded.len()].copy_from_slice(&encoded);
+        if code == "SLES-03900" {
+            d[0x216..0x218].copy_from_slice(&0x2774u16.to_le_bytes());
+        }
+        if code == "SCES-00934" {
+            d[0x200..0x204].copy_from_slice(&0x784u32.to_le_bytes());
+        }
+        let before = d.clone();
+        let s = summary(code, region, id, &d);
+        assert!(!s.profiles.is_empty(), "{code}");
+        assert_eq!(d, before, "{code}");
+        assert!(decode(code, "BI", id, &d).is_err(), "{code}");
+        assert!(decode(code, region, "INVALID", &d).is_err(), "{code}");
+        assert!(
+            decode(code, region, id, &d[..d.len() - 1]).is_err(),
+            "{code}"
+        );
+        d[2] ^= 1;
+        assert!(decode(code, region, id, &d).is_err(), "{code}");
+        d[2] = revision;
+        d[4] = b'X';
+        assert!(decode(code, region, id, &d).is_err(), "{code}");
+    }
+}
