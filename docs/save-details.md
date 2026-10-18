@@ -1,6 +1,6 @@
 # Read-only PS1 game details
 
-The original twelve-game coverage proposal, a Mega Man Legends 2 pilot, an Ape Escape reader, and nine October 2026 exact-release readers are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
+The original twelve-game coverage proposal, a Mega Man Legends 2 pilot, an Ape Escape reader, and ten October 2026 exact-release readers are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
 
 These are narrow decoders for original PS1 saves. They do not edit, repair, convert regions, or write back to hardware. An unknown game remains browseable using ordinary save metadata. Known releases with unsupported identifiers or malformed layouts show a details error. A checksum mismatch warns while leaving decoded values available; an unknown checksum is explicitly unverified.
 
@@ -8,7 +8,7 @@ The [overnight reader audit](formats/overnight-readers.md) gives the new release
 
 ## Supported releases and fields
 
-Only the following product codes are enabled. Each was exercised with a real save; upstream claims about other releases are not app support. Product codes alone cannot identify every disc revision or mod. Size, identifier, SC header, linked-block structure and selected layout markers are checked before decoding. Unknown enumerated values and undecoded location IDs remain explicit.
+Only the following product codes are enabled. Each was exercised with a real save; upstream claims about other releases are not app support. Product codes alone cannot identify every disc revision or mod. Size, identifier, release-specific header, linked-block structure and selected layout markers are checked before decoding. Unknown enumerated values and undecoded location IDs remain explicit.
 
 | Game | Product code / region | Blocks | Implemented fields |
 | --- | --- | ---: | --- |
@@ -32,6 +32,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Digimon Digital Card Battle | SLES-03900 / PAL | 2 | Time, area, seen and owned cards, completion preview; byte integrity |
 | Crash Bash | SCUS-94570 / NTSC-U | 1 | Four profiles, completion preview and collectible group totals; checksum |
 | Pac-Man World | SCES-00934 / PAL | 1 | Three profiles, lives, time, friends and score; checksum |
+| Pac-Man World | SLUS-00439 / NTSC-U | 1 | Three occupied/empty slots, quest stages cleared out of 23, friends rescued out of 6, saved playtime; integrity unverified |
 | Mega Man Legends | SLUS-00603 / NTSC-U | 1 | Time, Zenny, buster-part counts and raw location IDs; integrity unverified in app |
 | Kula World | SCES-01000 / PAL | 1 | Four slots, mode, score, level, fruit and elapsed seconds; integrity unverified |
 | Tomb Raider | SLES-00024 / PAL | 1 | Current level and level-start inventory; checksum |
@@ -40,6 +41,7 @@ FFVIII and Chrono Cross use **P-bearing save product codes**: these are the file
 
 ## Regional and interpretation boundaries
 
+- Pac-Man World US accepts only `BA` / `SLUS-00439` / `PACMAN20`, its exact nonstandard `43 00 13 01` header, body length `0x784` and body version 2. Its separate reader shows fixed slots, quest completion counts (including special entries), friends and saved displayed time. Native percentage, location, lives, score and game checksum are not decoded. Existing-save native loading is evidenced; newly generated save/flush/reload persistence, timer pause behavior and disc revision remain unqualified. See the [US partial specification](formats/pac-man-world-us.md). The PAL reader and its checksum claims remain separate.
 - PAL FFVII stores seconds, so its playtime is not divided by 50 or 60. The user's two SCES-00867 saves pass the checksum. Their time values are byte-level regressions, not an independently observed in-game display.
 - PAL FFIX uses 50 frames per second. FFVIII's supported NTSC save stores seconds; Chrono Cross and Tekken 3 use 60-frame counters. Synthetic hour-boundary tests protect these differences.
 - FFVIII has a nonstandard CRC lookup entry at index `0xff` (zero instead of `0x1ef0`). Both independent GameFAQs cards match this quirk. GF experience is shown without inferring levels: per-GF levelling differences have not been independently verified.
