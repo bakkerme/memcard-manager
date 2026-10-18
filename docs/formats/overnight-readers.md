@@ -1,14 +1,15 @@
 # October 2026 overnight research: read-only archive summaries
 
-The production readers use reconstructed SC payload offsets. The original card-chain and
+The production readers use reconstructed save-payload offsets (including the header). The original card-chain and
 MCS/GME/VGS handling stays in the existing engine. These readers accept only the product
-code, region, identifier, block count, observed SC revision and observed title pattern.
+code, region, identifier, block count and release-specific layout markers. Most use an
+SC header and observed title pattern; the exact US Pac-Man exception is specified below.
 They show a useful subset of a save for archive browsing. They do not edit, repair, or
 write saves, and no checksum success is presented as proof of in-game loadability.
 
 ## Readiness at the practical summary threshold
 
-The source of this assessment is the **2026-10-13 09:18:34 UTC** Spark snapshot in
+The original source of this assessment is the **2026-10-13 09:18:34 UTC** Spark snapshot in
 `tools/save_research/runs/transfers/snapshots/spark/20261013T091834Z-b81b23c0/`,
 not the older October 12 closeout. Its `results/overnight-20261012T213658Z/FINAL-LEDGER.md`
 and the later `runs/overnight-review-2026-10-13/REVIEW.md` record the handoffs.
@@ -17,6 +18,14 @@ negative, verified 2,419 archive files, and reconstructed selected native save p
 Research cases include synthetic and code-model cases; they are not all gameplay proof.
 The ignored recovered `recovery/parsers/`, suites and native evidence are private
 provenance, not production code or redistributable fixtures.
+
+The Pac-Man World US row was superseded by the October 18 continuation and October 19
+local review in ignored `tools/save_research/runs/review-d991f863/`. Its exact US disc
+is now present and hash-verified. The review reran all 23 research cases, verified
+386 artifact entries, compared both native RAM bodies to source saves, inspected the
+seven cited screenshots and independently recovered the 23-entry quest table from
+the verified executable. The [US specification](pac-man-world-us.md) records the
+accepted scope and the separate Rust verification commands.
 
 | Release | Readiness | Production summary or concrete gap |
 | --- | --- | --- |
@@ -35,7 +44,7 @@ provenance, not production code or redistributable fixtures.
 | Worms World Party SLUS-01448 US | Partial | No-op save/load and rank/stat writers traced; statistic columns and mission award meanings are not yet clear enough for labeled summaries. |
 | Monster Rancher SCES-02872 PAL | Partial, runtime blocked | Six statistics and frozen records traced, but boot movie queue stalls; save/load qualification absent. |
 | Um Jammer Lammy SCUS-94448 US | Partial, runtime blocked | Settings labels traced; forced exit 137 left no clean save/reload evidence or useful progress summary. |
-| Pac-Man World SLUS-00439 US | Blocked | Distinct nonstandard header is observed; matching US disc is missing, so native checksum/save-load qualification remains open. Do not apply the PAL layout. |
+| Pac-Man World SLUS-00439 US | Ready, integrated | Three occupied/empty slots, quest stages cleared out of 23, friends rescued out of 6 and saved playtime. Native existing-save load evidenced; percentage, location, lives, score, integrity and new-save persistence excluded. Separate US header/layout gate. |
 | Bomberman Fantasy Race SLUS-00823 US | Blocked | Time formatting is matching-source derived; matching US disc is missing, and profile ownership/integrity is not qualified. |
 
 All entries are exact releases. Other regions and revisions are unsupported. The final
@@ -81,6 +90,15 @@ bounded read-only summaries.
   ticks divide by 300. Friend count uses bit 1 in six halfwords; score sums
   native level value words times five. Byte sum `0x208..0x98c` is stored at
   `0x204`. No percentage is inferred.
+- **Pac-Man World US:** `BA` / `SLUS-00439` / `PACMAN20`, one block with
+  exact header `43 00 13 01`, length `0x784` at `0x200` and version 2 at
+  `0x208`. Three `0x280`-byte profiles start at `0x20c`. Signed word `+0xc`
+  below zero means empty; no progress is shown for empty slots. Quest completion
+  counts low-two-bit state 3 at `+0x54 + 2*ID` for the exact 23-entry US quest
+  table, including special entries. Friends count bit 1 in six halfwords at
+  `+0x5a`. Nonnegative signed ticks at `+0x24c` divide by 300; negative time
+  is unknown. No native percentage, location, lives, score or game integrity is
+  inferred. See [evidence and limits](pac-man-world-us.md).
 - **Mega Man Legends:** observed `SC 11 01`, `-DASH00` or `-DASH01`, and a
   patterned title clock. Gameplay ticks `0x180` use 30 per second; Zenny
   stores ten-unit increments at `0x184`. Buster-part ownership is flags
@@ -115,6 +133,12 @@ PS1_RESEARCH_SNAPSHOT="$PWD/tools/save_research/runs/transfers/snapshots/spark/2
 npm test
 npm run build
 ```
+
+Pac-Man US has separate Rust tests for field boundaries, unsupported layouts,
+serialization, Raw/GME/VGS normalization, MCS reimport, input preservation and
+malformed terminal links/allocation. Its opt-in, hash-pinned real-save corpus test
+uses the newer review directory rather than the October 13 snapshot; commands
+are in the [US specification](pac-man-world-us.md#validation).
 
 The production Rust code uses independently implemented numeric layout facts
 and observed labels. It does not import candidate Python code, game assets or

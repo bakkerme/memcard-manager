@@ -8,6 +8,7 @@ mod archive_summaries;
 mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
+mod pacman_us;
 mod summaries;
 
 #[derive(Debug, Clone, Serialize)]
@@ -112,6 +113,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
         ),
         "SCUS-94570" => ("crash-bash", "Crash Bash", 1, "BA", ""),
         "SCES-00934" => ("pac-man-world", "Pac-Man World", 1, "BE", "PACMAN20"),
+        "SLUS-00439" => ("pac-man-world", "Pac-Man World", 1, "BA", "PACMAN20"),
         "SLUS-00603" => ("mega-man-legends", "Mega Man Legends", 1, "BA", ""),
         "SLES-01219" => ("azure-dreams", "Azure Dreams", 3, "BE", ""),
         "SLUS-01411" => (
@@ -184,14 +186,21 @@ pub(super) fn decode(
     if !format.accepts_identifier(identifier) {
         return Err("This file is not a supported adventure/profile save (it may contain settings or a replay).".into());
     }
-    if data.len() != format.blocks * 8192
-        || !data.starts_with(b"SC")
-        || data[3] as usize != format.blocks
-    {
+    // The exact US Pac-Man writer deliberately emits this non-SC header.
+    // Keep the exception confined to its release, after region/identifier checks.
+    let header_matches = if code == "SLUS-00439" {
+        data.starts_with(&[0x43, 0x00, 0x13, 0x01])
+    } else {
+        data.starts_with(b"SC") && data.get(3).copied().map(usize::from) == Some(format.blocks)
+    };
+    if data.len() != format.blocks * 8192 || !header_matches {
         return Err(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SLUS-00439" {
+        return pacman_us::decode(&format, code, data).map(GameDetails::Summary);
     }
     if format.slug == "digimon-world-2" {
         return super::digimon_world2::decode(data).map(GameDetails::Digimon);
