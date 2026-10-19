@@ -190,6 +190,7 @@ pub(super) fn decode(
             number,
             name: format!("Save {number}"),
             empty: false,
+        status: None,
             checksum_ok: Some(checksum_ok),
             fields: vec![
                 field("Saved location", location_name(data[0x12f])),

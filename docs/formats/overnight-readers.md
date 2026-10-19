@@ -45,13 +45,26 @@ accepted scope and the separate Rust verification commands.
 | Monster Rancher SCES-02872 PAL | Partial, runtime blocked | Six statistics and frozen records traced, but boot movie queue stalls; save/load qualification absent. |
 | Um Jammer Lammy SCUS-94448 US | Partial, runtime blocked | Settings labels traced; forced exit 137 left no clean save/reload evidence or useful progress summary. |
 | Pac-Man World SLUS-00439 US | Ready, integrated | Three occupied/empty slots, quest stages cleared out of 23, friends rescued out of 6 and saved playtime. Native existing-save load evidenced; percentage, location, lives, score, integrity and new-save persistence excluded. Separate US header/layout gate. |
-| Bomberman Fantasy Race SLUS-00823 US | Blocked | Time formatting is matching-source derived; matching US disc is missing, and profile ownership/integrity is not qualified. |
+| Bomberman Fantasy Race SLUS-00823 US | Ready, integrated | Names, occupied/empty/unknown profiles and owned normal/mirrored course-ticket counts, with integrity gating. New default profile saved and freshly loaded; controlled ticket variation is representation evidence. Race wins, course names and overall completion excluded. |
 
 All entries are exact releases. Other regions and revisions are unsupported. The final
 research ledger leaves complete-format objectives open, which does not prevent these
 bounded read-only summaries.
 
+The Bomberman row is superseded by the October 19 continuation and local review in
+ignored `tools/save_research/runs/review-68a145a8a67645f09f9c3686112730ac-g51/`.
+The US disc is now supplied and hash-verified. All 99 exported research cases pass,
+341 artifact entries match their hashes, and saved/controlled ticket masks match
+retained native selector RAM. See the [Bomberman specification](bomberman-fantasy-race-us.md).
+
 ## Implemented field boundaries
+
+- **Bomberman Fantasy Race US:** `BA` / `SLUS-00823` / `SYSTEM`, exact
+  `SC 11 01`, one block. Capacity at `0xd03` is clamped to 50. Profiles start
+  at `0xd08`, stride `0x44`. Global and per-record XOR8/sum8 checks gate marker
+  interpretation: `00` empty, `ff` occupied, otherwise unknown. Names use five
+  glyphs at `+1`; owned normal/mirrored ticket masks are `+6/+7`. Failed checks
+  withhold names and ticket counts. Unsupported fields stay excluded.
 
 - **Azure:** observed `SC 13 03`, identifier `00`, three blocks. Preview ticks
   `0x21c` are divided by 60; money `0x224`, buildings `0x228`, game count

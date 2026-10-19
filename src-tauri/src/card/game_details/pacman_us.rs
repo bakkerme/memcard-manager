@@ -68,6 +68,7 @@ pub(super) fn decode(fmt: &Format, code: &str, data: &[u8]) -> Result<SaveDetail
                 number: (index + 1) as u8,
                 name: format!("Game {} of 3", index + 1),
                 empty,
+                status: None,
                 checksum_ok: None,
                 fields,
                 records: vec![],
