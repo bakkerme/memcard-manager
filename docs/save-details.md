@@ -1,6 +1,6 @@
 # Read-only PS1 game details
 
-The original twelve-game coverage proposal, a Mega Man Legends 2 pilot, an Ape Escape reader, and ten October 2026 exact-release readers are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
+The original twelve-game coverage proposal, a Mega Man Legends 2 pilot, an Ape Escape reader, and eleven October 2026 exact-release readers are implemented as useful summaries. Select a save on a card, in Local saves, or in snapshot history and choose **View game details**. Existing Digimon World 2 details remain available.
 
 These are narrow decoders for original PS1 saves. They do not edit, repair, convert regions, or write back to hardware. An unknown game remains browseable using ordinary save metadata. Known releases with unsupported identifiers or malformed layouts show a details error. A checksum mismatch warns while leaving decoded values available; an unknown checksum is explicitly unverified.
 
@@ -33,6 +33,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Crash Bash | SCUS-94570 / NTSC-U | 1 | Four profiles, completion preview and collectible group totals; checksum |
 | Pac-Man World | SCES-00934 / PAL | 1 | Three profiles, lives, time, friends and score; checksum |
 | Pac-Man World | SLUS-00439 / NTSC-U | 1 | Three occupied/empty slots, quest stages cleared out of 23, friends rescued out of 6, saved playtime; integrity unverified |
+| Bomberman Fantasy Race | SLUS-00823 / NTSC-U | 1 | Profile names, occupied/empty/unknown slots, owned normal/mirrored course-ticket counts; global and profile XOR8/sum8 checks |
 | Mega Man Legends | SLUS-00603 / NTSC-U | 1 | Time, Zenny, buster-part counts and raw location IDs; integrity unverified in app |
 | Kula World | SCES-01000 / PAL | 1 | Four slots, mode, score, level, fruit and elapsed seconds; integrity unverified |
 | Tomb Raider | SLES-00024 / PAL | 1 | Current level and level-start inventory; checksum |
@@ -40,6 +41,8 @@ Only the following product codes are enabled. Each was exercised with a real sav
 FFVIII and Chrono Cross use **P-bearing save product codes**: these are the filenames stored by the game, not replacement disc serials. GT/GT2 settings and CTR ghosts do not share the adventure decoder. The existing original-US Digimon World 2 decoder (`SLUS-01193`, two blocks, three profiles) keeps its JSON shape and detailed roster.
 
 ## Regional and interpretation boundaries
+
+- Bomberman Fantasy Race US accepts only `BA` / `SLUS-00823` / `SYSTEM`, one block and exact `SC 11 01` header. Integrity failures and unfamiliar markers produce an explicit unknown slot with identity/progress withheld. Owned normal and mirrored tickets govern Time Attack access; they are not race wins or every ticket offered for purchase. Unmapped name glyphs remain explicit IDs. No currency, animals, ranking identities, course names or overall completion is inferred. The supplied deleted entry is browsable as deleted but was invisible to native Load; no recovery/repair is performed. See the [US specification](formats/bomberman-fantasy-race-us.md).
 
 - Pac-Man World US accepts only `BA` / `SLUS-00439` / `PACMAN20`, its exact nonstandard `43 00 13 01` header, body length `0x784` and body version 2. Its separate reader shows fixed slots, quest completion counts (including special entries), friends and saved displayed time. Native percentage, location, lives, score and game checksum are not decoded. Existing-save native loading is evidenced; newly generated save/flush/reload persistence, timer pause behavior and disc revision remain unqualified. See the [US partial specification](formats/pac-man-world-us.md). The PAL reader and its checksum claims remain separate.
 - PAL FFVII stores seconds, so its playtime is not divided by 50 or 60. The user's two SCES-00867 saves pass the checksum. Their time values are byte-level regressions, not an independently observed in-game display.

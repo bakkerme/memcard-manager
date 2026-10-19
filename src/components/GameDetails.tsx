@@ -25,7 +25,7 @@ export function GameDetailsButton({ save }: { save: SaveInfo }) {
 
   useEffect(() => {
     setOpen(false);
-    setProfileIndex(Math.max(0, save.gameDetails?.profiles.findIndex(p => !p.empty) ?? 0));
+    setProfileIndex(Math.max(0, save.gameDetails?.profiles.findIndex(p => !p.empty && !("status" in p && p.status === "unknown")) ?? 0));
   }, [save]);
 
   useEffect(() => {
@@ -101,13 +101,13 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
   return <>
     {checksum === false && <p className="game-details-warning" role="status">{checksumSubject} does not match. These values may be unreliable; try another backup of this save.</p>}
     <p className="muted">{checksumLabel}: {checksumStatus}</p>
-    {details.profiles.length > 1 && <div className="game-profiles" data-count={details.profiles.length} role="group" aria-label="In-game saves">
+    {details.profiles.length > 1 && <div className="game-profiles" data-count={details.profiles.length} data-many={details.profiles.length > 4 || undefined} role="group" aria-label="In-game saves">
       {details.profiles.map((p, index) => <button key={p.number} type="button" className="game-profile"
         aria-pressed={profileIndex === index} onClick={() => setProfileIndex(index)}>
-        <span>Save {p.number}</span><strong>{p.empty ? "Empty" : p.name || "Saved game"}</strong>
+        <span>Save {p.number}</span><strong>{p.status === "unknown" ? "Unknown" : p.empty ? "Empty" : p.name || "Saved game"}</strong>
       </button>)}
     </div>}
-    {!profile || profile.empty ? <div className="game-profile-empty"><h3>No in-game save</h3><p>This profile has no saved adventure.</p></div> : <>
+    {profile?.status === "unknown" ? <div className="game-profile-empty" role="status"><h3>Slot status unknown</h3><p>The slot marker or integrity checks could not establish whether this slot contains a saved profile. Name and course tickets are withheld.</p></div> : !profile ? <div className="game-profile-empty"><h3>No profile details</h3><p>This save does not provide a profile to display.</p></div> : profile.empty ? <div className="game-profile-empty"><h3>No in-game save</h3><p>This profile has no saved adventure.</p></div> : <>
       {profile.name && <h3>{profile.name}</h3>}
       <dl className="game-summary">{profile.fields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{formatFieldValue(field.value)}</dd></div>)}</dl>
       {profile.records.length > 0 && <section className="game-roster" aria-label="Saved records">

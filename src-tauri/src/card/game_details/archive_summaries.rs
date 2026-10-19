@@ -21,6 +21,7 @@ fn p(number: u8, name: String, fields: Vec<Field>) -> Profile {
         number,
         name,
         empty: false,
+        status: None,
         checksum_ok: None,
         fields,
         records: vec![],

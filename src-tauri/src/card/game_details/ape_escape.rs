@@ -303,6 +303,7 @@ pub(super) fn decode(format: &Format, code: &str, data: &[u8]) -> Result<SaveDet
             number: (i + 1) as u8,
             name: name(&p[0x18..0x28]),
             empty: room == 0xffff,
+            status: None,
             checksum_ok: None,
             fields: vec![],
             records: vec![],

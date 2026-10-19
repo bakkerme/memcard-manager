@@ -5,6 +5,7 @@ use serde::Serialize;
 
 mod ape_escape;
 mod archive_summaries;
+mod bomberman_fantasy_race;
 mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
@@ -36,9 +37,20 @@ pub struct Profile {
     pub number: u8,
     pub name: String,
     pub empty: bool,
+    /// Additive tri-state occupancy for formats that can distinguish unknown slots.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<ProfileStatus>,
     pub checksum_ok: Option<bool>,
     pub fields: Vec<Field>,
     pub records: Vec<Record>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ProfileStatus {
+    Occupied,
+    Empty,
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,6 +126,13 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SCUS-94570" => ("crash-bash", "Crash Bash", 1, "BA", ""),
         "SCES-00934" => ("pac-man-world", "Pac-Man World", 1, "BE", "PACMAN20"),
         "SLUS-00439" => ("pac-man-world", "Pac-Man World", 1, "BA", "PACMAN20"),
+        "SLUS-00823" => (
+            "bomberman-fantasy-race",
+            "Bomberman Fantasy Race",
+            1,
+            "BA",
+            "SYSTEM",
+        ),
         "SLUS-00603" => ("mega-man-legends", "Mega Man Legends", 1, "BA", ""),
         "SLES-01219" => ("azure-dreams", "Azure Dreams", 3, "BE", ""),
         "SLUS-01411" => (
@@ -198,6 +217,9 @@ pub(super) fn decode(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SLUS-00823" {
+        return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00439" {
         return pacman_us::decode(&format, code, data).map(GameDetails::Summary);
