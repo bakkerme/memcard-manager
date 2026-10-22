@@ -14,6 +14,7 @@ mod overnight;
 mod pacman_us;
 mod summaries;
 mod tekken2;
+mod thps;
 mod tomb_raider2;
 
 #[derive(Debug, Clone, Serialize)]
@@ -83,6 +84,7 @@ impl Format {
             return false;
         };
         match self.slug {
+            "tony-hawks-pro-skater" => matches!(suffix, "THPSGN0" | "THPSGCL"),
             "crash-bandicoot" => matches!(suffix, "00867900" | "01313863"),
             "digimon-world-2" => true, // Existing pilot validates its own layout.
             "azure-dreams" => suffix == "00",
@@ -119,6 +121,13 @@ impl Format {
 pub(super) fn format(code: &str) -> Option<Format> {
     let (slug, title, blocks, region, identifier_prefix) = match code {
         "SCUSP94457" => ("grandia", "Grandia", 1, "BA", "GRA-S01"),
+        "SLUS-00860" => (
+            "tony-hawks-pro-skater",
+            "Tony Hawk's Pro Skater",
+            1,
+            "BA",
+            "",
+        ),
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
         "SLUS-00437" => ("tomb-raider-2", "Tomb Raider II", 1, "BA", "TOMB2"),
@@ -238,6 +247,9 @@ pub(super) fn decode(
     }
     if code == "SCUSP94457" {
         return grandia::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if code == "SLUS-00860" {
+        return thps::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00823" {
         return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);
