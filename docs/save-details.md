@@ -22,6 +22,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Gran Turismo 2 | SCES-02380 / English PAL | 4 | Credits, days, races, wins, garage count, career progress; passed/gold tests for all six licences; CRC32 |
 | CTR: Crash Team Racing | SCUS-94426 / NTSC-U | 1 | Four adventure profiles with names, empty state, completion, trophies, relics, race CTR tokens, keys and gems; checksum; ghosts excluded |
 | Spyro the Dragon | SCUS-94228 / NTSC-U | 1 | Three profiles with empty state, location, lives, dragons, gems, eggs; 35 per-level dragon/gem records; per-profile checksums |
+| Tekken 2 | SLUS-00213 / NTSC-U | 1 | Playtime, 23 character unlock flags; deobfuscation and additive checksum; [evidence](formats/tekken2-us.md) |
 | Tekken 3 | SLUS-00402 / NTSC-U | 1 | Playtime, 21 character unlocks, Tekken Ball/Theatre; character arcade usage and versus wins/losses; deobfuscation and checksum |
 | Silent Hill | SLUS-00707 / NTSC-U | 1 | Eleven in-game save positions, empty state, playtime, difficulty, saves, health, location ID, Normal/Next Fear; shared ending unlocks; slot, preview and options checksums |
 | Mega Man Legends 2 | SLUS-01140 / NTSC-U | 1 | Saved location preview, playtime to seconds, Zenny, current/maximum health in stored units, named saved difficulty, named equipped helmet/shoes/armor and three buster-part slots; all four additive checksums |
