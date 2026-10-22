@@ -7,6 +7,7 @@ mod ape_escape;
 mod archive_summaries;
 mod bomberman_fantasy_race;
 mod crash_bandicoot;
+mod grandia;
 mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
@@ -116,6 +117,7 @@ impl Format {
 
 pub(super) fn format(code: &str) -> Option<Format> {
     let (slug, title, blocks, region, identifier_prefix) = match code {
+        "SCUSP94457" => ("grandia", "Grandia", 1, "BA", "GRA-S01"),
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
@@ -228,6 +230,9 @@ pub(super) fn decode(
     }
     if code == "SCUS-94900" {
         return crash_bandicoot::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if code == "SCUSP94457" {
+        return grandia::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00823" {
         return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);
