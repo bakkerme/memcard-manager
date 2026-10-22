@@ -12,6 +12,7 @@ mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
 mod pacman_us;
+mod resident_evil;
 mod summaries;
 mod tekken2;
 mod thps;
@@ -127,6 +128,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
             "BA",
             "",
         ),
+        "SLUS-00170" => ("resident-evil", "Resident Evil", 1, "BA", "1"),
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
@@ -245,6 +247,9 @@ pub(super) fn decode(
     }
     if code == "SLUS-00860" {
         return thps::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if code == "SLUS-00170" {
+        return resident_evil::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00823" {
         return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);
