@@ -11,6 +11,7 @@ mod mega_man_legends2;
 mod overnight;
 mod pacman_us;
 mod summaries;
+mod tomb_raider2;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
@@ -115,6 +116,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
     let (slug, title, blocks, region, identifier_prefix) = match code {
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
+        "SLUS-00437" => ("tomb-raider-2", "Tomb Raider II", 1, "BA", "TOMB2"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
         "SLES-03900" => (
             "digimon-digital-card-battle",
@@ -217,6 +219,9 @@ pub(super) fn decode(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SLUS-00437" {
+        return tomb_raider2::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00823" {
         return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);

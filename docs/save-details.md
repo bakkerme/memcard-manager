@@ -36,6 +36,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Bomberman Fantasy Race | SLUS-00823 / NTSC-U | 1 | Profile names, occupied/empty/unknown slots, owned normal/mirrored course-ticket counts; global and profile XOR8/sum8 checks |
 | Mega Man Legends | SLUS-00603 / NTSC-U | 1 | Time, Zenny, buster-part counts and raw location IDs; integrity unverified in app |
 | Kula World | SCES-01000 / PAL | 1 | Four slots, mode, score, level, fruit and elapsed seconds; integrity unverified |
+| Tomb Raider II | SLUS-00437 / NTSC-U | 1 | Total level time, recorded dragon secrets, current position and cleared marker; additive checksum; [evidence](formats/tomb-raider2-us.md) |
 | Tomb Raider | SLES-00024 / PAL | 1 | Current level and level-start inventory; checksum |
 
 FFVIII and Chrono Cross use **P-bearing save product codes**: these are the filenames stored by the game, not replacement disc serials. GT/GT2 settings and CTR ghosts do not share the adventure decoder. The existing original-US Digimon World 2 decoder (`SLUS-01193`, two blocks, three profiles) keeps its JSON shape and detailed roster.
