@@ -11,6 +11,7 @@ mod mega_man_legends2;
 mod overnight;
 mod pacman_us;
 mod summaries;
+mod tekken2;
 mod tomb_raider2;
 
 #[derive(Debug, Clone, Serialize)]
@@ -174,6 +175,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
         ),
         "SCUS-94228" => ("spyro-the-dragon", "Spyro the Dragon", 1, "BA", "SPYRO"),
         "SCUS-94423" => ("ape-escape", "Ape Escape", 1, "BA", "SYS"),
+        "SLUS-00213" => ("tekken-2", "Tekken 2", 1, "BA", "TEKKEN-2"),
         "SLUS-00402" => ("tekken-3", "Tekken 3", 1, "BA", "TEKKEN-3"),
         "SLUS-00707" => ("silent-hill", "Silent Hill", 1, "BA", "SILENT"),
         "SLUS-01140" => (
@@ -219,6 +221,9 @@ pub(super) fn decode(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SLUS-00213" {
+        return tekken2::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00437" {
         return tomb_raider2::decode(&format, code, data).map(GameDetails::Summary);
