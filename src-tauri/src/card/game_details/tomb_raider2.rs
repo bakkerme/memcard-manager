@@ -118,6 +118,15 @@ mod tests {
         assert_eq!(s.checksum_ok, Some(false));
         assert_eq!(s.profiles[0].fields[2].value, "Unknown level (65297)");
         assert_eq!(s.profiles[0].fields[3].value, "Unknown (9)");
+        for (marker, expected) in [(0, "Not recorded"), (9, "Unknown marker (9)")] {
+            let mut variant = d.clone();
+            variant[0x64c] = marker;
+            let GameDetails::Summary(s) = decode("SLUS-00437", "BA", "TOMB2", &variant).unwrap()
+            else {
+                panic!()
+            };
+            assert_eq!(s.profiles[0].fields[2].value, expected);
+        }
         for n in 0..8192 {
             assert!(decode("SLUS-00437", "BA", "TOMB2", &d[..n]).is_err());
         }
