@@ -13,6 +13,7 @@ Only the following product codes are enabled. Each was exercised with a real sav
 | Game | Product code / region | Blocks | Implemented fields |
 | --- | --- | ---: | --- |
 | Crash Bandicoot | SCUS-94900 / NTSC-U | 1 | Stored completion/gems/keys preview, raw level; rotating additive checksum; [boundaries and evidence](formats/crash-bandicoot-us.md) |
+| Grandia | SCUSP94457 / NTSC-U | 1 | Disc/transition, time, Gold, raw location ID; integrity unverified; [evidence](formats/grandia-us.md) |
 | Final Fantasy VII | SCES-00867 / English PAL | 1 | Disc, playtime, Gil, GP, saved location preview, raw story value; nine stored character records with names, levels, HP, MP, XP and party membership; checksum |
 | Final Fantasy VIII | SLUSP00892 / NTSC-U | 1 | Disc, playtime, Squall/Laguna Gil, location ID; eight character records with levels, HP and XP; acquired Guardian Forces and XP; both checksum copies |
 | Final Fantasy IX | SLES-02965 / English PAL | 1 | Disc, saved location preview, playtime, Gil, save count, location ID; nine stored character names and levels; checksum |
