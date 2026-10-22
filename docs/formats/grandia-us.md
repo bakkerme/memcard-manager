@@ -1,6 +1,6 @@
 # Grandia US read-only summary
 
-Supports only `BA` / `SCUSP94457` / `GRA-S01` (upstream slot 2), one 8192-byte SC block, `SC 13 01`, normalized Shift-JIS title beginning `GRANDIA−` and exact `GrandiaBupData\0` at SC `0x280`. The P-bearing product code is the game's save filename code, not a disc serial. Other slots, regional layouts, HD remaster and disc revisions are unqualified.
+Supports only `BA` / `SCUSP94457` / `GRA-S01` (upstream slot 2), one 8192-byte SC block, `SC 13 01`, normalized Shift-JIS title beginning `GRANDIA-` (WHATWG Shift-JIS/NFKC) and exact `GrandiaBupData\0` at SC `0x280`. The P-bearing product code is the game's save filename code, not a disc serial. Other slots, regional layouts, HD remaster and disc revisions are unqualified.
 
 Source: MIT, copyright 2024 RyudoSynbios, game-tools-collection [47203c0683893fb41f59154c5c60752125199ca5](https://github.com/RyudoSynbios/game-tools-collection/tree/47203c0683893fb41f59154c5c60752125199ca5/src/lib/templates/grandia/saveEditor), `template.ts` and `utils.ts`. [Retained license](../licenses/game-tools-collection-MIT.txt).
 

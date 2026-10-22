@@ -6,7 +6,7 @@ pub(super) fn decode(fmt: &Format, code: &str, d: &[u8]) -> Result<SaveDetails, 
     let (title, _, invalid) = encoding_rs::SHIFT_JIS.decode(&d[4..4 + end]);
     if d[2] != 0x13
         || invalid
-        || !title.nfkc().collect::<String>().starts_with("GRANDIA−")
+        || !title.nfkc().collect::<String>().starts_with("GRANDIA-")
         || &d[0x280..0x28f] != b"GrandiaBupData\0"
     {
         return Err("Unsupported Grandia US title or data marker.".into());
