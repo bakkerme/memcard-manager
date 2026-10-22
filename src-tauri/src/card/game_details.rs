@@ -6,6 +6,7 @@ use serde::Serialize;
 mod ape_escape;
 mod archive_summaries;
 mod bomberman_fantasy_race;
+mod crash_bandicoot;
 mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
@@ -79,6 +80,7 @@ impl Format {
             return false;
         };
         match self.slug {
+            "crash-bandicoot" => matches!(suffix, "00867900" | "01313863"),
             "digimon-world-2" => true, // Existing pilot validates its own layout.
             "azure-dreams" => suffix == "00",
             "yu-gi-oh-forbidden-memories" => suffix.is_empty(),
@@ -123,6 +125,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
             "BE",
             "",
         ),
+        "SCUS-94900" => ("crash-bandicoot", "Crash Bandicoot", 1, "BA", ""),
         "SCUS-94570" => ("crash-bash", "Crash Bash", 1, "BA", ""),
         "SCES-00934" => ("pac-man-world", "Pac-Man World", 1, "BE", "PACMAN20"),
         "SLUS-00439" => ("pac-man-world", "Pac-Man World", 1, "BA", "PACMAN20"),
@@ -217,6 +220,9 @@ pub(super) fn decode(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SCUS-94900" {
+        return crash_bandicoot::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00823" {
         return bomberman_fantasy_race::decode(&format, code, data).map(GameDetails::Summary);
