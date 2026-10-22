@@ -16,6 +16,7 @@ mod resident_evil;
 mod summaries;
 mod tekken2;
 mod thps;
+mod tomb_raider2;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
@@ -131,6 +132,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SLUS-00170" => ("resident-evil", "Resident Evil", 1, "BA", "1"),
         "SLUS-01193" => ("digimon-world-2", "Digimon World 2", 2, "BA", ""),
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
+        "SLUS-00437" => ("tomb-raider-2", "Tomb Raider II", 1, "BA", "TOMB2"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
         "SLES-03900" => (
             "digimon-digital-card-battle",
@@ -241,6 +243,9 @@ pub(super) fn decode(
     }
     if code == "SCUS-94900" {
         return crash_bandicoot::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if code == "SLUS-00437" {
+        return tomb_raider2::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SCUSP94457" {
         return grandia::decode(&format, code, data).map(GameDetails::Summary);
