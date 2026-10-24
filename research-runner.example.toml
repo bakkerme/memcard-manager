@@ -1,0 +1,4 @@
+# Copy to research-runner.toml (ignored) and set your Runner service URL.
+# Loopback is an example for a local service, not an automatically started server.
+version = 1
+url = "http://127.0.0.1:8765"
