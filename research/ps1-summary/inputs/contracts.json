@@ -1,0 +1,575 @@
+{
+  "policy": {
+    "additionalProperties": false,
+    "properties": {
+      "finalization_seconds": {
+        "exclusiveMinimum": 0,
+        "title": "Finalization Seconds",
+        "type": "number"
+      },
+      "termination_seconds": {
+        "exclusiveMinimum": 0,
+        "title": "Termination Seconds",
+        "type": "number"
+      },
+      "checkpoint_seconds": {
+        "maximum": 300,
+        "minimum": 0.1,
+        "title": "Checkpoint Seconds",
+        "type": "number"
+      }
+    },
+    "required": [
+      "finalization_seconds",
+      "termination_seconds",
+      "checkpoint_seconds"
+    ],
+    "title": "Policy",
+    "type": "object"
+  },
+  "checkpoint": {
+    "additionalProperties": false,
+    "properties": {
+      "format": {
+        "const": "runner-checkpoint/v1",
+        "title": "Format",
+        "type": "string"
+      },
+      "summary": {
+        "maxLength": 8000,
+        "minLength": 1,
+        "title": "Summary",
+        "type": "string"
+      },
+      "next_action": {
+        "maxLength": 8000,
+        "title": "Next Action",
+        "type": "string"
+      },
+      "blockers": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 100,
+        "title": "Blockers",
+        "type": "array"
+      }
+    },
+    "required": [
+      "format",
+      "summary",
+      "next_action",
+      "blockers"
+    ],
+    "title": "Checkpoint",
+    "type": "object"
+  },
+  "result": {
+    "additionalProperties": false,
+    "properties": {
+      "format": {
+        "const": "runner-result/v1",
+        "title": "Format",
+        "type": "string"
+      },
+      "outcome": {
+        "enum": [
+          "complete",
+          "partial",
+          "blocked"
+        ],
+        "title": "Outcome",
+        "type": "string"
+      },
+      "reason": {
+        "enum": [
+          "scope_complete",
+          "budget_exhausted",
+          "no_actionable_work",
+          "user_requested"
+        ],
+        "title": "Reason",
+        "type": "string"
+      },
+      "summary": {
+        "maxLength": 8000,
+        "minLength": 1,
+        "title": "Summary",
+        "type": "string"
+      },
+      "next_action": {
+        "maxLength": 8000,
+        "title": "Next Action",
+        "type": "string"
+      },
+      "blockers": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 100,
+        "title": "Blockers",
+        "type": "array"
+      }
+    },
+    "required": [
+      "format",
+      "outcome",
+      "reason",
+      "summary",
+      "next_action",
+      "blockers"
+    ],
+    "title": "Result",
+    "type": "object"
+  },
+  "research": {
+    "$defs": {
+      "Dependency": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "provenance": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Provenance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "provenance"
+        ],
+        "title": "Dependency",
+        "type": "object"
+      },
+      "Evidence": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sha256"
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "description"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "Finding": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "claim": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Claim",
+            "type": "string"
+          },
+          "confidence": {
+            "enum": [
+              "supported",
+              "tentative",
+              "unresolved"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "claim",
+          "confidence",
+          "evidence",
+          "limitations"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "Reproduction": {
+        "additionalProperties": false,
+        "properties": {
+          "commands": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Commands",
+            "type": "array"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/$defs/Dependency"
+            },
+            "maxItems": 512,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "notes": {
+            "maxLength": 8000,
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commands",
+          "dependencies",
+          "notes"
+        ],
+        "title": "Reproduction",
+        "type": "object"
+      },
+      "ValidationCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "method": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Method",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "inconclusive",
+              "not_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "expected": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Expected",
+            "type": "string"
+          },
+          "observed": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Observed",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Evidence",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "status",
+          "expected",
+          "observed",
+          "evidence"
+        ],
+        "title": "ValidationCheck",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Workload-authored research and validation, separate from transport integrity.",
+    "properties": {
+      "format": {
+        "const": "runner-research/v1",
+        "title": "Format",
+        "type": "string"
+      },
+      "scope": {
+        "maxLength": 8000,
+        "minLength": 1,
+        "title": "Scope",
+        "type": "string"
+      },
+      "findings": {
+        "items": {
+          "$ref": "#/$defs/Finding"
+        },
+        "maxItems": 100,
+        "title": "Findings",
+        "type": "array"
+      },
+      "evidence": {
+        "items": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "maxItems": 100,
+        "title": "Evidence",
+        "type": "array"
+      },
+      "validation": {
+        "items": {
+          "$ref": "#/$defs/ValidationCheck"
+        },
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Validation",
+        "type": "array"
+      },
+      "reproduction": {
+        "$ref": "#/$defs/Reproduction"
+      },
+      "deliverables": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 100,
+        "title": "Deliverables",
+        "type": "array"
+      },
+      "limitations": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 100,
+        "title": "Limitations",
+        "type": "array"
+      }
+    },
+    "required": [
+      "format",
+      "scope",
+      "findings",
+      "evidence",
+      "validation",
+      "reproduction",
+      "deliverables",
+      "limitations"
+    ],
+    "title": "ResearchReport",
+    "type": "object"
+  },
+  "manifest-v2": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "format",
+      "name",
+      "adapter",
+      "runtime",
+      "brief",
+      "agents",
+      "skills",
+      "inputs",
+      "resources",
+      "required_outputs",
+      "policy"
+    ],
+    "properties": {
+      "format": {
+        "const": "research-package/v2"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "adapter": {
+        "enum": [
+          "fixture",
+          "codex"
+        ]
+      },
+      "runtime": {
+        "type": "object",
+        "required": [
+          "sdk"
+        ],
+        "dependentRequired": {
+          "image": [
+            "image_id"
+          ],
+          "image_id": [
+            "image"
+          ]
+        },
+        "properties": {
+          "image": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "sdk": {
+            "const": "openai-codex==0.159.0"
+          }
+        }
+      },
+      "brief": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Normalized relative POSIX path; no traversal, links or reserved input paths."
+      },
+      "agents": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Normalized relative POSIX path; no traversal, links or reserved input paths."
+      },
+      "skills": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normalized relative POSIX path; no traversal, links or reserved input paths."
+        },
+        "uniqueItems": true
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normalized relative POSIX path; no traversal, links or reserved input paths."
+        },
+        "uniqueItems": true
+      },
+      "resources": {
+        "type": "object",
+        "required": [
+          "cpu",
+          "memory_mb",
+          "time_seconds"
+        ],
+        "properties": {
+          "cpu": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 8
+          },
+          "memory_mb": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 32768
+          },
+          "time_seconds": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
+          }
+        }
+      },
+      "required_outputs": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normalized relative POSIX path; no traversal, links or reserved input paths."
+        },
+        "uniqueItems": true,
+        "allOf": [
+          {
+            "contains": {
+              "const": "outputs/result.json"
+            }
+          },
+          {
+            "contains": {
+              "const": "outputs/handoff.md"
+            }
+          }
+        ]
+      },
+      "policy": {
+        "additionalProperties": false,
+        "properties": {
+          "finalization_seconds": {
+            "exclusiveMinimum": 0,
+            "title": "Finalization Seconds",
+            "type": "number"
+          },
+          "termination_seconds": {
+            "exclusiveMinimum": 0,
+            "title": "Termination Seconds",
+            "type": "number"
+          },
+          "checkpoint_seconds": {
+            "maximum": 300,
+            "minimum": 0.1,
+            "title": "Checkpoint Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "finalization_seconds",
+          "termination_seconds",
+          "checkpoint_seconds"
+        ],
+        "title": "Policy",
+        "type": "object"
+      }
+    },
+    "description": "Cross-field/path, dependency and archive constraints are additionally checked by research-runner verify."
+  }
+}

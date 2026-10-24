@@ -1,0 +1,15 @@
+# Only definitions and public contracts belong in Git. Runner packages ALL files,
+# including ignored files; review its inventory before submission.
+/*/*
+!/*/manifest.json
+!/*/brief.md
+!/*/AGENTS.md
+!/*/inputs/
+/*/inputs/*
+!/*/inputs/question.md
+!/*/inputs/contracts.json
+
+# Historical private imports contain deployment-specific briefs and tool pins.
+# Keep the full workspaces local; publish only deliberately portable definitions.
+/pacman-us/
+/bomberman-us/

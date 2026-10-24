@@ -110,3 +110,8 @@ The read-only Digimon World 2 decoder and name mappings are adapted from [acemon
 Playtime conversion was verified against [Wyrelade’s Digimon World 2 decompilation](https://github.com/Wyrelade/Digimon-World-2-Decomp/blob/cff2114139f0d93dd8fa94fa09600462ed9a35a2/src/stag1100/stag1100_301C.c) (`Stg11_CardMenuDraw`, CC0-1.0). The original US save stores a little-endian counter at profile offset `0x10`; the menu truncates it to minutes at 3,600 ticks per minute and clamps to 99:59. The `blue.mcr` fixture’s 217,430 ticks matches the user-confirmed in-game display of 01:00.
 
 GPL-3.0-or-later. The parser is ported from [MemcardRex](https://github.com/ShendoXT/memcardrex) Core by Shendo; attribution remains with the parser. The bundled Encode Sans Expanded font is distributed under the [SIL Open Font License](src/assets/fonts/OFL.txt). The PlayStation monogram uses the Simple Icons CC0 silhouette. This is an independent project, not an official Sony application.
+
+## Remote save research
+
+See [Research Runner setup and commands](research/README.md) for repo-local research
+definitions, complete private inputs, remote execution and verified result collection.

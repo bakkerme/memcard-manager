@@ -1,5 +1,19 @@
 # Standalone parser research
 
+## Research Runner
+
+Use the repo-local [Research Runner workflow](../../research/README.md): install
+`requirements-research.txt`, activate `.research-runner/venv`, define work under
+`research/NAME/`, and use the installed CLI for package/submit/start/monitor/pull/results.
+No Runner source checkout or custom submission/collection commands are needed.
+
+`prepare_runner.py` now imports a complete, SHA-256-pinned legacy v2 archive into
+a fresh definition, retaining every dependency and its relative path, and adds the
+structured research closeout contract. It delegates extraction and packaging to
+the installed library and never submits or starts work. See the workflow for the
+Pac-Man/Bomberman migration, input preservation, current server compatibility,
+required dependency verification and recovery commands.
+
 Copy this directory's `harness.py` and `parser_template.py` with your private
 suite. Python 3.10+ and the standard library are sufficient. No desktop app,
 Node.js, Rust, BIOS, disc or container is needed for file-only parser validation.

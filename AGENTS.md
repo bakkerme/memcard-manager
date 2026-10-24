@@ -32,6 +32,17 @@ npm run build   # tsc --noEmit && vite build
 - Coordinator tests need only Python 3: `python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v`. Passing them does not qualify a real emulator run. Keep research results and production parser changes distinct.
 - Readiness pilots include bounded startup diagnosis within their requested scope. For card preservation failures, follow `.agents/skills/emulator-replay/references/startup-preservation.md`; retain the failed probe and require exact equality after an evidenced initialization boundary.
 
+## Research Runner packaging
+
+- Use the installed wheel pinned in `requirements-research.txt`, configured by ignored `research-runner.toml` copied from `research-runner.example.toml`; see `research/README.md` and the bundled `.agents/skills/research-runner/SKILL.md`. Definitions live in `research/NAME/`; private inputs are ignored but still packaged. Keep generated state in ignored `.research-runner/`. Never import a sibling Runner checkout or implement custom job transport/receipt handling.
+- Use Runner CLI/ResearchRepo for package, submit, start, read-only monitoring and recoverable pull/results. Require `outputs/research.json` alongside result/handoff, with bundled schemas. Submit/start are separate explicit actions; a setup/migration request does not authorize execution. Existing complete archives can be migrated with `tools/save_research/prepare_runner.py --name NAME --archive FILE --sha256 HASH`.
+
+- Include all inputs required to reproduce the scoped research in the package, preserving relative paths and provenance. This includes required save samples, readers/helpers, specs/evidence, BIOS and complete disc/CUE dependencies. Do not exclude an input merely because it is already on DGX.
+- Inspect current supplied assets as well as historical manifests; an old missing-input record is not proof that an input is still absent.
+- Inspect the server's current capabilities before packaging. Input defaults are now 512 archive entries, 8 GiB/file and 64 GiB total uncompressed including the envelope (maximum 1 MiB); published outputs retain separate 32 MiB/file and 128 MiB/generation limits. If a required input exceeds the configured input limits, report an explicit packaging limitation with its path, size, SHA-256, affected scope and exceeded limit. Distinguish missing inputs from oversized inputs. Do not silently omit dependencies or describe an incomplete package as self-contained. Split independent scopes when useful; splitting jobs does not bypass a per-file limit.
+- Every external dependency must have an exact cryptographic hash (SHA-256 for files; immutable digest for tool images), explicit location and provenance. Verify the actual bytes or image identity on the executing host before using it; retain the verification receipt. A filename, version, mutable tag, historical receipt or path-existence check alone is insufficient. Missing or mismatched dependencies block the affected operation.
+- Keep originals unchanged and generated packages/operational records in ignored run directories. Codex runs natively with its existing login; workload tool containers remain optional. Keep credentials out of packages.
+
 ## Layout
 
 - `src/` — React UI. `src/card/` (engine, api, demo), `src/components/` (`PixelIcon.tsx`), `App.tsx`, `icons.tsx`, `index.css`, `App.css`.
