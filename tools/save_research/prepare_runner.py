@@ -46,6 +46,11 @@ def suite_files(root, suite):
     return paths
 
 
+def relative_name(path, root):
+    """Runner wire paths use forward slashes on every producer platform."""
+    return path.relative_to(root).as_posix()
+
+
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
@@ -118,14 +123,15 @@ def import_package(repo, name, archive, expected_sha256):
             'verified_utc': datetime.now(timezone.utc).isoformat(),
             'source_archive': str(archive), 'source_sha256': expected_sha256,
             'original_manifest': original,
-            'preserved_files': {str(p.relative_to(stage)): sha(p) for p in occupied
-                                if str(p.relative_to(stage)) not in (manifest['brief'], manifest['agents'])},
+            'preserved_files': {relative_name(p, stage): sha(p) for p in occupied
+                                if relative_name(p, stage) not in
+                                ('manifest.json', manifest['brief'], manifest['agents'])},
             'note': 'Byte verification only; runtime dependencies must be verified on executing host.',
         })
         declared = {manifest['brief'], manifest['agents'], *manifest['skills']}
-        manifest['inputs'] = sorted(str(p.relative_to(stage)) for p in stage.rglob('*')
+        manifest['inputs'] = sorted(relative_name(p, stage) for p in stage.rglob('*')
                                     if p.is_file() and p != stage / 'manifest.json'
-                                    and str(p.relative_to(stage)) not in declared)
+                                    and relative_name(p, stage) not in declared)
         write(stage / 'manifest.json', manifest)
         target.parent.mkdir(parents=True, exist_ok=True)
         stage.rename(target)

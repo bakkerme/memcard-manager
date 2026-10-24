@@ -2,9 +2,9 @@ import hashlib
 import json
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
-from prepare_runner import checked, sha, suite_files
+from prepare_runner import checked, relative_name, sha, suite_files
 
 
 class PreparationTests(unittest.TestCase):
@@ -51,6 +51,10 @@ class PreparationTests(unittest.TestCase):
         (self.root / 'linked').symlink_to(self.suite)
         with self.assertRaises(ValueError):
             checked(self.root, 'linked')
+
+    def test_windows_wire_paths_use_forward_slashes(self):
+        self.assertEqual(relative_name(PureWindowsPath('C:/payload/nested/brief.md'),
+                                       PureWindowsPath('C:/payload')), 'nested/brief.md')
 
     def test_hash_matches_standard_digest(self):
         self.assertEqual(sha(self.root / 'recovery/inputs/save.bin'), hashlib.sha256(b'original').hexdigest())
@@ -103,6 +107,39 @@ class MigrationTests(unittest.TestCase):
         self.assertFalse((self.repo.state / 'runs').exists())
         self.assertEqual((target / 'preparation/runner-migration-original/brief.md').read_text(),
                          'Original scientific question')
+
+    def test_rewritten_root_manifest_is_not_claimed_as_preserved(self):
+        from prepare_runner import import_package
+        self.manifest['inputs'].append('manifest.json')
+        (self.source / 'manifest.json').write_text(json.dumps(self.manifest))
+        self.expected = assemble(self.source, self.archive)
+        import_package(self.repo, 'root-manifest', self.archive, self.expected)
+        target = self.repo.root / 'research/root-manifest'
+        ledger = json.loads((target / 'preparation/runner-migration.json').read_text())
+        self.assertNotIn('manifest.json', ledger['preserved_files'])
+        self.assertIn('nested/manifest.json', ledger['preserved_files'])
+        for name, expected in ledger['preserved_files'].items():
+            self.assertEqual(sha(target / name), expected, name)
+        self.assertEqual(ledger['original_manifest'], self.manifest)
+
+    def test_nested_control_files_remain_declared_once(self):
+        from prepare_runner import import_package
+        for key in ('brief', 'agents'):
+            old = self.source / self.manifest[key]
+            name = 'nested/' + old.name
+            old.rename(self.source / name)
+            self.manifest[key] = name
+        skill = 'nested/SKILL.md'
+        (self.source / skill).write_text('Research skill')
+        self.manifest['skills'] = [skill]
+        (self.source / 'manifest.json').write_text(json.dumps(self.manifest))
+        self.expected = assemble(self.source, self.archive)
+        package = import_package(self.repo, 'nested-control', self.archive, self.expected)
+        manifest, inventory = verify(package['archive'])
+        for name in (manifest['brief'], manifest['agents'], *manifest['skills']):
+            self.assertIn(name, inventory)
+            self.assertNotIn(name, manifest['inputs'])
+        self.assertTrue(all('\\' not in name for name in manifest['inputs']))
 
     def test_mismatch_creates_no_definition(self):
         from prepare_runner import import_package
