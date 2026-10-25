@@ -1,0 +1,30 @@
+{
+  "format": "research-package/v2",
+  "name": "ps1-summary",
+  "adapter": "codex",
+  "runtime": {
+    "sdk": "openai-codex==0.159.0"
+  },
+  "brief": "brief.md",
+  "agents": "AGENTS.md",
+  "skills": [],
+  "inputs": [
+    "inputs/question.md",
+    "inputs/contracts.json"
+  ],
+  "resources": {
+    "cpu": 1,
+    "memory_mb": 4096,
+    "time_seconds": 3600
+  },
+  "required_outputs": [
+    "outputs/result.json",
+    "outputs/handoff.md",
+    "outputs/research.json"
+  ],
+  "policy": {
+    "finalization_seconds": 300,
+    "termination_seconds": 60,
+    "checkpoint_seconds": 30
+  }
+}

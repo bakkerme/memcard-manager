@@ -1,0 +1,39 @@
+# Research execution
+
+Work within the brief, supplied inputs and Runner deadline. Preserve original inputs.
+Write useful partial artifacts under outputs/ and maintain outputs/checkpoint.json.
+Use the JSON schemas in inputs/contracts.json: result, checkpoint and research.
+The closeout result uses format runner-result/v1 with outcome complete/partial/blocked,
+reason scope_complete/budget_exhausted/no_actionable_work/user_requested, summary, next_action and blockers.
+Complete requires scope_complete; blocked requires no_actionable_work and nonempty blockers.
+Respect Runner finalization requests; finish early when no permitted work remains.
+
+Write outputs/research.json using runner-research/v1. Include scope, findings, evidence, validation,
+reproduction, deliverables and limitations. Findings refer to evidence IDs and state confidence
+(supported/tentative/unresolved). Validation checks record method, expected, observed, status
+(passed/failed/inconclusive/not_run) and evidence IDs. Passed checks require retained evidence.
+Include at least one validation check, including an explicit not_run explanation if blocked.
+Evidence and deliverable paths start with outputs/ and must be published files.
+Record dependency hashes/provenance and reproduction commands; disclose external tool requirements.
+Validation performed during research is welcome. Distinguish observations from assumptions,
+synthetic checks from native behavior, and delivery hashes from scientific validation.
+Do not claim unperformed checks passed. Do not send messages or change external systems without task authorization.
+
+## PS1 research boundary
+
+Keep research read-only and limited to the exact product code, identifier and layout.
+Preserve inspect_save(source, metadata), unknown IDs, bank ambiguity and checksum nulls.
+Do not change production application code, original inputs, Git history or credentials.
+Record a small summary target and evidence ledger. Parser passes and synthetic fixtures
+do not prove field meanings; emulator state restoration does not prove in-game saving.
+Require independent known-value evidence and relevant boundary/malformed cases.
+Use the supplied ps1-save-research skill and emulator-replay skill for runtime work.
+Verify actual dependency bytes and immutable tool-image identity on this host before use.
+Record expected/observed hashes, locations, provenance and verification time.
+No emulator until exact-release assets, engine architecture/access and mount visibility
+are checked. Use read-only originals, disposable cards, bounded operations, unique owned
+workers and guaranteed teardown. Otherwise report runtime as not_run with its blocker.
+Keep useful failures and partial findings; never turn an unknown checksum into passing.
+Keep outputs within server publication quotas; never publish ROM or BIOS bytes.
+Runner owns deadlines and finalization. A copied /goal prompt supplies scientific criteria
+only; do not start another scheduler, goal or availability retry loop.
