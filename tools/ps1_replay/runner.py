@@ -23,6 +23,11 @@ ROOT = Path(__file__).resolve().parent
 WORK = Path('/work')
 URL = 'http://127.0.0.1:8080/api/v1/lua/'
 EMU = '/opt/squashfs-root/AppRun'
+# Session budgets were hard-coded: 300s for baseline restores and the CLI
+# client, 900s for calibrate/bootstrap/diagnose. Slow software GL boots and
+# card writes exhausted them independently of the Runner budget.
+BASELINE_SECONDS = float(os.environ.get('PS1_REPLAY_BASELINE_SECONDS', '300'))
+SESSION_SECONDS = float(os.environ.get('PS1_REPLAY_SESSION_SECONDS', '900'))
 
 
 def sha(path):
@@ -54,7 +59,7 @@ class Client:
     def __init__(self, log, process=None, deadline=None, request=None):
         self.log = Path(log)
         self.process = process
-        self.deadline = deadline or time.monotonic() + 300
+        self.deadline = deadline or time.monotonic() + BASELINE_SECONDS
         self.request = request or self.http
 
     @staticmethod
@@ -69,7 +74,7 @@ class Client:
         if self.process is not None and self.process.poll() is not None:
             raise GateError(f'Emulator exited: {self.process.returncode}')
         if time.monotonic() >= self.deadline:
-            raise GateError('Five-minute worker deadline exceeded')
+            raise GateError('Emulator session deadline exceeded (PS1_REPLAY_*_SECONDS)')
 
     def ready(self):
         while True:
@@ -97,7 +102,13 @@ class Client:
                 self.check()
                 if time.monotonic() - started > timeout:
                     raise GateError(f'Action stalled: {action}')
-                state = self.request('replay_status')
+                try:
+                    state = self.request('replay_status')
+                except (OSError, ValueError):
+                    # A busy emulator can miss one 2s poll; the action timeout
+                    # and process check above still bound the wait.
+                    time.sleep(.2)
+                    continue
                 if state.get('done') == ident:
                     result = state['result']
                     if result.get('error'):
@@ -236,7 +247,7 @@ class Worker:
                                         'LP_NUM_THREADS', 'SDL_AUDIODRIVER')}})
             self.process = subprocess.Popen(args, env=env, stdout=self.log,
                                             stderr=subprocess.STDOUT, start_new_session=True)
-            self.client = Client(self.directory / 'actions.jsonl', self.process, started + (300 if self.baseline else 900))
+            self.client = Client(self.directory / 'actions.jsonl', self.process, started + (BASELINE_SECONDS if self.baseline else SESSION_SECONDS))
             self.client.ready()
             # The on-disk profile can still contain pre-CLI defaults until exit.
             # Inspect the live Lua settings rather than certifying that stale file.

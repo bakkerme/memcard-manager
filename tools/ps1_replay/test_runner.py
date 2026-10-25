@@ -88,6 +88,27 @@ class CoordinatorTests(unittest.TestCase):
         self.assertEqual([c['action'] for c in adapter.commands], ['press', 'release'])
         self.assertIn('stalled', json.loads(self.log.read_text())['error'])
 
+    def test_transient_status_poll_failure_does_not_abort_action(self):
+        calls = {'n': 0}
+        def request(endpoint, params=None):
+            if endpoint == 'replay_command':
+                return {'accepted': params['id']}
+            calls['n'] += 1
+            if calls['n'] == 1:
+                raise OSError('timed out')
+            return {'done': ident[0], 'result': {'ok': True}}
+        ident = [None]
+        original = runner.uuid.uuid4
+        class Fixed:
+            hex = 'f' * 32
+        runner.uuid.uuid4 = lambda: Fixed
+        ident[0] = 'f' * 32
+        try:
+            client = runner.Client(self.log, request=request)
+            self.assertEqual(client.action('capture', timeout=5), {'ok': True})
+        finally:
+            runner.uuid.uuid4 = original
+
     def test_frame_overshoot_is_rejected_and_releases_buttons(self):
         adapter = FakeAdapter('overshoot')
         client = runner.Client(self.log, request=adapter)
