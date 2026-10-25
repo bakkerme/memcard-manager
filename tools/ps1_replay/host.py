@@ -3,6 +3,8 @@
 import argparse
 import hashlib
 import json
+import math
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -16,6 +18,27 @@ def image_name():
 
 def call(argv, **kwargs):
     return subprocess.run(argv, check=True, **kwargs)
+
+
+# runner.py reads these when the container process starts. Docker and Podman do
+# not copy the host environment into `run` or `exec`.
+SESSION_ENV_KEYS = ('PS1_REPLAY_BASELINE_SECONDS', 'PS1_REPLAY_SESSION_SECONDS')
+
+
+def session_env_flags():
+    flags = []
+    for key in SESSION_ENV_KEYS:
+        if key not in os.environ:
+            continue
+        raw = os.environ[key].strip()
+        try:
+            seconds = float(raw)
+        except ValueError:
+            seconds = float('nan')
+        if not math.isfinite(seconds) or seconds <= 0:
+            raise RuntimeError(f'{key} must be a positive number of seconds')
+        flags += ['-e', f'{key}={raw}']
+    return flags
 
 
 def download():
@@ -82,7 +105,8 @@ def main(argv=None):
     p.add_argument('arguments', nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     if args.mode == 'command':
-        call([args.engine, 'exec', args.name, 'python3', '/tools/ps1_replay/runner.py', 'command', *args.arguments])
+        call([args.engine, 'exec', *session_env_flags(), args.name, 'python3',
+              '/tools/ps1_replay/runner.py', 'command', *args.arguments])
         return
     environment = preflight(args.engine)
     if args.mode == 'preflight':
@@ -140,6 +164,7 @@ def main(argv=None):
         pass  # best effort; `run` reports a real conflict
     argv = [args.engine, 'run', '--rm', '--label', 'memcard.ps1-replay=1', '--platform', 'linux/arm64', '--name', args.name, '--cpus', '4', '--memory', '3g',
             '--network', 'none', '--entrypoint', 'python3']
+    argv += session_env_flags()
     for path, dest, mode in mounts:
         argv += ['-v', f'{path.resolve()}:{dest}:{mode}']
     argv += [info['Id'], '/tools/ps1_replay/runner.py', args.mode]
