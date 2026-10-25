@@ -51,12 +51,27 @@ class EngineTests(unittest.TestCase):
                 bios = root / 'bios.bin'; bios.write_bytes(b'bios')
                 card = root / 'card.mcr'; card.write_bytes(b'card')
                 run = root / 'run'
+                calls = []
+
+                def fake_run(argv, **kwargs):
+                    calls.append(argv)
+                    if argv[1] == 'ps':
+                        return SimpleNamespace(stdout='stale123\n', returncode=0)
+                    return SimpleNamespace(stdout='', returncode=0)
+
                 with patch.object(host, 'preflight'), \
                         patch.object(host, 'image_info', return_value={'Id': 'sha256:test', 'Architecture': 'arm64'}), \
-                        patch.object(host, 'call') as call:
+                        patch.object(host, 'call') as call, \
+                        patch.object(host.subprocess, 'run', side_effect=fake_run):
                     host.main(['--engine', engine, 'bootstrap', '--run', str(run), '--bios', str(bios), '--disc', str(disc), '--card', str(card)])
                     argv = call.call_args.args[0]
                     self.assertEqual(argv[:3], [engine, 'run', '--rm'])
+                    self.assertEqual(argv[argv.index('--label') + 1], 'memcard.ps1-replay=1')
+                    self.assertEqual(calls, [
+                        [engine, 'ps', '-aq', '--filter', 'name=^ps1-replay$',
+                         '--filter', 'label=memcard.ps1-replay=1'],
+                        [engine, 'rm', '-f', 'stale123'],
+                    ])
                     self.assertIn(f'{card.resolve()}:/inputs/seed.mcr:ro', argv)
                     self.assertIn(f'{run.resolve()}:/work:rw', argv)
                     self.assertEqual(argv[argv.index('--network') + 1], 'none')

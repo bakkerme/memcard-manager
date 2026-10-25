@@ -127,7 +127,18 @@ def main(argv=None):
               (args.run, '/work', 'rw')]
     if args.mode == 'diagnose':
         mounts.append((args.state, '/inputs/diagnostic.state', 'ro'))
-    argv = [args.engine, 'run', '--rm', '--platform', 'linux/arm64', '--name', args.name, '--cpus', '4', '--memory', '3g',
+    # A Runner hard kill (SIGKILL to the worker process group) kills this CLI but
+    # not the container. Foreground `run --rm` never gets to remove it, so a fixed
+    # --name then fails every later run with "name already in use". Remove only a
+    # stale container this tool labelled.
+    try:
+        stale = subprocess.run([args.engine, 'ps', '-aq', '--filter', 'name=^' + args.name + '$',
+                                '--filter', 'label=memcard.ps1-replay=1'], capture_output=True, text=True, timeout=30)
+        for cid in stale.stdout.split():
+            subprocess.run([args.engine, 'rm', '-f', cid], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        pass  # best effort; `run` reports a real conflict
+    argv = [args.engine, 'run', '--rm', '--label', 'memcard.ps1-replay=1', '--platform', 'linux/arm64', '--name', args.name, '--cpus', '4', '--memory', '3g',
             '--network', 'none', '--entrypoint', 'python3']
     for path, dest, mode in mounts:
         argv += ['-v', f'{path.resolve()}:{dest}:{mode}']

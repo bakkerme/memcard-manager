@@ -189,7 +189,9 @@ python3 tools/ps1_replay/host.py command memory --address 0x8008c0b0 --length 0x
 Every press releases overrides at its final guest vsync. Frame actions fail if
 their actual count differs from the requested count. An action has a 60-second
 deadline and a trial has a five-minute deadline, including emulator startup.
-Interactive calibration has a separate fifteen-minute limit. Errors attempt an
+Interactive calibration has a separate fifteen-minute limit. `PS1_REPLAY_BASELINE_SECONDS`
+overrides the trial and CLI budget (default 300); `PS1_REPLAY_SESSION_SECONDS` overrides the
+calibration, bootstrap, and diagnose budget (default 900). Errors attempt an
 acknowledged emergency release, then shut down the owned emulator process;
 `cleanup.json` records release acknowledgement and process exit; a null
 acknowledgement means the emulator had already exited before cleanup.
