@@ -200,16 +200,20 @@
       "game": "Rayman",
       "genre": "Platformer",
       "evidence": "Source available",
-      "fields": "Current level, unlocked powers, lives and rescued Electoons by level.",
-      "regions": "EU / US / JP",
-      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "fields": "Filename, completion text, lives and continues. Editor map also lists level, powers and cages; those are unconfirmed.",
+      "regions": "SLUS-00005 (NTSC-U). Directory prefix BI confirmed; BA accepted, unobserved.",
+      "note": "USA reader uses confirmed filename, completion, lives and continues. Cage, power and current-level offsets match the pinned editor and are labeled unconfirmed because a GameFAQs file labeled 100% complete reads as a new game on that map. EU and JP are not accepted.",
       "links": [
         [
           "Field definitions",
-          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/rayman/saveEditor/template.ts"
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/c4c80f40fd0e102e2dac7257851f43167b2c350f/src/lib/templates/rayman/saveEditor/template.ts"
         ]
       ],
-      "implementationStatus": "Research candidate"
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00005 (NTSC-U)",
+      "implementationDocumentation": "docs/formats/rayman-us.md",
+      "validationBoundary": "Fresh native load confirmed the header, filename, 000% completion, lives and continues. Cages, powers and current level are editor-derived and contradicted by a GameFAQs file labeled 100% complete. No checksum is validated.",
+      "implementedFields": "Filename, completion text, lives and continues. Unconfirmed editor readings for current level, cages and powers are labeled and are not treated as reliable progress."
     },
     {
       "game": "Spyro the Dragon",
