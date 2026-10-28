@@ -32,6 +32,9 @@ TOOL_PATHS = (
     'tools/save_research/harness.py',
     'tools/save_research/parser_template.py',
     'tools/save_research/disc_id.py',
+    # host.py bind-mounts this decoder on every launch. Without it, ensure
+    # succeeds and bootstrap/calibrate/qualify fail on a missing source path.
+    'tools/inspect_mml2.py',
 )
 SKILL_ROOTS = (
     '.agents/skills/ps1-save-research/',

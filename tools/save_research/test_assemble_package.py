@@ -184,7 +184,8 @@ class AssembleTests(unittest.TestCase):
             self.assertNotIn('image', manifest['runtime'])
             self.assertNotIn('image_id', manifest['runtime'])
             for name in ('tools/ps1_replay/Containerfile', 'tools/ps1_replay/build-lock.json',
-                         'tools/ps1_replay/host.py', 'inputs/tool-images.json',
+                         'tools/ps1_replay/host.py', 'tools/inspect_mml2.py',
+                         'inputs/tool-images.json',
                          'inputs/bios/ps-22a.bin', 'inputs/saves/rayman-na.gme'):
                 self.assertIn(name, files)
             self.assertNotIn('inputs/roms/game', files)
