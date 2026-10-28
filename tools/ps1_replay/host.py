@@ -101,7 +101,7 @@ def download():
     if not cache.exists():
         temporary = cache.with_suffix('.partial')
         try:
-            with urllib.request.urlopen(lock['url'], timeout=60) as source, temporary.open('wb') as dest:
+            with urllib.request.urlopen(urllib.request.Request(lock['url'], headers={'User-Agent': 'research-runner/ps1-replay'}), timeout=60) as source, temporary.open('wb') as dest:
                 while chunk := source.read(1024 * 1024):
                     dest.write(chunk)
             if hashlib.sha256(temporary.read_bytes()).hexdigest() != lock['sha256']:

@@ -11,7 +11,7 @@ The decoder should help a person tell saves apart and track progress. A 100% sam
 ## Acceptance
 
 - A read-only decoder and suite for @@PRODUCT_CODE@@ / @@SERIAL@@, following the shape of `inputs/current-reader`. There is no Rayman decoder in that tree.
-- Known values from the supplied save, plus boundary and malformed cases. Synthetic edits stay labelled synthetic.
+- Known values from the supplied or emulator-generated saves, plus boundary and malformed cases. Synthetic edits stay labelled synthetic.
 - Cross-check against the MIT editor cited below. Cite it. Do not copy its source into the deliverable.
 - The cited editor has no checksum logic. Leave checksum status null unless a separate experiment establishes an algorithm. Do not invent a passing checksum.
 - `native-load` reads the on-screen completion percent. A screenshot of that screen is evidence.

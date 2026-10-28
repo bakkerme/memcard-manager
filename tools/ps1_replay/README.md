@@ -8,9 +8,14 @@ each worker receives a disposable card and separate portable profile.
 ## First result
 
 The 10 October 2026 test **passed three fresh-process Equipment replays** on
-pinned official ARM64 build 70 (`d42cdae5`). Each reached relative frame 288 with
+official ARM64 build 70 (`d42cdae5`). Each reached relative frame 288 with
 identical framebuffer hashes and matching known-save RAM. All originals,
 prepared disposable cards and baseline artifacts remained unchanged.
+That result is historical. `build-lock.json` and `recipe.json` now pin build
+206 (`85baf2cd`, archive sha256
+`14b1f77c98ee238c32463c96b21b91e1e8a45cc26ec8f48706da0f54ea0fb5da`).
+Build 206 is the artifact `host.py` downloads; it is not a new qualification
+of the Legends 2 recipe.
 See [the test report](../../docs/research/linux-replay-first-test.md).
 The reusable [emulator-replay skill](../../.agents/skills/emulator-replay/SKILL.md)
 captures the qualification workflow with separate Redux notes and a Legends 2

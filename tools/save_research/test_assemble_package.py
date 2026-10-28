@@ -66,12 +66,28 @@ def init_fixture(repo):
     git(repo, 'commit', '-m', 'fixture', '--no-gpg-sign')
 
 
-def filled_spec(bios, save, directory):
+def filled_spec(bios, save, directory, include_save=True):
+    """Copy the committed spec and pin private-input digests to these files.
+
+    The committed Rayman spec has no save. Tests of the save-present path pass
+    include_save=True, which declares one. The optional-save path leaves it out.
+    """
     spec = json.loads((REAL / 'research/specs/rayman-us.json').read_text())
+    roles = {item['role'] for item in spec['private_inputs']}
+    if include_save and 'save' not in roles:
+        spec['private_inputs'].append({
+            'role': 'save',
+            'path': 'inputs/saves/rayman-na.gme',
+            'path_env': 'RAYMAN_SAVE',
+            'sha256': '0' * 64,
+            'provenance': 'Fixture save supplied at assemble time.',
+        })
     for item in spec['private_inputs']:
         if item['role'] == 'bios':
             item['sha256'] = sha256(bios)
         elif item['role'] == 'save':
+            if save is None:
+                raise ValueError('save file required when the spec declares one')
             item['sha256'] = sha256(save)
     path = directory / 'rayman-us.json'
     path.write_text(json.dumps(spec, indent=2, sort_keys=True) + '\n')
@@ -199,7 +215,10 @@ class AssembleTests(unittest.TestCase):
             self.assertNotIn('image_id', brief)
             self.assertNotIn('rebuild permitted', (agents + brief).lower())
             self.assertIn('input hash', agents)
-            self.assertIn('f9568b93', agents)
+            lock = json.loads((self.repo / 'tools/ps1_replay/build-lock.json').read_text())
+            self.assertEqual(lock['buildId'], 206)
+            self.assertIn(lock['sha256'], agents)
+            self.assertIn(str(lock['buildId']), agents)
             generated = ('AGENTS.md', 'brief.md', 'inputs/question.md', 'inputs/spec.json',
                          'inputs/provenance.json', 'inputs/tool-images.json', 'inputs/contracts.json')
             with tarfile.open(built['package'], 'r:gz') as tar:
@@ -235,14 +254,17 @@ class AssembleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             bios = root / 'bios.bin'
-            save = root / 'save.gme'
             bios.write_bytes(b'real-checkout-bios')
-            save.write_bytes(b'real-checkout-save')
-            spec = filled_spec(bios, save, root)
-            first = build_package(spec, root / 'one', fmt='v2', bios=bios, save=save, repo=REAL)
-            second = build_package(spec, root / 'two', fmt='v2', bios=bios, save=save, repo=REAL)
+            spec = filled_spec(bios, None, root, include_save=False)
+            first = build_package(spec, root / 'one', fmt='v2', bios=bios, repo=REAL)
+            second = build_package(spec, root / 'two', fmt='v2', bios=bios, repo=REAL)
             self.assertEqual(first['sha256'], second['sha256'])
             self.assertTrue(filecmp.cmp(first['package'], second['package'], shallow=False))
+            with tarfile.open(first['package'], 'r:gz') as tar:
+                names = tar.getnames()
+            self.assertFalse(any(name.endswith('.gme') for name in names))
+            self.assertIn(json.loads(spec.read_text())['no_save_note'],
+                          archive_text(first['package'], 'inputs/question.md'))
             runner = package_builder.load_research_runner()
             manifest, _files = runner.package.verify(first['package'])
             self.assertEqual(manifest['name'], 'rayman-us-save-decoder')
@@ -262,7 +284,9 @@ class AssembleTests(unittest.TestCase):
         self.assertEqual(spec['cross_check']['license'], 'MIT')
         self.assertIn('Do not copy', spec['cross_check']['note'])
         by_role = {item['role']: item for item in spec['private_inputs']}
-        self.assertEqual(by_role['save']['sha256'], PLACEHOLDER_SHA)
+        self.assertNotIn('save', by_role)
+        self.assertIn('Generate saves in the emulator', spec['no_save_note'])
+        self.assertNotIn(PLACEHOLDER_SHA, json.dumps(spec['private_inputs']))
         self.assertEqual(by_role['bios']['sha256'],
                          '71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3')
         self.assertIn('completion_percent', spec['fields_target'])
@@ -270,9 +294,50 @@ class AssembleTests(unittest.TestCase):
         self.assertNotIn('ps-22a.bin', tracked)
         self.assertNotIn('.gme', tracked)
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ValueError, 'placeholder'):
+            with self.assertRaisesRegex(ValueError, 'sha256 mismatch'):
                 build_package(REAL / 'research/specs/rayman-us.json', tmp,
-                              bios=self.bios, save=self.save, repo=self.repo)
+                              bios=self.bios, repo=self.repo)
+
+    def test_optional_save_packages_no_save_and_tells_the_agent_to_generate_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bios = root / 'bios.bin'
+            bios.write_bytes(b'bios-without-save')
+            stray = root / 'not-packaged.gme'
+            stray.write_bytes(b'this save must not be copied')
+            spec = filled_spec(bios, None, root, include_save=False)
+            self.assertNotIn('save', {item['role'] for item in json.loads(spec.read_text())['private_inputs']})
+            broken = json.loads(spec.read_text())
+            broken['private_inputs'] = []
+            empty_path = root / 'empty.json'
+            empty_path.write_text(json.dumps(broken) + '\n')
+            with self.assertRaisesRegex(ValueError, 'non-empty'):
+                build_package(empty_path, root / 'rejected-empty', bios=bios, repo=self.repo)
+            broken['private_inputs'] = [{
+                'role': 'save', 'path': 'inputs/saves/x.gme', 'sha256': sha256(stray),
+                'provenance': 'A save without a BIOS is not a launchable package.',
+            }]
+            no_bios = root / 'no-bios.json'
+            no_bios.write_text(json.dumps(broken) + '\n')
+            with self.assertRaisesRegex(ValueError, 'must include bios'):
+                build_package(no_bios, root / 'rejected-bios', bios=bios, save=stray, repo=self.repo)
+            first = build_package(spec, root / 'one', fmt='v2', bios=bios, save=stray, repo=self.repo)
+            second = build_package(spec, root / 'two', fmt='v2', bios=bios, repo=self.repo)
+            self.assertEqual(first['sha256'], second['sha256'])
+            self.assertTrue(filecmp.cmp(first['package'], second['package'], shallow=False))
+            runner = package_builder.load_research_runner()
+            manifest, files = runner.package.verify(first['package'])
+            self.assertNotIn('inputs/saves/rayman-na.gme', files)
+            self.assertFalse(any(name.endswith('.gme') for name in files))
+            self.assertIn('inputs/bios/ps-22a.bin', files)
+            question = archive_text(first['package'], 'inputs/question.md')
+            agents = archive_text(first['package'], 'AGENTS.md')
+            note = json.loads(spec.read_text())['no_save_note']
+            self.assertIn(note, question)
+            self.assertIn('(none supplied)', question)
+            self.assertIn('create saves in the emulator', agents)
+            self.assertIn('emulator-generated saves', question)
+            self.assertIn('native-load', agents)
 
 
 if __name__ == '__main__':

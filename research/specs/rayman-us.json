@@ -774,19 +774,13 @@
     }
   ],
   "name": "rayman-us-save-decoder",
+  "no_save_note": "No reference save is packaged (the GameFAQs save could not be downloaded). Generate saves in the emulator: start a new game, save to the virtual memory card at several distinct progress points (fresh file, after freeing cages in Pink Plant Woods, after gaining a power, after changing level), and diff those slots to confirm the field map.",
   "policy": {
     "checkpoint_seconds": 30,
     "finalization_seconds": 900,
     "termination_seconds": 60
   },
   "private_inputs": [
-    {
-      "path": "inputs/saves/rayman-na.gme",
-      "path_env": "RAYMAN_SAVE",
-      "provenance": "GameFAQs SMD 2001-08-06 DexDrive NA 100% from https://gamefaqs.gamespot.com/sega32x/302551-rayman/saves. The sha256 is a placeholder until the parent records the downloaded file digest. Not redistributable; supplied at assemble time.",
-      "role": "save",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
-    },
     {
       "path": "inputs/bios/ps-22a.bin",
       "path_env": "PS1_BIOS",

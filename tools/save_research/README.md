@@ -16,21 +16,23 @@ required dependency verification and recovery commands.
 
 `assemble_package.py` is the other direction: it builds a new definition from a
 committed game spec (`research/specs/<game>.json`) and the tracked tools, skills,
-and current reader. It does not submit or start work. BIOS and save files are
-passed with `--bios`/`--save` or the spec's `path_env` variables and must match
-the spec sha256. Disc bytes are not packaged; the manifest lists them as a
-`psx-rom` dependency. `--format v2` (the default) is the package Runner 0.4.0
-can run, and its first instruction is `host.py ensure`. Two assemblies with the
-same spec, commit, and private-input bytes produce the same archive sha256.
+and current reader. It does not submit or start work. Each declared private
+input is passed with `--bios`/`--save` or the spec's `path_env` and must match
+the spec sha256. A spec with no save role packages no save; Rayman records that
+in `no_save_note` and the job generates saves in the emulator. Disc bytes are
+not packaged; the manifest lists them as a `psx-rom` dependency. `--format v2`
+(the default) is the package Runner 0.4.0 can run, and its first instruction is
+`host.py ensure`. Two assemblies with the same spec, commit, and private-input
+bytes produce the same archive sha256.
 
 ```sh
-python3 tools/save_research/assemble_package.py \
+PS1_BIOS=/path/to/ps-22a.bin \
+  python3 tools/save_research/assemble_package.py \
   --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
 ```
 
-The Rayman spec's save digest is a 64-zero placeholder until the GameFAQs file
-is hashed. The BIOS digest is the Tomb Raider `ps-22a.bin` sha256. Neither file
-belongs in git.
+The Rayman spec's BIOS digest is the Tomb Raider `ps-22a.bin` sha256. No save
+file is declared. Neither BIOS nor save bytes belong in git.
 
 Copy this directory's `harness.py` and `parser_template.py` with your private
 suite. Python 3.10+ and the standard library are sufficient. No desktop app,

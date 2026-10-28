@@ -146,7 +146,8 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(first, host.image_name())
         self.assertRegex(first, r'^localhost/rr-tool/ps1-replay:in-[0-9a-f]{16}$')
-        self.assertEqual(host.legacy_image_name(), 'localhost/ps1-replay:70')
+        self.assertEqual(host.load_lock()['buildId'], 206)
+        self.assertEqual(host.legacy_image_name(), 'localhost/ps1-replay:206')
 
     def _labelled(self, digest, architecture='arm64', image_id='sha256:test'):
         return {'Id': image_id, 'Architecture': architecture,
@@ -217,6 +218,39 @@ class EngineTests(unittest.TestCase):
         self.assertNotIn('\n', err.getvalue().rstrip('\n'))
         self.assertNotIn('Traceback', err.getvalue())
         call.assert_not_called()
+
+    def test_download_identifies_itself_with_a_user_agent(self):
+        seen = []
+
+        class Body:
+            def read(self, _size):
+                return b''
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        def fake_open(request, timeout=None):
+            seen.append((request, timeout))
+            return Body()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'build-lock.json').write_bytes((host.ROOT / 'build-lock.json').read_bytes())
+            lock = json.loads((root / 'build-lock.json').read_text())
+            with patch.object(host, 'ROOT', root), \
+                    patch.object(host.urllib.request, 'urlopen', side_effect=fake_open):
+                with self.assertRaisesRegex(RuntimeError, 'checksum mismatch'):
+                    host.download()
+        self.assertEqual(len(seen), 1)
+        request, timeout = seen[0]
+        self.assertIsInstance(request, host.urllib.request.Request)
+        self.assertEqual(request.full_url, lock['url'])
+        self.assertEqual(request.get_header('User-agent'), 'research-runner/ps1-replay')
+        self.assertEqual(timeout, 60)
+        self.assertFalse((root / '.cache' / f"pcsx-redux-{lock['buildId']}.zip").exists())
 
     def test_ensure_rejects_a_non_arm64_image(self):
         digest = host.tool_input_hash()

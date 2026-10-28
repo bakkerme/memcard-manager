@@ -72,13 +72,14 @@ affected scope.
 Game packages are generated, not hand-copied. The committed spec carries no BIOS,
 disc, or save bytes. The disc is a v2 `dependencies` entry (`psx-rom`), resolved
 by the operator loader the same way the Tomb Raider package fetched its disc.
-The BIOS and the save are private inputs: the assembler copies them only after
-their sha256 matches the spec.
+BIOS is a private input: the assembler copies it only after its sha256 matches
+the spec. A save is packaged only when the spec declares one. Rayman does not:
+`no_save_note` tells the job to generate saves in the emulator.
 
 ```sh
-# Fill the save digest in research/specs/rayman-us.json first (it ships as 64 zeros).
-# BIOS digest is already the Tomb Raider ps-22a.bin sha256.
-RAYMAN_SAVE=/path/to/rayman-na.gme PS1_BIOS=/path/to/ps-22a.bin \
+# BIOS digest in research/specs/rayman-us.json is the Tomb Raider ps-22a.bin sha256.
+# No RAYMAN_SAVE is required; the spec has no save input.
+PS1_BIOS=/path/to/ps-22a.bin \
   python3 tools/save_research/assemble_package.py \
   --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
 ```

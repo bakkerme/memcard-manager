@@ -163,8 +163,8 @@ def load_spec(path):
                 f"private input {item['role']} sha256 is still the placeholder; "
                 'record the real digest in the spec before assembly')
     roles = {item['role'] for item in privates}
-    if not {'save', 'bios'} <= roles:
-        raise ValueError('spec private_inputs must include save and bios')
+    if 'bios' not in roles:
+        raise ValueError('spec private_inputs must include bios')
     resources = spec.get('resources')
     if not isinstance(resources, dict):
         raise ValueError('spec resources are required')
@@ -318,8 +318,11 @@ def ensure_section(fmt):
 
 def template_values(spec, image, fmt):
     cross = spec['cross_check']
-    save = next(item for item in spec['private_inputs'] if item['role'] == 'save')
+    save = next((item for item in spec['private_inputs'] if item['role'] == 'save'), None)
     bios = next(item for item in spec['private_inputs'] if item['role'] == 'bios')
+    if save is None:
+        save = {'path': '(none supplied)', 'sha256': 'n/a',
+                'provenance': spec.get('no_save_note', 'No reference save is packaged. Generate saves in the emulator by playing from a new game and saving to the virtual memory card at several progress points.')}
     return {
         'TITLE': spec['title'],
         'NAME': spec['name'],

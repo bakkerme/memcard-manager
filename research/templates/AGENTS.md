@@ -52,4 +52,4 @@ Runtime steps listed in required_checks are mandatory. If one can't be done, rep
 
 @@CHECKS@@
 
-Native load of the supplied save is the `native-load` check. Load the save in the emulator and read the completion percent on the save or select screen. Retain the capture. This load is required.
+Native load of a save is the `native-load` check. If no save is supplied (see `inputs/question.md`), first create saves in the emulator by playing from a new game and saving to the virtual memory card, then reload one from a fresh boot. Load the save in the emulator and read the completion percent on the save or select screen. Retain the capture. This load is required.
