@@ -18,4 +18,6 @@ Capture/acquisition time is separate from uploader dates and from the original g
 
 Legends 2 public files live in `local/mml2/` at the manifest paths. Nine cards cover four labelled starting modes, their endgame samples, and Sangogi's S-license save. Difficulty is a saved level: the upload described as a Normal endgame actually stores Hard, consistent with license tests raising difficulty. The modified Eevee-Trainer timers are zero; do not reinterpret the separate counter as display time. Duplicate uploads 26006 and 25147 were inspected but excluded from the regression manifest. See the [format spec](../../../docs/formats/mega-man-legends-2.md) for the location table and validation limits.
 
+Tomb Raider US is `local/tomb-raider-1996.381.gme` from GameFAQs save 381 (contributor Kasket_Darkfyre). The corpus expects level 15, The Great Pyramid, and a passing checksum. The file is not committed.
+
 Ape Escape files live in `local/ape-escape/`: the optional private `ape-escape.mcs` and public cards 164 and 4583. Their hashes, provenance and exact profile values are in the manifest. WLau's 100%/83.3% labels match the traced game formula; upload 4583's labels do not, so its expectations are byte-level regressions. Game checksum support is unverified. See the [partial specification](../../../docs/formats/ape-escape.md).

@@ -38,6 +38,7 @@ accepted scope and the separate Rust verification commands.
 | Mega Man Legends SLUS-00603 US | Ready, integrated | Gameplay time, Zenny, owned/equipped buster-part counts and raw location IDs. Native equipment UI and public save load; detailed names and changed-equipment save remain open. Game checksum not checked in this reader. |
 | Kula World SCES-01000 PAL | Ready, integrated | Four occupied slots, mode, score, level, fruit and elapsed seconds. Arcade save/fresh load; checksum and other modes remain open. |
 | Tomb Raider SLES-00024 PAL | Ready, integrated | Current level, available level starts and their recorded weapon/medipack/Scion inventory. Native load observed; current checkpoint inventory, time and normal save remain open. |
+| Tomb Raider SLUS-00152 US | Ready, integrated | Current level and payload checksum only. Level-start inventory, current-position availability, health, playtime and emulator load are not verified. |
 | Crash 3 SCUS-94244 US | Partial | Lives and fruit persist, but completion and collectible meanings remain unknown. Only counters would be a thin archive summary. |
 | Ghost in the Shell SCES-01050 PAL | Partial | Checksum, option and grade encoding traced, but mission identities and meaningful progress summary remain unresolved. |
 | Point Blank 2 SCES-02180 PAL | Partial | High-score pools and formatting traced; record identities and normal save remain unresolved. |
@@ -121,11 +122,18 @@ retained native selector RAM. See the [Bomberman specification](bomberman-fantas
   Four `0x270`-byte slots start at `0x378`; occupied marker `+0x268` must
   be 0 or 1. Score, level, mode and fruit use observed slot fields. No game
   checksum is established.
-- **Tomb Raider:** observed `SC 11 01`, `TOMBRAID` and exact title. The
+- **Tomb Raider PAL:** observed `SC 11 01`, `TOMBRAID` and exact title. The
   signed current level is at `0x33e`; available level-start records are
   14-byte entries from `0x200`, with bit `0x100` indicating a load-menu
   start. A negative byte sum over `0x200..0x357` and `0x358..0xf58` is
   stored at `0x357`. Inventory fields are explicitly level-start snapshots.
+- **Tomb Raider US:** `BA` / `SLUS-00152` / `TOMBRAID`, the same `SC 11 01`
+  header and title normalized to `Tomb Raider`. The signed level at `0x33e`
+  uses the shared 22-name table; negative or out-of-range values stay
+  `Unknown level (N)`. The checksum byte at `0x357` is the negative sum of
+  `[0x200,0xf58)` excluding itself. Level-start inventory, the
+  current-position bit at `0x330`, health and playtime are not emitted.
+  No emulator load validation. See [US limits](tomb-raider-us.md).
 
 Every reader receives exactly the expected reconstructed payload size from dispatch.
 Unknown titles/revisions, wrong regions and wrong identifiers return a details error;
@@ -146,6 +154,12 @@ PS1_RESEARCH_SNAPSHOT="$PWD/tools/save_research/runs/transfers/snapshots/spark/2
 npm test
 npm run build
 ```
+
+Tomb Raider US synthetic tests cover level names, checksum coverage and
+identity/layout rejection. Its ignored real-sample test reads
+`TOMB_RAIDER_US_MCS`, `TOMB_RAIDER_US_SC`, `TOMB_RAIDER_US_MCR` and
+`TOMB_RAIDER_US_GME`; see [US limits](tomb-raider-us.md). The public GME is
+a manifest entry only and is not committed.
 
 Pac-Man US has separate Rust tests for field boundaries, unsupported layouts,
 serialization, Raw/GME/VGS normalization, MCS reimport, input preservation and
