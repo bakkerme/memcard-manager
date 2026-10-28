@@ -134,6 +134,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SCES-01000" => ("kula-world", "Kula World", 1, "BE", "KULA"),
         "SLUS-00437" => ("tomb-raider-2", "Tomb Raider II", 1, "BA", "TOMB2"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
+        "SLUS-00152" => ("tomb-raider", "Tomb Raider", 1, "BA", "TOMBRAID"),
         "SLES-03900" => (
             "digimon-digital-card-battle",
             "Digimon Digital Card Battle",

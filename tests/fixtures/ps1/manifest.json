@@ -1463,6 +1463,26 @@
       "checksumOk": null,
       "profileCount": 4,
       "acquiredAt": "2026-10-11"
+    },
+    {
+      "filename": "tomb-raider-1996.381.gme",
+      "private": false,
+      "code": "SLUS-00152",
+      "sha256": "273fedac22c71c0bbc1b621f49a1d822b02698d24cc9fbebed7515ea66a7c73f",
+      "checksumOk": true,
+      "profileCount": 1,
+      "checks": [
+        {
+          "profile": 0,
+          "label": "Current level",
+          "value": "The Great Pyramid"
+        }
+      ],
+      "source": "https://gamefaqs.gamespot.com/ps/199040-tomb-raider/saves/381",
+      "uploader": "Kasket_Darkfyre",
+      "contributor": "Kasket_Darkfyre",
+      "completionClaim": "Last Level (level 15, The Great Pyramid)",
+      "evidence": "Expected level 15, The Great Pyramid, with a passing payload checksum. Level-start inventory, current-position availability, health and playtime are not part of this US summary. No emulator load validation. Stored locally as local/tomb-raider-1996.381.gme; bytes are not redistributed."
     }
   ]
 }
