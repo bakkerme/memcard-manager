@@ -9,6 +9,12 @@
 !/*/inputs/question.md
 !/*/inputs/contracts.json
 
+# Committed game specs and package templates. Private bytes stay out of both.
+!/specs/
+!/specs/**
+!/templates/
+!/templates/**
+
 # Historical private imports contain deployment-specific briefs and tool pins.
 # Keep the full workspaces local; publish only deliberately portable definitions.
 /pacman-us/

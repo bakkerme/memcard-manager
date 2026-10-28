@@ -57,3 +57,10 @@ jobs:
         run: npm run build
       - name: Replay coordinator tests
         run: python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v
+      - name: Research package assembler tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv
+          python3 -m venv /tmp/research-runner
+          /tmp/research-runner/bin/pip install -r requirements-research.txt
+          /tmp/research-runner/bin/python -m unittest discover -s tools/save_research -p 'test_*.py' -v

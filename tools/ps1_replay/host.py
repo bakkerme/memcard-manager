@@ -12,8 +12,61 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent.parent
+# Files whose bytes define the tool image. Keys are package-relative so the hash
+# matches the research-package tool_images declaration from any checkout path.
+TOOL_IMAGE_INPUTS = (
+    'tools/ps1_replay/Containerfile',
+    'tools/ps1_replay/build-lock.json',
+    'tools/ps1_replay/runner.py',
+    'tools/ps1_replay/adapter.lua',
+)
+TOOL_IMAGE_PLATFORM = 'linux/arm64'
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_lock(root=None):
+    root = Path(root or ROOT)
+    return json.loads((root / 'build-lock.json').read_text())
+
+
+def tool_input_hash(root=None):
+    """sha256 of the canonical tool-image identity. Sorted keys, no host paths."""
+    root = Path(root or ROOT)
+    inputs = {rel: sha256_file(root / Path(rel).name) for rel in TOOL_IMAGE_INPUTS}
+    payload = {
+        'containerfile': 'tools/ps1_replay/Containerfile',
+        'context': 'tools/ps1_replay',
+        'platform': TOOL_IMAGE_PLATFORM,
+        'inputs': inputs,
+        'fetch': [load_lock(root)['sha256']],
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def derived_tag(digest=None, root=None):
+    digest = digest or tool_input_hash(root)
+    return 'localhost/rr-tool/ps1-replay:in-' + digest[:16]
+
+
+def legacy_image_name(root=None):
+    """Alias kept so existing localhost/ps1-replay:<buildId> references still resolve."""
+    return 'localhost/ps1-replay:' + str(load_lock(root)['buildId'])
+
+
 def image_name():
-    return 'localhost/ps1-replay:' + str(json.loads((ROOT / 'build-lock.json').read_text())['buildId'])
+    return derived_tag()
+
+
+def active_tag(override=None):
+    return override or image_name()
 
 
 def call(argv, **kwargs):
@@ -63,8 +116,31 @@ def download():
     shutil.copyfile(cache, ROOT / '.cache/pcsx-redux.zip')
 
 
-def image_info(engine):
-    return json.loads(call([engine, 'image', 'inspect', image_name()], capture_output=True, text=True).stdout)[0]
+def image_label(info):
+    labels = {}
+    config = info.get('Config')
+    if isinstance(config, dict):
+        labels.update(config.get('Labels') or {})
+    top = info.get('Labels')
+    if isinstance(top, dict):
+        labels.update(top)
+    return labels.get('research.input_hash')
+
+
+def image_info(engine, tag=None):
+    """Return the inspect object, or None when the tag is absent. Never raises IndexError."""
+    tag = tag or image_name()
+    try:
+        result = call([engine, 'image', 'inspect', tag], capture_output=True, text=True)
+    except subprocess.CalledProcessError:
+        return None
+    try:
+        data = json.loads(result.stdout or '[]')
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f'worker image inspect returned invalid JSON: {error}') from error
+    if not isinstance(data, list) or not data:
+        return None
+    return data[0]
 
 
 def image_metadata(info, engine):
@@ -75,22 +151,62 @@ def image_metadata(info, engine):
             'architecture': info['Architecture']}
 
 
-def preflight(engine):
+def build_argv(engine, tag, digest):
+    argv = [engine, 'build', '--platform', TOOL_IMAGE_PLATFORM,
+            '--label', f'research.input_hash={digest}', '-t', tag]
+    alias = legacy_image_name()
+    if alias != tag:
+        argv += ['-t', alias]
+    argv += ['-f', str(ROOT / 'Containerfile'), str(ROOT)]
+    return argv
+
+
+def ensure_image(engine, tag_override=None):
+    """Build the worker only when the input-hash tag is missing or stale. Idempotent."""
+    digest = tool_input_hash()
+    tag = tag_override or derived_tag(digest)
+    info = image_info(engine, tag)
+    if info and image_label(info) == digest:
+        if info.get('Architecture') != 'arm64':
+            raise RuntimeError('Worker image must be native ARM64')
+        print(json.dumps({**image_metadata(info, engine), 'tag': tag,
+                          'inputHash': digest, 'action': 'reused'}, indent=2))
+        return
+    download()
+    call(build_argv(engine, tag, digest))
+    info = image_info(engine, tag)
+    if info is None:
+        raise RuntimeError(f'worker image {tag} missing after build')
+    if info.get('Architecture') != 'arm64':
+        raise RuntimeError('Built worker image must be ARM64')
+    if image_label(info) != digest:
+        raise RuntimeError('Built worker image is missing the input-hash label')
+    print(json.dumps({**image_metadata(info, engine), 'tag': tag,
+                      'inputHash': digest, 'action': 'built'}, indent=2))
+
+
+def preflight(engine, tag=None):
     template = '{{.Architecture}}' if engine == 'docker' else '{{.Host.Arch}}'
     arch = call([engine, 'info', '--format', template], capture_output=True,
                 text=True, timeout=30).stdout.strip().lower()
     if arch not in ('arm64', 'aarch64'):
         raise RuntimeError(f'{engine} engine reports {arch!r}; this pinned worker requires native Linux ARM64')
-    return {'engine': engine, 'architecture': arch}
+    selected = active_tag(tag)
+    return {'engine': engine, 'architecture': arch,
+            'image': selected, 'image_present': image_info(engine, selected) is not None}
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--engine', choices=('podman', 'docker'), default='podman',
                         help='Container CLI (default: podman); place before the subcommand')
+    parser.add_argument('--image-tag',
+                        help='Worker tag to inspect and run. Defaults to the input-hash tag. '
+                             'v3 jobs pass the tag from .runner/tool-images.json')
     sub = parser.add_subparsers(dest='mode', required=True)
     sub.add_parser('preflight')
     sub.add_parser('build')
+    sub.add_parser('ensure')
     for mode in ('calibrate', 'bootstrap', 'qualify', 'diagnose'):
         p = sub.add_parser(mode)
         p.add_argument('--run', required=True, type=Path)
@@ -108,18 +224,17 @@ def main(argv=None):
         call([args.engine, 'exec', *session_env_flags(), args.name, 'python3',
               '/tools/ps1_replay/runner.py', 'command', *args.arguments])
         return
-    environment = preflight(args.engine)
+    if args.mode in ('build', 'ensure'):
+        try:
+            preflight(args.engine, args.image_tag)
+            ensure_image(args.engine, args.image_tag)
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print(str(error), file=sys.stderr)
+            raise SystemExit(2)
+        return
+    environment = preflight(args.engine, args.image_tag)
     if args.mode == 'preflight':
         print(json.dumps(environment, indent=2))
-        return
-    if args.mode == 'build':
-        download()
-        call([args.engine, 'build', '--platform', 'linux/arm64', '-t', image_name(),
-              '-f', str(ROOT / 'Containerfile'), str(ROOT)])
-        info = image_info(args.engine)
-        if info['Architecture'] != 'arm64':
-            parser.error('Built worker image must be ARM64')
-        print(json.dumps(image_metadata(info, args.engine), indent=2))
         return
     for path in (args.disc, args.bios, args.card):
         if not path.exists():
@@ -136,7 +251,10 @@ def main(argv=None):
     else:
         if args.run.exists() and any(args.run.iterdir()):
             parser.error('Calibration/bootstrap requires a new empty run directory')
-    info = image_info(args.engine)
+    tag = active_tag(args.image_tag)
+    info = image_info(args.engine, tag)
+    if info is None:
+        parser.error(f'worker image {tag} missing; run host.py ensure')
     if info['Architecture'] != 'arm64':
         parser.error('Worker image must be native ARM64')
     args.run.mkdir(parents=True, exist_ok=True)

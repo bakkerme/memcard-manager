@@ -1,2 +1,3 @@
 # Python 3.11+. Published release wheel; no Runner checkout required.
-research-runner @ https://github.com/bakkerme/research-runner/releases/download/v0.3.0/research_runner-0.3.0-py3-none-any.whl#sha256=df0369af91b549311e529ff3fd8f62a3658a3def3e9b1dd50908cd9ca2c3f88b
+# 0.4.0 matches the runner deployed for v2 packages with asset dependencies.
+research-runner @ https://github.com/bakkerme/research-runner/releases/download/v0.4.0/research_runner-0.4.0-py3-none-any.whl#sha256=fdd3d7c5368d805c6e43d01dd24594ac3c1364a47e60bb563bb921030ade69ae

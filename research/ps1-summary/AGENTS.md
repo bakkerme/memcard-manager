@@ -37,3 +37,11 @@ Keep useful failures and partial findings; never turn an unknown checksum into p
 Keep outputs within server publication quotas; never publish ROM or BIOS bytes.
 Runner owns deadlines and finalization. A copied /goal prompt supplies scientific criteria
 only; do not start another scheduler, goal or availability retry loop.
+
+## Emulator image
+
+The emulator image is provisioned from the packaged Containerfile. Its identity is the input hash of the declared tool image, together with the build id and zip sha in `tools/ps1_replay/build-lock.json`. The runtime image ID comes from `.runner/tool-images.json` in v3, or from the output of `host.py ensure` in v2, and is recorded as evidence. A missing image is an error to provision. Do not pin a pre-existing image ID.
+
+Runtime steps listed in required_checks are mandatory. If one can't be done, report partial with the blocker, never complete.
+
+Unpinned package installs and toolchain rebuilds are forbidden. The declared tool image built from the packaged Containerfile is the exception. When the brief requires a native load, that load is a required check.

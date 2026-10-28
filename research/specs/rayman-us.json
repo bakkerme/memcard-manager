@@ -1,0 +1,812 @@
+{
+  "asset": {
+    "asset_id": "SLUS-00005",
+    "asset_type": "psx-rom",
+    "destination": "inputs/roms/game",
+    "provenance": "Redump Rayman (USA), a single catalog release, fetched by the operator psx-rom loader as cue/bin with one data track and 50 audio tracks. The disc is a runner dependency, not a packaged file."
+  },
+  "cross_check": {
+    "commit": "c4c80f40fd0e102e2dac7257851f43167b2c350f",
+    "file": "src/lib/templates/rayman/saveEditor/template.ts",
+    "license": "MIT",
+    "name": "game-tools-collection rayman",
+    "note": "Cite this editor as an independent field map. Do not copy its TypeScript into the decoder. The editor implements no checksum.",
+    "url": "https://github.com/RyudoSynbios/game-tools-collection/tree/c4c80f40fd0e102e2dac7257851f43167b2c350f/src/lib/templates/rayman/saveEditor"
+  },
+  "fields": [
+    {
+      "id": "filename",
+      "length": 3,
+      "note": "editor reads three bytes; letter bytes are lowercase ASCII displayed as A-Z",
+      "offset": "0xb",
+      "type": "string"
+    },
+    {
+      "id": "completion_percent",
+      "length": 3,
+      "note": "editor label Progression; confirm the on-screen percent before treating the bytes as a number",
+      "offset": "0xf",
+      "type": "string"
+    },
+    {
+      "id": "continues",
+      "note": "editor max 99",
+      "offset": "0x200",
+      "type": "uint8"
+    },
+    {
+      "flags": [
+        {
+          "bit": 0,
+          "label": "Punch",
+          "offset": "0x300"
+        },
+        {
+          "bit": 1,
+          "label": "Hang",
+          "offset": "0x300"
+        },
+        {
+          "bit": 2,
+          "label": "Helicopter",
+          "offset": "0x300"
+        },
+        {
+          "bit": 3,
+          "label": "unknown",
+          "offset": "0x300"
+        },
+        {
+          "bit": 4,
+          "label": "unknown",
+          "offset": "0x300"
+        },
+        {
+          "bit": 5,
+          "label": "unknown",
+          "offset": "0x300"
+        },
+        {
+          "bit": 6,
+          "label": "unknown",
+          "offset": "0x300"
+        },
+        {
+          "bit": 7,
+          "label": "Grab",
+          "offset": "0x300"
+        },
+        {
+          "bit": 0,
+          "label": "Run",
+          "offset": "0x301"
+        }
+      ],
+      "id": "powers",
+      "type": "bitflags"
+    },
+    {
+      "id": "lives",
+      "note": "editor max 99",
+      "offset": "0x400",
+      "type": "uint8"
+    },
+    {
+      "id": "tins",
+      "note": "editor max 99; not a primary progress target",
+      "offset": "0x406",
+      "type": "uint8"
+    },
+    {
+      "id": "health_max",
+      "note": "editor maps 0x2 to 3 points and 0x4 to 5 points",
+      "offset": "0x409",
+      "type": "uint8"
+    },
+    {
+      "id": "health",
+      "note": "editor displays the stored byte plus 1; confirm that operation",
+      "offset": "0x480",
+      "type": "uint8"
+    },
+    {
+      "id": "current_level",
+      "note": "editor level index 0 through 23, including save points",
+      "offset": "0x1080",
+      "type": "uint8"
+    }
+  ],
+  "fields_target": [
+    "completion_percent",
+    "current_level",
+    "lives",
+    "cages_per_level",
+    "continues",
+    "powers"
+  ],
+  "format": "memcard-research-spec/v1",
+  "goal": "Produce a read-only save-details decoder for Rayman (USA) that is useful for telling saves apart and tracking progress: completion percent, current level, lives, cages freed, continues, and unlocked powers.",
+  "layout": {
+    "accepted_product_codes": [
+      "SLUS-00005",
+      "SLES-00049",
+      "SLPS-00026"
+    ],
+    "product_code_ascii_at": 0,
+    "scope": "This package is the USA release only. Slot offsets are the editor's claims and still need native confirmation.",
+    "slot_bytes": 8192,
+    "slots": 3
+  },
+  "levels": [
+    {
+      "cages": [
+        {
+          "bit": 6,
+          "offset": "0x521"
+        },
+        {
+          "bit": 2,
+          "offset": "0x529"
+        },
+        {
+          "bit": 4,
+          "offset": "0x529"
+        },
+        {
+          "bit": 5,
+          "offset": "0x529"
+        },
+        {
+          "bit": 5,
+          "offset": "0x56a"
+        },
+        {
+          "bit": 7,
+          "offset": "0x56a"
+        }
+      ],
+      "index": 0,
+      "name": "Pink Plant Woods",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x280"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 0,
+          "offset": "0x583"
+        },
+        {
+          "bit": 3,
+          "offset": "0x584"
+        },
+        {
+          "bit": 5,
+          "offset": "0x584"
+        },
+        {
+          "bit": 6,
+          "offset": "0x584"
+        },
+        {
+          "bit": 7,
+          "offset": "0x584"
+        },
+        {
+          "bit": 6,
+          "offset": "0x5c3"
+        }
+      ],
+      "index": 1,
+      "name": "Anguish Lagoon",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x281"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 4,
+          "offset": "0x600"
+        },
+        {
+          "bit": 5,
+          "offset": "0x600"
+        },
+        {
+          "bit": 1,
+          "offset": "0x626"
+        },
+        {
+          "bit": 7,
+          "offset": "0x627"
+        },
+        {
+          "bit": 1,
+          "offset": "0x648"
+        },
+        {
+          "bit": 2,
+          "offset": "0x648"
+        }
+      ],
+      "index": 2,
+      "name": "The Swamps of Forgetfulness",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x282"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 2,
+          "offset": "0x667"
+        },
+        {
+          "bit": 3,
+          "offset": "0x667"
+        },
+        {
+          "bit": 6,
+          "offset": "0x667"
+        },
+        {
+          "bit": 0,
+          "offset": "0x689"
+        },
+        {
+          "bit": 1,
+          "offset": "0x689"
+        },
+        {
+          "bit": 3,
+          "offset": "0x689"
+        }
+      ],
+      "index": 3,
+      "name": "Moskito's Nest",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x283"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 0,
+          "offset": "0x7aa"
+        },
+        {
+          "bit": 5,
+          "offset": "0x7d3"
+        },
+        {
+          "bit": 3,
+          "offset": "0x7e8"
+        },
+        {
+          "bit": 3,
+          "offset": "0x810"
+        },
+        {
+          "bit": 0,
+          "offset": "0x832"
+        },
+        {
+          "bit": 1,
+          "offset": "0x832"
+        }
+      ],
+      "index": 4,
+      "name": "Bongo Hills",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x284"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 2,
+          "offset": "0x860"
+        },
+        {
+          "bit": 4,
+          "offset": "0x860"
+        },
+        {
+          "bit": 5,
+          "offset": "0x860"
+        },
+        {
+          "bit": 7,
+          "offset": "0x88f"
+        },
+        {
+          "bit": 0,
+          "offset": "0x8a1"
+        },
+        {
+          "bit": 2,
+          "offset": "0x8a1"
+        }
+      ],
+      "index": 5,
+      "name": "Allegro Presto",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x285"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 2,
+          "offset": "0x900"
+        },
+        {
+          "bit": 4,
+          "offset": "0x900"
+        },
+        {
+          "bit": 5,
+          "offset": "0x900"
+        },
+        {
+          "bit": 7,
+          "offset": "0x900"
+        },
+        {
+          "bit": 3,
+          "offset": "0x920"
+        },
+        {
+          "bit": 6,
+          "offset": "0x920"
+        }
+      ],
+      "index": 6,
+      "name": "Gong Heights",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x286"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 2,
+          "offset": "0x954"
+        },
+        {
+          "bit": 3,
+          "offset": "0x954"
+        },
+        {
+          "bit": 4,
+          "offset": "0x954"
+        },
+        {
+          "bit": 5,
+          "offset": "0x954"
+        },
+        {
+          "bit": 6,
+          "offset": "0x954"
+        },
+        {
+          "bit": 7,
+          "offset": "0x954"
+        }
+      ],
+      "index": 7,
+      "name": "Mr Sax's Hullaballoo",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x287"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 1,
+          "offset": "0x9ea"
+        },
+        {
+          "bit": 2,
+          "offset": "0x9ea"
+        },
+        {
+          "bit": 4,
+          "offset": "0x9eb"
+        },
+        {
+          "bit": 5,
+          "offset": "0x9eb"
+        },
+        {
+          "bit": 6,
+          "offset": "0x9eb"
+        },
+        {
+          "bit": 7,
+          "offset": "0x9eb"
+        }
+      ],
+      "index": 8,
+      "name": "Twilight Gulch",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x288"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 6,
+          "offset": "0xa37"
+        },
+        {
+          "bit": 5,
+          "offset": "0xa44"
+        },
+        {
+          "bit": 6,
+          "offset": "0xa44"
+        },
+        {
+          "bit": 0,
+          "offset": "0xa69"
+        },
+        {
+          "bit": 1,
+          "offset": "0xa69"
+        },
+        {
+          "bit": 6,
+          "offset": "0xa6a"
+        }
+      ],
+      "index": 9,
+      "name": "The Hard Rocks",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x289"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 0,
+          "offset": "0xa90"
+        },
+        {
+          "bit": 1,
+          "offset": "0xa90"
+        },
+        {
+          "bit": 7,
+          "offset": "0xaa5"
+        },
+        {
+          "bit": 1,
+          "offset": "0xac6"
+        },
+        {
+          "bit": 0,
+          "offset": "0xaf3"
+        },
+        {
+          "bit": 7,
+          "offset": "0xaf4"
+        }
+      ],
+      "index": 10,
+      "name": "Mr Stone's Peaks",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28a"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 3,
+          "offset": "0xb93"
+        },
+        {
+          "bit": 4,
+          "offset": "0xb93"
+        },
+        {
+          "bit": 3,
+          "offset": "0xbb2"
+        },
+        {
+          "bit": 1,
+          "offset": "0xbcf"
+        },
+        {
+          "bit": 2,
+          "offset": "0xbcf"
+        },
+        {
+          "bit": 7,
+          "offset": "0xbd0"
+        }
+      ],
+      "index": 11,
+      "name": "Eraser Plains",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28b"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 0,
+          "offset": "0xc17"
+        },
+        {
+          "bit": 7,
+          "offset": "0xc18"
+        },
+        {
+          "bit": 0,
+          "offset": "0xc2a"
+        },
+        {
+          "bit": 2,
+          "offset": "0xc2a"
+        },
+        {
+          "bit": 1,
+          "offset": "0xc4b"
+        },
+        {
+          "bit": 7,
+          "offset": "0xc4c"
+        }
+      ],
+      "index": 12,
+      "name": "Pencil Pentathlon",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28c"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 2,
+          "offset": "0xc68"
+        },
+        {
+          "bit": 3,
+          "offset": "0xc68"
+        },
+        {
+          "bit": 0,
+          "offset": "0xc81"
+        },
+        {
+          "bit": 2,
+          "offset": "0xc81"
+        },
+        {
+          "bit": 4,
+          "offset": "0xcb3"
+        },
+        {
+          "bit": 5,
+          "offset": "0xcb3"
+        }
+      ],
+      "index": 13,
+      "name": "Space Mama's Crater",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28d"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 1,
+          "offset": "0xd2c"
+        },
+        {
+          "bit": 4,
+          "offset": "0xd2c"
+        },
+        {
+          "bit": 5,
+          "offset": "0xd2c"
+        },
+        {
+          "bit": 0,
+          "offset": "0xd4b"
+        },
+        {
+          "bit": 6,
+          "offset": "0xd4c"
+        },
+        {
+          "bit": 7,
+          "offset": "0xd4c"
+        }
+      ],
+      "index": 14,
+      "name": "Crystal Palace",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28e"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 3,
+          "offset": "0xd87"
+        },
+        {
+          "bit": 1,
+          "offset": "0xdb1"
+        },
+        {
+          "bit": 3,
+          "offset": "0xdb1"
+        },
+        {
+          "bit": 4,
+          "offset": "0xdb1"
+        },
+        {
+          "bit": 6,
+          "offset": "0xde0"
+        },
+        {
+          "bit": 4,
+          "offset": "0xe07"
+        }
+      ],
+      "index": 15,
+      "name": "Eat At Joe's",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x28f"
+      }
+    },
+    {
+      "cages": [
+        {
+          "bit": 1,
+          "offset": "0xe20"
+        },
+        {
+          "bit": 2,
+          "offset": "0xe20"
+        },
+        {
+          "bit": 3,
+          "offset": "0xe20"
+        },
+        {
+          "bit": 4,
+          "offset": "0xe20"
+        },
+        {
+          "bit": 5,
+          "offset": "0xe20"
+        },
+        {
+          "bit": 6,
+          "offset": "0xe20"
+        }
+      ],
+      "index": 16,
+      "name": "Mr Skops' Stalactites",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x290"
+      }
+    },
+    {
+      "index": 17,
+      "name": "Mr Dark's Dare",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x291"
+      }
+    },
+    {
+      "index": 18,
+      "name": "The Dream Forest (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x292"
+      }
+    },
+    {
+      "index": 19,
+      "name": "Band Land (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x293"
+      }
+    },
+    {
+      "index": 20,
+      "name": "Blue Mountains (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x294"
+      }
+    },
+    {
+      "index": 21,
+      "name": "Picture City (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x295"
+      }
+    },
+    {
+      "index": 22,
+      "name": "The Caves of Skops (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x296"
+      }
+    },
+    {
+      "index": 23,
+      "name": "Candy Chateau (Save)",
+      "unlock": {
+        "bit": 0,
+        "offset": "0x297"
+      }
+    }
+  ],
+  "name": "rayman-us-save-decoder",
+  "policy": {
+    "checkpoint_seconds": 30,
+    "finalization_seconds": 900,
+    "termination_seconds": 60
+  },
+  "private_inputs": [
+    {
+      "path": "inputs/saves/rayman-na.gme",
+      "path_env": "RAYMAN_SAVE",
+      "provenance": "GameFAQs SMD 2001-08-06 DexDrive NA 100% from https://gamefaqs.gamespot.com/sega32x/302551-rayman/saves. The sha256 is a placeholder until the parent records the downloaded file digest. Not redistributable; supplied at assemble time.",
+      "role": "save",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "inputs/bios/ps-22a.bin",
+      "path_env": "PS1_BIOS",
+      "provenance": "SCPH-1001 BIOS image ps-22a.bin, the same bytes as the Tomb Raider US package inputs/bios/ps-22a.bin. Supplied at assemble time via PS1_BIOS or --bios. Not committed.",
+      "role": "bios",
+      "sha256": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3"
+    }
+  ],
+  "product_code": "BASLUS-00005",
+  "required_checks": [
+    "tool-image-provisioned",
+    "native-load",
+    "parser-suite",
+    "cross-check-editor"
+  ],
+  "resources": {
+    "cpu": 2,
+    "memory_mb": 6144,
+    "time_seconds": 21600
+  },
+  "serial": "SLUS-00005",
+  "title": "Rayman (USA)"
+}

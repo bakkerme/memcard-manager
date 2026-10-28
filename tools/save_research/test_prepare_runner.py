@@ -60,9 +60,30 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(sha(self.root / 'recovery/inputs/save.bin'), hashlib.sha256(b'original').hexdigest())
 
 
+def _import_runner():
+    """Import research-runner even when tools/ps1_replay is on sys.path.
+
+    That directory's runner.py is the emulator coordinator and would shadow the package.
+    """
+    import sys
+    replay = Path(__file__).resolve().parents[1] / 'ps1_replay'
+    saved = sys.path[:]
+    sys.path[:] = [entry for entry in saved if Path(entry).resolve() != replay.resolve()]
+    for name in list(sys.modules):
+        module = sys.modules.get(name)
+        file = str(getattr(module, '__file__', '') or '')
+        if (name == 'runner' or name.startswith('runner.')) and 'ps1_replay' in file:
+            del sys.modules[name]
+    try:
+        from runner import ResearchRepo
+        from runner.package import assemble, verify
+        return ResearchRepo, assemble, verify
+    finally:
+        sys.path[:] = saved
+
+
 try:
-    from runner import ResearchRepo
-    from runner.package import assemble, verify
+    ResearchRepo, assemble, verify = _import_runner()
 except ImportError:
     ResearchRepo = None
 

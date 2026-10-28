@@ -77,15 +77,24 @@ For a DGX Spark with Docker CE, begin with:
 
 ```sh
 python3 tools/ps1_replay/host.py --engine docker preflight
-python3 tools/ps1_replay/host.py --engine docker build
+python3 tools/ps1_replay/host.py --engine docker ensure
 ```
 
-`preflight` checks engine access and daemon architecture, not game boot or mount
+`ensure` is idempotent. It builds the worker only when the input-hash tag is
+missing or the image label `research.input_hash` does not match the packaged
+Containerfile, build lock, runner, and adapter. A missing image is an error on
+later launch modes: `worker image <tag> missing; run host.py ensure`. `build`
+is the same provisioning step. `preflight` checks engine access, daemon
+architecture, and `image_present`. It does not check game boot or mount
 visibility. Docker command construction/metadata handling is regression-tested;
 the historical emulator pass used Podman. Bootstrap and inspect gameplay on the
 Spark before unattended research. No NVIDIA GPU access is required by this
-software-rendered worker. Local Docker builds can have no registry digest;
-the actual immutable image ID is recorded in that case.
+software-rendered worker. The worker identity is that input hash plus the image
+ID `ensure` prints. A previously recorded image ID is not portable: apt packages
+inside the image are unpinned, so rebuilds are tagged by input hash and the
+resulting ID is evidence. `--image-tag` selects a tag the runner already
+provisioned. The legacy `localhost/ps1-replay:<buildId>` tag is applied as an
+alias when the image is built.
 
 For unattended Docker research, prefer a rootless daemon under a dedicated
 research account without sudo access. The coordinator inherits the Docker CLI
@@ -121,7 +130,7 @@ PS1_RESEARCH_BIOS=/absolute/path/ps-22a.bin
 PS1_RESEARCH_DISC='/absolute/path/Mega Man Legends 2 (USA)'
 PS1_RESEARCH_CARD=/absolute/path/mml2-viewer-qa.mcr
 PS1_RESEARCH_RUN=tools/ps1_replay/runs/reproduction
-python3 tools/ps1_replay/host.py build
+python3 tools/ps1_replay/host.py ensure
 python3 tools/ps1_replay/host.py bootstrap --run "$PS1_RESEARCH_RUN" \
   --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
 ```
