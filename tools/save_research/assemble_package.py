@@ -312,7 +312,11 @@ def ensure_section(fmt):
     return (
         'The runner provisions this image before the first turn. Read '
         '`.runner/tool-images.json` and record its image ID as the evidence for '
-        '`tool-image-provisioned`. Do not rebuild the image in the worker.\n'
+        '`tool-image-provisioned`. Do not rebuild the image in the worker. '
+        'Pass that tag to every emulator command, for example '
+        '`python3 tools/ps1_replay/host.py --engine docker --image-tag <tag> ...`; '
+        'the v3 tag pins the whole tools/ps1_replay context, so host.py\'s built-in '
+        'default tag differs.\n'
     )
 
 
@@ -354,13 +358,18 @@ def template_values(spec, image, fmt):
     }
 
 
-def tool_image_declaration(stage):
+def tool_image_declaration(stage, fmt='v2'):
     replay = stage / 'tools' / 'ps1_replay'
     host = load_replay_host()
     digest = host.tool_input_hash(replay)
     lock = host.load_lock(replay)
     inputs = {rel: host.sha256_file(replay / Path(rel).name) for rel in host.TOOL_IMAGE_INPUTS}
-    return {
+    if fmt == 'v3':
+        # Runner 0.5.0 requires every package file inside the context to be pinned,
+        # and derives the tag from those pins, so hash the whole staged context.
+        inputs = {path.relative_to(stage).as_posix(): host.sha256_file(path)
+                  for path in sorted(replay.rglob('*')) if path.is_file()}
+    entry = {
         'name': 'ps1-replay',
         'containerfile': 'tools/ps1_replay/Containerfile',
         'context': 'tools/ps1_replay',
@@ -377,6 +386,17 @@ def tool_image_declaration(stage):
         'build_id': lock['buildId'],
         'zip_sha256': lock['sha256'],
     }
+    if fmt == 'v3':
+        tool_images = load_research_runner_tool_images()
+        entry['input_hash'] = tool_images.input_hash(entry)
+        entry['tag'] = tool_images.derived_tag(entry)
+    return entry
+
+
+def load_research_runner_tool_images():
+    load_research_runner()
+    import importlib
+    return importlib.import_module('runner.tool_images')
 
 
 def _resolved(entry):
@@ -549,21 +569,29 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
             if sha256_file(target) != item['sha256']:
                 raise ValueError(f"private input {item['role']} changed while copying")
 
-        image = tool_image_declaration(stage)
+        image = tool_image_declaration(stage, fmt)
         values = template_values(spec, image, fmt)
         template_root = repo / 'research' / 'templates'
         write_text(stage / 'AGENTS.md', render_text((template_root / 'AGENTS.md').read_text(encoding='utf-8'), values))
         write_text(stage / 'brief.md', render_text((template_root / 'brief.md').read_text(encoding='utf-8'), values))
-        write_text(stage / 'inputs' / 'question.md',
-                   render_text((template_root / 'question.md').read_text(encoding='utf-8'), values))
+        question = render_text((template_root / 'question.md').read_text(encoding='utf-8'), values)
+        extra = spec.get('question_extra')
+        if extra:
+            if isinstance(extra, list):
+                extra = '\n'.join(extra)
+            if not isinstance(extra, str):
+                raise ValueError('spec question_extra must be a string or list of strings')
+            question = question.rstrip('\n') + '\n\n' + extra.rstrip('\n') + '\n'
+        write_text(stage / 'inputs' / 'question.md', question)
         write_json(stage / 'inputs' / 'contracts.json', contracts())
         write_json(stage / 'inputs' / 'spec.json', spec)
         write_json(stage / 'inputs' / 'provenance.json', provenance)
         declaration = {key: image[key] for key in (
             'name', 'containerfile', 'context', 'platform', 'inputs', 'fetch', 'tag',
-            'input_hash', 'timeout_seconds')}
+            'timeout_seconds')}
         write_json(stage / 'inputs' / 'tool-images.json',
-                   {'format': 'memcard-tool-images/v1', 'images': [declaration]})
+                   {'format': 'memcard-tool-images/v1',
+                    'images': [dict(declaration, input_hash=image['input_hash'])]})
 
         asset = {key: spec['asset'][key] for key in ('asset_type', 'asset_id', 'destination')}
         skills = sorted(path.relative_to(stage).as_posix()
