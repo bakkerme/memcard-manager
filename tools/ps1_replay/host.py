@@ -214,6 +214,9 @@ def main(argv=None):
         p.add_argument('--bios', type=Path, required=True, help='Explicit BIOS file visible to the engine')
         p.add_argument('--card', type=Path, required=True, help='Explicit whole-card seed file')
         p.add_argument('--name', default='ps1-replay')
+        if mode in ('calibrate', 'diagnose'):
+            p.add_argument('--guest-writes', action='store_true',
+                           help='Opt in to logged guest RAM pokes for this session')
         if mode == 'diagnose':
             p.add_argument('--state', required=True, type=Path)
     p = sub.add_parser('command')
@@ -259,7 +262,8 @@ def main(argv=None):
         parser.error('Worker image must be native ARM64')
     args.run.mkdir(parents=True, exist_ok=True)
     metadata = {**image_metadata(info, args.engine),
-                'cpuLimit': 4, 'memoryLimitBytes': 3 * 1024**3, 'network': 'none'}
+                'cpuLimit': 4, 'memoryLimitBytes': 3 * 1024**3, 'network': 'none',
+                'guestWrites': bool(getattr(args, 'guest_writes', False))}
     (args.run / 'container.json').write_text(json.dumps(metadata, indent=2) + '\n')
     mounts = [(ROOT / name, '/tools/ps1_replay/' + name, 'ro') for name in
               ('runner.py', 'adapter.lua', 'recipe.json', 'build-lock.json')]
@@ -283,6 +287,9 @@ def main(argv=None):
     argv = [args.engine, 'run', '--rm', '--label', 'memcard.ps1-replay=1', '--platform', 'linux/arm64', '--name', args.name, '--cpus', '4', '--memory', '3g',
             '--network', 'none', '--entrypoint', 'python3']
     argv += session_env_flags()
+    # Only the launch flag opts in. An ambient host variable must not enable writes.
+    if getattr(args, 'guest_writes', False):
+        argv += ['-e', 'PS1_REPLAY_GUEST_WRITES=1']
     for path, dest, mode in mounts:
         argv += ['-v', f'{path.resolve()}:{dest}:{mode}']
     argv += [info['Id'], '/tools/ps1_replay/runner.py', args.mode]

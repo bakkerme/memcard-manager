@@ -104,6 +104,7 @@ class EngineTests(unittest.TestCase):
                     self.assertIn(f'{run.resolve()}:/work:rw', argv)
                     self.assertEqual(argv[argv.index('--network') + 1], 'none')
                     self.assertEqual(json.loads((run / 'container.json').read_text())['engine'], engine)
+                    self.assertFalse(json.loads((run / 'container.json').read_text())['guestWrites'])
 
     def test_session_deadline_overrides_are_forwarded(self):
         env = {'PS1_REPLAY_BASELINE_SECONDS': '600', 'PS1_REPLAY_SESSION_SECONDS': '1200'}
@@ -131,6 +132,61 @@ class EngineTests(unittest.TestCase):
                 self.assertLess(argv.index('-e'), argv.index('worker'))
                 self.assertIn('PS1_REPLAY_BASELINE_SECONDS=600', argv)
                 self.assertIn('PS1_REPLAY_SESSION_SECONDS=1200', argv)
+
+    def test_guest_writes_are_opt_in_on_calibrate_and_diagnose_only(self):
+        info = {'Id': 'sha256:test', 'Architecture': 'arm64'}
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); disc = root / 'disc'; disc.mkdir()
+            bios = root / 'bios.bin'; bios.write_bytes(b'bios')
+            card = root / 'card.mcr'; card.write_bytes(b'card')
+            state = root / 'state.bin'; state.write_bytes(b'state')
+            for mode, extra in (('calibrate', []), ('diagnose', ['--state', str(state)])):
+                run = root / mode
+                opted = root / (mode + '-on')
+                with patch.dict(os.environ, {'PS1_REPLAY_GUEST_WRITES': '1'}), \
+                        patch.object(host, 'preflight'), \
+                        patch.object(host, 'image_info', return_value=info), \
+                        patch.object(host, 'call') as call, \
+                        patch.object(host.subprocess, 'run', return_value=SimpleNamespace(stdout='', returncode=0)), \
+                        hidden_session_env():
+                    host.main(['--engine', 'docker', mode, '--run', str(run), '--bios', str(bios),
+                               '--disc', str(disc), '--card', str(card), *extra])
+                    argv = call.call_args.args[0]
+                    self.assertNotIn('PS1_REPLAY_GUEST_WRITES=1', argv)
+                    self.assertFalse(json.loads((run / 'container.json').read_text())['guestWrites'])
+                    host.main(['--engine', 'docker', mode, '--guest-writes', '--run', str(opted),
+                               '--bios', str(bios), '--disc', str(disc), '--card', str(card), *extra])
+                    argv = call.call_args.args[0]
+                    self.assertLess(argv.index('-e'), argv.index(info['Id']))
+                    self.assertEqual(argv[argv.index('-e') + 1], 'PS1_REPLAY_GUEST_WRITES=1')
+                    self.assertTrue(json.loads((opted / 'container.json').read_text())['guestWrites'])
+
+    def test_bootstrap_and_qualify_reject_guest_writes_before_the_engine(self):
+        err = io.StringIO()
+        with patch('sys.stderr', err), patch.object(host, 'call') as call:
+            for mode in ('bootstrap', 'qualify'):
+                err.seek(0)
+                err.truncate(0)
+                with self.assertRaises(SystemExit) as error:
+                    host.main(['--engine', 'docker', mode, '--guest-writes', '--run', 'new-run',
+                               '--bios', 'bios.bin', '--disc', 'disc', '--card', 'card.mcr'])
+                self.assertEqual(error.exception.code, 2)
+                self.assertIn('guest-writes', err.getvalue())
+            call.assert_not_called()
+
+    def test_poke_command_is_forwarded_without_enabling_writes(self):
+        with patch.dict(os.environ, {'PS1_REPLAY_GUEST_WRITES': '1'}), hidden_session_env(), \
+                patch.object(host, 'call') as call:
+            host.main(['--engine', 'docker', 'command', '--name', 'worker', 'poke',
+                       '--address', '0x80010000', '--size', '2', '--value', '0xff', '--sticky',
+                       '--when-op', 'eq', '--when-address', '0x80010004', '--when-size', '2',
+                       '--when-value', '0'])
+            argv = call.call_args.args[0]
+            self.assertNotIn('-e', argv)
+            self.assertEqual(argv, ['docker', 'exec', 'worker', 'python3', '/tools/ps1_replay/runner.py',
+                                    'command', 'poke', '--address', '0x80010000', '--size', '2',
+                                    '--value', '0xff', '--sticky', '--when-op', 'eq',
+                                    '--when-address', '0x80010004', '--when-size', '2', '--when-value', '0'])
 
     def test_invalid_session_deadline_is_rejected_before_the_engine(self):
         for value in ('nope', '0', '-5', 'nan', 'inf'):

@@ -40,6 +40,8 @@ Handlers appeared under `/api/v1/lua/<handler-name>`. The coordinator sent a uni
 
 `PCSX.getMemoryAsFile()` exposes mapped reads such as `readU8At`, `readU32At`, and `readAt`; close the handle. Bound RAM ranges and validate addresses for the exact game region/revision. Record raw ranges alongside interpreted stable fields, excluding volatile registers from equality criteria unless deliberately required.
 
+PCSX-Redux has no cheat database, `.cht` loader, or GameShark UI. The memcard-manager harness can opt in to logged guest RAM pokes with `writeU8At` / `writeU16At` / `writeU32At` (value, then address) on that same file object. Writes stay inside `0x80000000-0x80200000` and stay disabled unless the worker was launched with `--guest-writes`. See `tools/ps1_replay/README.md`. Do not hide a poke inside a qualification replay.
+
 `PCSX.GPU.takeScreenShot()` returned width, height, a binary data slice, and a bpp enum. In the tested builds, enum 0 meant 16-bit RGB555 little-endian; the other supported mode was 24-bit RGB. Convert according to the actual format, preserve the raw bytes and dimensions, and hash raw pixels separately from PNG encoding. Reject zero-sized captures; a uniformly black initialized image also fails a gate expecting visible gameplay.
 
 `PCSX.createSaveState()` returned a raw binary slice serialized with `tostring`. Restore it using `Support.File.open` and `PCSX.loadSaveState`, then close the file. These were native raw Redux states, distinct from compressed UI files and other emulators' formats. Capture with all buttons released and the emulator paused. Do not equate a successful load call or matching RAM with resumed execution.

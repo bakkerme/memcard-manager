@@ -1,9 +1,11 @@
 # Linux Legends 2 input/replay harness
 
 Research-only tooling, separate from the desktop app. One PCSX-Redux process per
-trial, driven by Lua controller overrides and guest-vsync events. It never
-patches guest memory or saves through the game. Originals are mounted read-only;
-each worker receives a disposable card and separate portable profile.
+trial, driven by Lua controller overrides and guest-vsync events. Guest RAM
+writes stay disabled unless a research session is started with `--guest-writes`.
+The harness does not write save bytes into the memory-card file; when a save is
+required, the game writes it. Originals are mounted read-only; each worker
+receives a disposable card and separate portable profile.
 
 ## First result
 
@@ -200,6 +202,9 @@ python3 tools/ps1_replay/host.py command values
 python3 tools/ps1_replay/host.py command memory --address 0x8008c0b0 --length 0x300 --name player
 ```
 
+`watch`, `poke`, and `poke-clear` are for opted-in research sessions. See below.
+`poke` is rejected unless this worker was started with `--guest-writes`.
+
 Every press releases overrides at its final guest vsync. Frame actions fail if
 their actual count differs from the requested count. An action has a 60-second
 deadline and a trial has a five-minute deadline, including emulator startup.
@@ -248,14 +253,79 @@ A calibration session ending cleanly means the session completed, not that the
 integration test passed. Failure reviews bind an observed gate failure to the
 captured evidence; automatic startup/bootstrap failures write a failed result.
 
+## Opt-in guest memory writes
+
+PCSX-Redux has no cheat database, `.cht` loader, or GameShark screen. A research
+session that already knows a code sends one logged poke at a time. `calibrate`
+and `diagnose` accept `--guest-writes`. `bootstrap` and `qualify` reject it.
+Frozen recipes still accept only button presses and frame waits.
+
+Confirm the current scene can reach a save (memory-card menu or a save point)
+before poking. If it cannot, navigate there first. Keep one control save from
+a separate `--guest-writes` session that never issues `poke`. Compare that card
+with the poked card. Leave `recipe.json` as button and frame steps.
+
+The harness does not write save bytes into the memory-card file. After a poke,
+resume and let the game save. A launch without `--guest-writes` still fails if
+the disposable card changes. With the flag, that change is evidence instead:
+`memory-writes.jsonl` grows as each poke returns, and `calibration.json` records
+`cardEvidence` when the session exits.
+
+- `cardEvidence.control` is true when the disposable card changed and
+  `memory-writes.jsonl` has no lines. Confirm on the capture that the game saved.
+- `cardEvidence.cheatDerived` is true when a poke landed and the card bytes
+  changed.
+- `harnessPatchedCard` stays false. A nonzero `guestMemoryWrites` means that
+  card is not a control, even if the game has not saved yet.
+
+`values` and the qualification `memory` dump read fixed Mega Man Legends 2
+addresses. Other games use `watch` and pass the address from the research package.
+
+```sh
+python3 tools/ps1_replay/host.py calibrate --guest-writes --run "$PS1_RESEARCH_RUN" \
+  --bios "$PS1_RESEARCH_BIOS" --disc "$PS1_RESEARCH_DISC" --card "$PS1_RESEARCH_CARD"
+
+# 8-bit GameShark 30aaaaaa 00vv
+python3 tools/ps1_replay/host.py command watch --address 0x80012345 --size 1 --name lives
+python3 tools/ps1_replay/host.py command poke --address 0x80012345 --size 1 --value 0x09
+
+# 16-bit GameShark 80aaaaaa vvvv. Pass the 80xxxxxx address as-is.
+python3 tools/ps1_replay/host.py command poke --address 0x80012346 --size 2 --value 0x00ff
+
+# Hold a code on every guest vsync while the game runs, then stop it.
+python3 tools/ps1_replay/host.py command poke --address 0x80012346 --size 2 --value 0x00ff --sticky
+python3 tools/ps1_replay/host.py command frames --frames 120
+python3 tools/ps1_replay/host.py command poke-clear
+
+# D0aaaaaa vvvv checks a 16-bit equal; E0aaaaaa vvvv checks not-equal.
+# A failing check skips the write and logs skipped:true.
+python3 tools/ps1_replay/host.py command poke --address 0x80020000 --size 2 --value 0x0001 --sticky \
+  --when-op eq --when-address 0x80012346 --when-size 2 --when-value 0x00ff
+```
+
+`poke-clear --address 0x80012346` removes one sticky code. Omit `--address` to
+remove every sticky code. Sticky writes run from the guest-vsync listener, so
+the emulator has to be running (`frames` or `resume`).
+
+Every landed or skipped poke is one JSON line in `<stage>/memory-writes.jsonl`
+with `address`, `size`, `value`, `before`, `after`, `frame`, and `timestamp`
+(worker-clock unix seconds). The same one-shot record is in `actions.jsonl`.
+Later sticky vsyncs add `reapplied: true`. Addresses are naturally aligned and
+stay inside `0x80000000-0x80200000`. Translate a `0xA0xxxxxx` code by subtracting
+`0x20000000` before sending it. Sizes are 1, 2, or 4. The adapter writes with
+`PCSX.getMemoryAsFile()` `writeU8At` / `writeU16At` / `writeU32At` (value, then
+address).
+
 ## Diagnostics
 
 Calibration-only commands include `resume`, `release`, `diagnostics --name NAME`,
 `reset_normal`, `reset_fast`, and `restore_saved --name NAME`. `resume` is an
 unbounded diagnostic run within the coordinator's overall deadline; it is
 rejected in a qualification recipe. Use `release` to stop it and clear buttons.
-The `diagnostics` command saves CPU registers and the Redux state schema without
-patching memory. Use distinct names for captures and register dumps.
+The `diagnostics` command saves CPU registers and the Redux state schema. It
+does not write guest RAM. `poke` is a separate command and runs only in a
+session started with `--guest-writes`. Use distinct names for captures and
+register dumps.
 
 To reopen a paired failed state/card for diagnosis:
 
@@ -275,7 +345,8 @@ python3 -m unittest discover -s tools/ps1_replay -p 'test_*.py' -v
 ```
 
 These simulated coordinator tests cover missing inputs, emulator exit, stalled
-actions, frame overshoot, transport failure, deadlines, cleanup and value checks.
+actions, frame overshoot, transport failure, deadlines, cleanup, value checks,
+and guest-memory writes (disabled unless the session opts in).
 They do not qualify real emulator compatibility or hardware behavior.
 
 Primary API references: [CLI flags](https://pcsx-redux.consoledev.net/cli_flags/),
