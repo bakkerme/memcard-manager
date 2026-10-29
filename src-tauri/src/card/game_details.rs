@@ -12,6 +12,7 @@ mod level_summaries;
 mod mega_man_legends2;
 mod overnight;
 mod pacman_us;
+mod rayman;
 mod resident_evil;
 mod summaries;
 mod tekken2;
@@ -95,6 +96,8 @@ impl Format {
             "mega-man-legends" => matches!(suffix, "-DASH00" | "-DASH01"),
             "kula-world" => suffix.is_empty(),
             "tomb-raider" => suffix.is_empty(),
+            // The 8-byte suffix is the save id (`aaa63592`, `smd56832`), not a fixed token.
+            "rayman" => true,
             "final-fantasy-vii" | "final-fantasy-viii" => {
                 suffix.len() == 2
                     && suffix.bytes().all(|b| b.is_ascii_digit())
@@ -135,6 +138,8 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SLUS-00437" => ("tomb-raider-2", "Tomb Raider II", 1, "BA", "TOMB2"),
         "SLES-00024" => ("tomb-raider", "Tomb Raider", 1, "BE", "TOMBRAID"),
         "SLUS-00152" => ("tomb-raider", "Tomb Raider", 1, "BA", "TOMBRAID"),
+        // Observed USA directory prefix is BI. BA is also accepted; see rayman::decode.
+        "SLUS-00005" => ("rayman", "Rayman", 1, "BI", ""),
         "SLES-03900" => (
             "digimon-digital-card-battle",
             "Digimon Digital Card Battle",
@@ -213,6 +218,14 @@ pub(super) fn format(code: &str) -> Option<Format> {
     })
 }
 
+fn region_accepted(code: &str, region: &str, format: &Format) -> bool {
+    if code == "SLUS-00005" {
+        // The USA disc and the GameFAQs sample both write BI. BA is accepted and unobserved.
+        return region == "BI" || region == "BA";
+    }
+    region == format.region
+}
+
 pub(super) fn decode(
     code: &str,
     region: &str,
@@ -220,7 +233,7 @@ pub(super) fn decode(
     data: &[u8],
 ) -> Result<GameDetails, String> {
     let format = format(code).ok_or("This release does not have a verified decoder yet.")?;
-    if region != format.region {
+    if !region_accepted(code, region, &format) {
         return Err("The save region does not match the supported product code. Game details are unavailable for this variant.".into());
     }
     if !format.accepts_identifier(identifier) {
@@ -238,6 +251,9 @@ pub(super) fn decode(
             "This save does not have the expected game layout. Try another backup of this save."
                 .into(),
         );
+    }
+    if code == "SLUS-00005" {
+        return rayman::decode(&format, code, region, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00213" {
         return tekken2::decode(&format, code, data).map(GameDetails::Summary);
