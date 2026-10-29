@@ -6,6 +6,8 @@ Use when file comparisons cannot resolve a candidate, when capturing new game sa
 
 Record an experiment ID and question, game/release and save identifier, original input hashes, normalization/extraction method, emulator build/image/settings, baseline state and paired card, recipe/actions with frame checkpoints, before/after screenshots and RAM, generated card/save hashes, and observed reload behavior. Retain the record with private evidence outside the disposable worker. Every offset must say whether it is card, wrapper, SC payload, game-data-relative, RAM, or a record-relative coordinate.
 
+When that record is published under Research Runner `outputs/`, keep the field ledger loose and pack the screenshots, calibration dumps, and action logs into the archives described in the skill's publish section. Cite the archive path and name the member in the description.
+
 Use a field ledger like this; leave unmeasured cells explicit:
 
 | Origin + offset | Width/encoding | Candidate | Evidence | Confidence | Counterexample / next test |

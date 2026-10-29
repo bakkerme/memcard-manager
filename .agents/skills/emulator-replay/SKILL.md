@@ -48,6 +48,8 @@ For startup card-preservation failures in a readiness pilot, read [the startup p
 
 Retain a machine-readable verdict and manifest with provenance hashes, effective settings, baseline state/media, raw frames and viewable screenshots, RAM values/ranges, recipe/action logs, requested/actual frames, elapsed times, failing step, and cleanup outcomes. Keep calibration, diagnostics, mechanical completion, and reviewed qualification distinct.
 
+Local `tools/ps1_replay/runs/` directories stay unpacked. When that evidence is published as a Research Runner job, follow the ps1-save-research publish section: pack screenshots, raw frames, calibration dumps, and action logs into a few archives under `outputs/`, and leave `handoff.md`, `field-ledger.md`, `research.json`, `result.json`, `decoder/`, and a small fixtures set loose. The runner accepts about 512 published output entries.
+
 Use bounded per-action and overall deadlines. On failure, attempt acknowledged release of every controller override, retain available evidence, and stop only owned emulator processes. Preserve the original failure if cleanup or integrity checks also fail. Restore a VM's initial running/stopped state when the task started it temporarily.
 
 Test coordinator handling of missing inputs, early emulator exit, stalled actions, frame overshoot, failed transport, deadline expiry, and button cleanup with simulated responses. Also test baseline tampering and evidence mismatches where relevant. These tests do not replace the local-assets integration run.

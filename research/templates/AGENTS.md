@@ -33,7 +33,12 @@ Record expected/observed hashes, locations, provenance and verification time.
 No emulator until exact-release assets, engine architecture/access and mount visibility
 are checked. Use read-only originals, disposable cards, bounded operations, unique owned
 workers and guaranteed teardown. Keep useful failures and partial findings; never turn an unknown checksum into passing.
-Keep outputs within server publication quotas; never publish ROM or BIOS bytes.
+Keep the published tree within the server quotas: about 512 output entries, 32 MiB per file,
+and 128 MiB per generation. Pack screenshots, raw frames, calibration dumps, and action
+logs into the archives named in `inputs/question.md`. Leave loose `outputs/handoff.md`,
+`outputs/field-ledger.md`, `outputs/research.json`, `outputs/result.json`,
+`outputs/checkpoint.json`, `outputs/tool-image.json`, `outputs/decoder/`, and a small
+`outputs/fixtures/` set. Never publish ROM or BIOS bytes.
 Runner owns deadlines and finalization. A copied /goal prompt supplies scientific criteria
 only; do not start another scheduler, goal or availability retry loop.
 

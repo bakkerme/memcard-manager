@@ -17,8 +17,8 @@ if str(HERE) not in sys.path:
 
 import assemble_package as package_builder
 from assemble_package import (
-    PLACEHOLDER_SHA, READER_PREFIX, SKILL_ROOTS, TEMPLATE_PATHS, TOOL_PATHS,
-    assemble_package as build_package,
+    PLACEHOLDER_SHA, READER_PREFIX, REQUIRED_OUTPUTS, SKILL_ROOTS, TEMPLATE_PATHS,
+    TOOL_PATHS, assemble_package as build_package,
 )
 
 REAL = Path(__file__).resolve().parents[2]
@@ -195,6 +195,7 @@ class AssembleTests(unittest.TestCase):
             self.assertEqual(manifest['inputs'], sorted(manifest['inputs']))
             self.assertEqual(manifest['dependencies'], [{
                 'asset_type': 'psx-rom', 'asset_id': 'SLUS-00005', 'destination': 'inputs/roms/game'}])
+            self.assertEqual(manifest['required_outputs'], list(REQUIRED_OUTPUTS))
             self.assertNotIn('tool_images', manifest)
             self.assertNotIn('required_checks', manifest)
             self.assertNotIn('image', manifest['runtime'])
@@ -303,7 +304,10 @@ class AssembleTests(unittest.TestCase):
         self.assertIn('completion_percent', spec['fields_target'])
         tracked = subprocess.check_output(['git', '-C', str(REAL), 'ls-files'], text=True)
         self.assertNotIn('ps-22a.bin', tracked)
-        self.assertNotIn('.gme', tracked)
+        gme_files = [line for line in tracked.splitlines() if line.endswith('.gme')]
+        self.assertEqual(gme_files, [
+            'src-tauri/src/card/game_details/testdata/rayman-gamefaqs-100.gme',
+        ])
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError, 'sha256 mismatch'):
                 build_package(REAL / 'research/specs/rayman-us.json', tmp,
@@ -338,6 +342,7 @@ class AssembleTests(unittest.TestCase):
             self.assertTrue(filecmp.cmp(first['package'], second['package'], shallow=False))
             runner = package_builder.load_research_runner()
             manifest, files = runner.package.verify(first['package'])
+            self.assertEqual(manifest['required_outputs'], list(REQUIRED_OUTPUTS))
             self.assertNotIn('inputs/saves/rayman-na.gme', files)
             self.assertFalse(any(name.endswith('.gme') for name in files))
             self.assertIn('inputs/bios/ps-22a.bin', files)
@@ -349,6 +354,52 @@ class AssembleTests(unittest.TestCase):
             self.assertIn('create saves in the emulator', agents)
             self.assertIn('emulator-generated saves', question)
             self.assertIn('native-load', agents)
+            self.assertIn('outputs/evidence-screenshots.tar.gz', question)
+            self.assertIn('outputs/field-ledger.md', question)
+
+    def test_publish_layout_archives_bulky_evidence_and_keeps_required_outputs_small(self):
+        self.assertEqual(list(REQUIRED_OUTPUTS), [
+            'outputs/handoff.md',
+            'outputs/research.json',
+            'outputs/result.json',
+        ])
+        archives = (
+            'outputs/evidence-screenshots.tar.gz',
+            'outputs/evidence-calibration.tar.gz',
+            'outputs/evidence-actions.tar.gz',
+        )
+        detailed = (
+            REAL / 'research/templates/question.md',
+            REAL / 'research/ps1-summary/inputs/question.md',
+            REAL / '.agents/skills/ps1-save-research/SKILL.md',
+        )
+        for path in detailed:
+            text = path.read_text()
+            self.assertIn('field-ledger.md', text)
+            self.assertIn('512', text)
+            self.assertIn('outputs/decoder/', text)
+            self.assertIn('outputs/fixtures/', text)
+            for archive in archives:
+                self.assertIn(archive, text)
+            self.assertIn('tar --sort=name --mtime=@0', text)
+        pointers = (
+            REAL / 'research/templates/AGENTS.md',
+            REAL / 'research/templates/brief.md',
+            REAL / 'research/ps1-summary/AGENTS.md',
+            REAL / 'research/ps1-summary/brief.md',
+            REAL / '.agents/skills/research-runner/SKILL.md',
+        )
+        for path in pointers:
+            text = path.read_text()
+            self.assertIn('field-ledger.md', text)
+            self.assertIn('512', text)
+            self.assertIn('calibration dumps', text)
+        question = (REAL / 'research/templates/question.md').read_text()
+        self.assertIn(
+            '`required_outputs` stays `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`',
+            question)
+        for forbidden in archives + ('outputs/decoder/', 'outputs/fixtures/'):
+            self.assertNotIn(forbidden, REQUIRED_OUTPUTS)
 
 
 if __name__ == '__main__':
