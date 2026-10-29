@@ -238,8 +238,17 @@ class AssembleTests(unittest.TestCase):
                 'tool-image-provisioned', 'native-load', 'parser-suite', 'cross-check-editor'])
             image = payload['tool_images'][0]
             self.assertNotIn('input_hash', image)
-            from runner import tool_images
-            self.assertEqual(image['tag'], tool_images.derived_tag(image))
+            try:
+                from runner import tool_images
+            except ImportError:
+                tool_images = None
+            if tool_images is not None:
+                self.assertEqual(image['tag'], tool_images.derived_tag(image))
+                self.assertEqual(package_builder.canonical_tool_image_hash(image),
+                                 tool_images.input_hash(image))
+            else:
+                digest = package_builder.canonical_tool_image_hash(image)
+                self.assertEqual(image['tag'], 'localhost/rr-tool/ps1-replay:in-' + digest[:16])
             self.assertNotIn('image_id', json.dumps(image))
             self.assertNotIn('Step 0', archive_text(v3['package'], 'AGENTS.md'))
             if version >= (0, 5, 0):

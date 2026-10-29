@@ -387,16 +387,47 @@ def tool_image_declaration(stage, fmt='v2'):
         'zip_sha256': lock['sha256'],
     }
     if fmt == 'v3':
-        tool_images = load_research_runner_tool_images()
+        apply_runner_tool_image_identity(entry)
+    return entry
+
+
+def canonical_tool_image_hash(entry):
+    """Same material Runner 0.5.0 hashes in runner.tool_images.input_hash.
+
+    Research Runner 0.4.0 has no tool_images module. CI still assembles v3
+    packages with that wheel, so this copy keeps the tag identical to 0.5.0.
+    """
+    material = {
+        'containerfile': entry['containerfile'],
+        'context': entry['context'],
+        'platform': entry['platform'],
+        'inputs': dict(entry['inputs']),
+    }
+    fetch = entry.get('fetch') or []
+    if fetch:
+        material['fetch'] = [item['sha256'] for item in fetch]
+    encoded = json.dumps(material, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+    return hashlib.sha256(encoded.encode('ascii')).hexdigest()
+
+
+def apply_runner_tool_image_identity(entry):
+    tool_images = load_research_runner_tool_images()
+    if tool_images is not None:
         entry['input_hash'] = tool_images.input_hash(entry)
         entry['tag'] = tool_images.derived_tag(entry)
-    return entry
+        return
+    digest = canonical_tool_image_hash(entry)
+    entry['input_hash'] = digest
+    entry['tag'] = f"localhost/rr-tool/{entry['name']}:in-{digest[:16]}"
 
 
 def load_research_runner_tool_images():
     load_research_runner()
     import importlib
-    return importlib.import_module('runner.tool_images')
+    try:
+        return importlib.import_module('runner.tool_images')
+    except ImportError:
+        return None
 
 
 def _resolved(entry):
