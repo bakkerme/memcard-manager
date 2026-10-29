@@ -46,6 +46,129 @@ class GateError(RuntimeError):
     pass
 
 
+# Guest RAM pokes stay off unless the worker was launched with --guest-writes.
+RAM_START = 0x80000000
+RAM_END = 0x80200000
+
+
+def guest_writes_enabled():
+    return os.environ.get('PS1_REPLAY_GUEST_WRITES') == '1'
+
+
+def assert_guest_writes_allowed(mode):
+    if guest_writes_enabled() and mode not in ('calibrate', 'diagnose', 'command'):
+        raise GateError('Guest memory writes are only available for calibrate and diagnose')
+
+
+def valid_artifact_name(name):
+    return type(name) is str and bool(name) and all(c.isalnum() or c in '_.-' for c in name)
+
+
+def validate_ram_access(address, size, value=None):
+    if type(address) is not int or type(size) is not int:
+        raise GateError('Poke address and size must be integers')
+    if size not in (1, 2, 4):
+        raise GateError('Poke size must be 1, 2, or 4')
+    if address < RAM_START or address + size > RAM_END:
+        raise GateError('Poke must stay inside guest RAM 0x80000000-0x80200000')
+    if address % size != 0:
+        raise GateError('Poke address must be aligned to its size')
+    if value is not None:
+        if type(value) is not int or value < 0 or value >= 1 << (8 * size):
+            raise GateError('Poke value does not fit in the requested size')
+
+
+def normalize_guest_action(action, params):
+    """Reject guest writes unless this session opted in. Reads stay available."""
+    params = dict(params)
+    if action in ('poke', 'poke-clear') and not guest_writes_enabled():
+        raise GateError('Guest memory writes are disabled')
+    if action == 'poke':
+        if any(params.get(key) is None for key in ('address', 'size', 'value')):
+            raise GateError('Poke requires address, size, and value')
+        validate_ram_access(params['address'], params['size'], params['value'])
+        when_keys = ('when_op', 'when_address', 'when_size', 'when_value')
+        present = [key for key in when_keys if params.get(key) is not None]
+        if present and len(present) != len(when_keys):
+            raise GateError('Poke condition needs when_op, when_address, when_size, and when_value')
+        if len(present) == len(when_keys):
+            if params['when_op'] not in ('eq', 'ne'):
+                raise GateError('Poke condition must be eq or ne')
+            validate_ram_access(params['when_address'], params['when_size'], params['when_value'])
+        if params.get('sticky') in (True, '1', 1):
+            params['sticky'] = '1'
+        else:
+            params.pop('sticky', None)
+    elif action == 'watch':
+        if params.get('address') is None or params.get('size') is None:
+            raise GateError('Watch requires address and size')
+        validate_ram_access(params['address'], params['size'])
+        if params.get('name') is not None and not valid_artifact_name(params['name']):
+            raise GateError('Invalid watch name')
+    elif action == 'poke-clear' and params.get('address') is not None:
+        if type(params['address']) is not int:
+            raise GateError('Poke address and size must be integers')
+    return params
+
+
+def append_memory_write(directory, entry):
+    required = ('address', 'size', 'value', 'before', 'after', 'frame')
+    missing = [key for key in required if key not in entry]
+    if missing:
+        raise GateError(f'Poke evidence missing {", ".join(missing)}')
+    line = {
+        'address': entry['address'], 'after': entry['after'], 'before': entry['before'],
+        'frame': entry['frame'], 'reapplied': bool(entry.get('reapplied')),
+        'size': entry['size'], 'skipped': bool(entry.get('skipped')),
+        'sticky': bool(entry.get('sticky')), 'timestamp': entry.get('timestamp', time.time()),
+        'value': entry['value'],
+    }
+    if entry.get('when') is not None:
+        line['when'] = entry['when']
+    path = Path(directory) / 'memory-writes.jsonl'
+    with path.open('a') as handle:
+        handle.write(json.dumps(line, sort_keys=True) + '\n')
+
+
+def load_memory_writes(directory):
+    path = Path(directory) / 'memory-writes.jsonl'
+    if not path.exists():
+        return []
+    rows = []
+    for index, line in enumerate(path.read_text().splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError as error:
+            raise GateError(f'Unreadable memory-write evidence line {index}: {error}') from error
+    return rows
+
+
+def classify_card(initial_sha256, final_sha256, write_rows, guest_enabled):
+    """Tag a disposable card after a session. The harness does not patch card bytes."""
+    applied = [row for row in write_rows if not row.get('skipped')]
+    changed = initial_sha256 != final_sha256
+    info = {
+        'guestWritesEnabled': bool(guest_enabled),
+        'calibrationCardUnchanged': not changed,
+        'guestMemoryWrites': len(applied),
+        'failPreservation': changed and not guest_enabled,
+    }
+    if guest_enabled:
+        # A control save is a game-written card with no poke attempts.
+        # cheatDerived means a poke landed and the game then wrote the card.
+        info['cardEvidence'] = {
+            'cheatDerived': bool(applied) and changed,
+            'control': changed and not write_rows,
+            'guestMemoryWrites': len(applied),
+            'initialSha256': initial_sha256,
+            'finalSha256': final_sha256,
+            'harnessPatchedCard': False,
+        }
+    return info
+
+
 def record_failure(verdict, gate, error):
     # Cleanup/preservation checks must not erase the original failed gate.
     verdict.setdefault('failures', []).append({'gate': gate, 'error': error})
@@ -90,6 +213,14 @@ class Client:
         self.check()
         started = time.monotonic()
         ident = uuid.uuid4().hex
+        try:
+            params = normalize_guest_action(action, params)
+        except GateError as error:
+            record = {'id': ident, 'action': action, **params, 'error': str(error),
+                      'elapsedSeconds': time.monotonic() - started}
+            with self.log.open('a') as handle:
+                handle.write(json.dumps(record) + '\n')
+            raise
         record = {'id': ident, 'action': action, **params}
         try:
             ack = self.request('replay_command', {'id': ident, 'action': action, **params})
@@ -113,6 +244,10 @@ class Client:
                     result = state['result']
                     if result.get('error'):
                         raise GateError(result['error'])
+                    if action == 'poke':
+                        result = dict(result)
+                        result['timestamp'] = time.time()
+                        append_memory_write(self.log.parent, result)
                     if action in ('press', 'frames') and result.get('actualFrames') != int(params['frames']):
                         raise GateError(f'Frame boundary overshot: {result}')
                     record['result'] = result
@@ -244,7 +379,7 @@ class Worker:
                     '-stdout', '-lua_stdout', '-dofile', str(ROOT / 'adapter.lua')]
             save_json(self.directory / 'launch.json', {'argv': args, 'environment': {
                 k: env.get(k) for k in ('DISPLAY', 'LIBGL_ALWAYS_SOFTWARE', 'GALLIUM_DRIVER',
-                                        'LP_NUM_THREADS', 'SDL_AUDIODRIVER')}})
+                                        'LP_NUM_THREADS', 'SDL_AUDIODRIVER', 'PS1_REPLAY_GUEST_WRITES')}})
             self.process = subprocess.Popen(args, env=env, stdout=self.log,
                                             stderr=subprocess.STDOUT, start_new_session=True)
             self.client = Client(self.directory / 'actions.jsonl', self.process, started + (BASELINE_SECONDS if self.baseline else SESSION_SECONDS))
@@ -414,9 +549,19 @@ def qualify(recipe):
 
 
 def command(args):
+    try:
+        _command(args)
+    except GateError as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(1) from error
+
+
+def _command(args):
     directory = WORK / args.stage
     client = Client(directory / 'actions.jsonl')
-    params = {k: v for k, v in vars(args).items() if k in ('button', 'frames', 'name', 'address', 'length') and v is not None}
+    keys = ('button', 'frames', 'name', 'address', 'length', 'size', 'value', 'sticky',
+            'when_op', 'when_address', 'when_size', 'when_value')
+    params = {k: v for k, v in vars(args).items() if k in keys and v is not None and v is not False}
     if args.action == 'baseline':
         proxy = type('CalibrationWorker', (), {'directory': directory, 'client': client,
                     'capture': lambda _, name: (client.action('capture', name=name), convert_capture(directory, name))[1]})()
@@ -429,7 +574,7 @@ def command(args):
     print(json.dumps(result))
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='mode', required=True)
     sub.add_parser('calibrate')
@@ -437,13 +582,15 @@ def main():
     sub.add_parser('bootstrap')
     sub.add_parser('diagnose')
     p = sub.add_parser('command')
-    p.add_argument('action', choices=['frames', 'press', 'resume', 'release', 'capture', 'memory', 'values', 'diagnostics', 'spu_irq', 'reset_normal', 'reset_fast', 'restore_saved', 'restore_diagnostic', 'save', 'baseline', 'quit'])
+    p.add_argument('action', choices=['frames', 'press', 'resume', 'release', 'capture', 'memory', 'values', 'watch', 'poke', 'poke-clear', 'diagnostics', 'spu_irq', 'reset_normal', 'reset_fast', 'restore_saved', 'restore_diagnostic', 'save', 'baseline', 'quit'])
     p.add_argument('--stage', default='calibration')
+    p.add_argument('--sticky', action='store_true')
+    p.add_argument('--when-op', choices=('eq', 'ne'))
     for flag in ('button', 'name'):
         p.add_argument('--' + flag)
-    for flag in ('frames', 'address', 'length'):
+    for flag in ('frames', 'address', 'length', 'size', 'value', 'when-address', 'when-size', 'when-value'):
         p.add_argument('--' + flag, type=lambda x: int(x, 0))
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.mode == 'command':
         command(args); return
     WORK.mkdir(exist_ok=True)
@@ -451,7 +598,11 @@ def main():
     inputs = None
     display = None
     display_log = None
+    verdict['guestWritesEnabled'] = guest_writes_enabled()
     try:
+        if guest_writes_enabled() and args.mode not in ('calibrate', 'diagnose', 'command'):
+            verdict['gate'] = 'guest-writes'
+        assert_guest_writes_allowed(args.mode)
         inputs = input_hashes()
         save_json(WORK / 'inputs.json', inputs)
         if sha(ROOT / 'build-lock.json') != sha('/opt/harness/build-lock.json'):
@@ -516,8 +667,17 @@ def main():
             if calibration_card.exists():
                 initial = json.loads((calibration_card.parent / 'card-initial.json').read_text())
                 verdict['cardPreparation'] = initial
-                verdict['calibrationCardUnchanged'] = sha(calibration_card) == initial['initialSha256']
-                if not verdict['calibrationCardUnchanged']:
+                try:
+                    rows = load_memory_writes(calibration_card.parent)
+                except GateError as error:
+                    record_failure(verdict, 'memory-write-evidence', str(error))
+                    rows = []
+                info = classify_card(initial['initialSha256'], sha(calibration_card), rows, guest_writes_enabled())
+                verdict['calibrationCardUnchanged'] = info['calibrationCardUnchanged']
+                verdict['guestMemoryWrites'] = info['guestMemoryWrites']
+                if 'cardEvidence' in info:
+                    verdict['cardEvidence'] = info['cardEvidence']
+                if info['failPreservation']:
                     record_failure(verdict, 'card-preservation', 'Calibration wrote its disposable card')
         if display and display.poll() is None:
             display.terminate(); display.wait(timeout=5)

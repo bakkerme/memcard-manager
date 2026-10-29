@@ -34,6 +34,10 @@ for reproducible boot-only scratch writes and a frozen initialized disposable
 baseline. Exact whole-card equality remains required during measured replay.
 The existing Legends 2 preparation does not certify another game's startup.
 
+## Cheat-and-diff saves
+
+Guest RAM pokes stay off unless `calibrate` or `diagnose` is started with `--guest-writes`. PCSX-Redux has no `.cht` loader; send one `poke` at a time, with `--sticky` when the code has to be rewritten every guest vsync. Before poking, confirm the current scene can reach a save (menu or save point). Keep one control save from a separate `--guest-writes` session that never issues `poke`, so the game's card write is tagged `control`. The harness does not patch the memory-card file; the game writes the save, and a card produced after a landed poke is tagged cheat-derived. Commands, GameShark mapping, and the evidence file are in `tools/ps1_replay/README.md`.
+
 ## Research output
 
 Retain the complete private evidence bundle and report the requested finding with its exact game/build/input scope. Version the reusable recipe, harness changes, and a concise report when requested; exclude asset bytes, RAM, states, screenshots, and local caches. A production reader change should follow from verified field evidence and its own parser tests rather than automatically shipping every experimental observation.
