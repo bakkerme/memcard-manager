@@ -1,7 +1,10 @@
 # Research Runner in memcard-viewer
 
-The project consumes the published **Research Runner 0.3.0** wheel. It needs
+The project consumes the published **Research Runner 0.4.0** wheel. It needs
 Python 3.11+; no sibling Runner checkout, local Codex, Docker or desktop build.
+0.4.0 is the runner deployed for current packages: it accepts v2 manifests
+with asset dependencies and does not provision tool images. `--format v3` is
+for a later runner that understands `tool_images`.
 
 ## Setup
 
@@ -60,8 +63,38 @@ Review current readers/specs first: historical unfinished scopes may now be
 supported. Preserve originals and independent field evidence. Static parser tests,
 emulator boot, in-game save/load and semantic confidence are separate checks.
 Required dependencies must be rehashed on the executing host before use, including
-an immutable tool-image identity check before runtime work. Report unavailable
-and oversized inputs distinctly, with path, size, SHA-256 and affected scope.
+the tool-image input hash and the recorded runtime image ID before runtime work.
+Report unavailable and oversized inputs distinctly, with path, size, SHA-256 and
+affected scope.
+
+## Assemble a game package
+
+Game packages are generated, not hand-copied. The committed spec carries no BIOS,
+disc, or save bytes. The disc is a v2 `dependencies` entry (`psx-rom`), resolved
+by the operator loader the same way the Tomb Raider package fetched its disc.
+BIOS is a private input: the assembler copies it only after its sha256 matches
+the spec. A save is packaged only when the spec declares one. Rayman does not:
+`no_save_note` tells the job to generate saves in the emulator.
+
+```sh
+# BIOS digest in research/specs/rayman-us.json is the Tomb Raider ps-22a.bin sha256.
+# No RAYMAN_SAVE is required; the spec has no save input.
+PS1_BIOS=/path/to/ps-22a.bin \
+  python3 tools/save_research/assemble_package.py \
+  --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
+```
+
+Run that twice. Both prints must show the same `sha256`. `--format v2` is what
+Runner 0.4.0 can verify and start. The package contains `tools/ps1_replay/`
+(Containerfile, lock, host) and `inputs/tool-images.json`. Its AGENTS.md step 0
+is `python3 tools/ps1_replay/host.py --engine docker ensure`. `--format v3` adds
+`tool_images`, `required_checks` and `provenance` on the manifest for a runner
+that provisions the image itself; 0.4.0 rejects that format, so tonight stays v2.
+
+The archive is byte-stable for the same spec, git commit, and private-input
+bytes. A dirty worktree is refused unless `--allow-dirty` is set, which records
+a hash of the diff. `--out` should sit outside the repository so the package
+file itself does not dirty the next run.
 
 ## Submit, run and collect
 
@@ -140,18 +173,18 @@ no separate SSH/rsync transfer utility is required.
 
 ## Dependency and validation boundary
 
-- Release: [v0.3.0](https://github.com/bakkerme/research-runner/releases/tag/v0.3.0).
-- Source commit: `f77c24999d6fbbc621df7f438be77c4d2d8f2aa2`.
-- Wheel: `research_runner-0.3.0-py3-none-any.whl`.
-- SHA-256: `df0369af91b549311e529ff3fd8f62a3658a3def3e9b1dd50908cd9ca2c3f88b`, checked against release `SHA256SUMS` and pinned in requirements.
+- Release: [v0.4.0](https://github.com/bakkerme/research-runner/releases/tag/v0.4.0).
+- Source commit: `9078a12831d896bf36332ec2b35d5327656ec2c1`.
+- Wheel: `research_runner-0.4.0-py3-none-any.whl`.
+- SHA-256: `fdd3d7c5368d805c6e43d01dd24594ac3c1364a47e60bb563bb921030ade69ae`, checked against release `SHA256SUMS` and pinned in requirements.
+- The Pac-Man and Bomberman migration above was imported with the previous 0.3.0 pin (`f77c24999d6fbbc621df7f438be77c4d2d8f2aa2`, wheel sha256 `df0369af91b549311e529ff3fd8f62a3658a3def3e9b1dd50908cd9ca2c3f88b`). New packages use 0.4.0 so disc dependencies verify.
 - Server version, limits, supported execution engines and `structured_research`
   support must be discovered with `research-runner capabilities` for the configured
-  service. If structured reports are not enforced there, 0.3.0 `results` still
+  service. If structured reports are not enforced there, 0.4.0 `results` still
   validates them locally. This integration does not deploy or upgrade a server.
-- The producer requires no GPU or particular CPU architecture. Emulator tools and
-  immutable image pins are workload-specific: check compatibility with the actual
-  execution host. The repository's existing Legends 2 recipe is qualified on
-  native Linux ARM64 only; it is optional and does not qualify other platforms.
+- The producer requires no GPU or particular CPU architecture. Emulator tools are
+  workload-specific: the image identity is the input hash plus the recorded image
+  ID, and the Legends 2 recipe is qualified on native Linux ARM64 only.
 - Local migration tests and actual package verification qualify producer behavior,
   not native Codex authentication, emulator execution or new field findings.
 - No research job was submitted or started during this migration.

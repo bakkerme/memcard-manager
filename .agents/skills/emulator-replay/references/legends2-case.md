@@ -1,6 +1,6 @@
 # Case study: Legends 2 ARM64 replay
 
-Verified 10 October 2026 in memcard-viewer's research harness. These observations concern US `SLUS-01140` and one known save. Do not automatically apply the build pin, memory addresses, scratch preparation, or warmup to another title or environment.
+Verified 10 October 2026 in memcard-viewer's research harness. These observations concern US `SLUS-01140` and one known save. Do not automatically apply the build pin, memory addresses, scratch preparation, or warmup to another title or environment. The checked-in lock is now build 206; the build 70 identity below is this run's pin, not the current download.
 
 ## What worked
 

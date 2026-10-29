@@ -7,12 +7,32 @@ Use the repo-local [Research Runner workflow](../../research/README.md): install
 `research/NAME/`, and use the installed CLI for package/submit/start/monitor/pull/results.
 No Runner source checkout or custom submission/collection commands are needed.
 
-`prepare_runner.py` now imports a complete, SHA-256-pinned legacy v2 archive into
+`prepare_runner.py` imports a complete, SHA-256-pinned legacy v2 archive into
 a fresh definition, retaining every dependency and its relative path, and adds the
 structured research closeout contract. It delegates extraction and packaging to
 the installed library and never submits or starts work. See the workflow for the
 Pac-Man/Bomberman migration, input preservation, current server compatibility,
 required dependency verification and recovery commands.
+
+`assemble_package.py` is the other direction: it builds a new definition from a
+committed game spec (`research/specs/<game>.json`) and the tracked tools, skills,
+and current reader. It does not submit or start work. Each declared private
+input is passed with `--bios`/`--save` or the spec's `path_env` and must match
+the spec sha256. A spec with no save role packages no save; Rayman records that
+in `no_save_note` and the job generates saves in the emulator. Disc bytes are
+not packaged; the manifest lists them as a `psx-rom` dependency. `--format v2`
+(the default) is the package Runner 0.4.0 can run, and its first instruction is
+`host.py ensure`. Two assemblies with the same spec, commit, and private-input
+bytes produce the same archive sha256.
+
+```sh
+PS1_BIOS=/path/to/ps-22a.bin \
+  python3 tools/save_research/assemble_package.py \
+  --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
+```
+
+The Rayman spec's BIOS digest is the Tomb Raider `ps-22a.bin` sha256. No save
+file is declared. Neither BIOS nor save bytes belong in git.
 
 Copy this directory's `harness.py` and `parser_template.py` with your private
 suite. Python 3.10+ and the standard library are sufficient. No desktop app,

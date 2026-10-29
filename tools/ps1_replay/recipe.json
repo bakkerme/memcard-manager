@@ -131,7 +131,7 @@
       "frames": 120
     }
   ],
-  "buildId": 70,
+  "buildId": 206,
   "cardPreparation": "mirror-sector-0-to-scratch-sector-63-before-measured-boot",
   "expectedVisibleGear": [
     "Normal Helmet",

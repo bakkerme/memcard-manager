@@ -22,7 +22,7 @@ For PCSX-Redux, read [the Linux adapter notes](references/pcsx-redux-linux.md). 
 ## Isolate and pin
 
 - Hash original BIOS, disc files including cue dependencies, and card/save inputs. Mount originals read-only; use separate writable configuration and disposable save media per worker. Keep private assets, states, RAM, screenshots, and download caches outside version control and container images.
-- Pin the official executable artifact checksum, reported version/changeset, architecture, image ID/digest, effective settings, and launch arguments. A base-image digest alone does not pin packages resolved during a rebuild. Verify the actual running binary and renderer.
+- The worker identity is the tool-image input hash plus the runtime image ID recorded when the image was provisioned. Pin the official executable artifact checksum, reported version/changeset, architecture, effective settings, and launch arguments. A base-image digest alone does not pin packages resolved during a rebuild. Verify the actual running binary and renderer. A missing image is an error to provision from the packaged Containerfile (`host.py ensure` on a v2 package, or the runner tool-image receipt on v3), not a step that can be skipped. Do not pin a pre-existing image ID in place of the input hash.
 - For a local Linux pilot, prefer one native-architecture worker, a virtual display, software rendering, dummy audio, disabled shaders/updates, explicit resource limits, and container-local control transport without published ports. Adapt these to the emulator and requested environment; record deviations.
 
 ## Qualify in gates

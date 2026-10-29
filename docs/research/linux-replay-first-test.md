@@ -4,7 +4,8 @@
 Redux state/card pair, opened Equipment without user input or desktop focus,
 and produced identical screens with matching stable RAM. The production app is
 unchanged. This qualifies single-worker input/replay, not in-game saving,
-parallel isolation or fully headless rendering.
+parallel isolation or fully headless rendering. The repository lock has since
+moved to build 206; this page records the build 70 run, not the current pin.
 
 ## What fixed the failures
 
