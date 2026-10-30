@@ -46,6 +46,15 @@ TEMPLATE_PATHS = (
     'research/templates/brief.md',
     'research/templates/question.md',
 )
+# Closeout files the runner must see as loose paths. The question template
+# tells the job to also publish a field ledger, decoder/, a small fixtures set,
+# and bulky screenshots, calibration dumps, and action logs as a few archives.
+# Those paths vary, and a blocked job still closes out with this trio.
+REQUIRED_OUTPUTS = [
+    'outputs/handoff.md',
+    'outputs/research.json',
+    'outputs/result.json',
+]
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
 COMMIT_RE = re.compile(r'^[0-9a-f]{40}(?:[0-9a-f]{24})?$')
 CHECK_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,99}$')
@@ -228,7 +237,11 @@ def source_paths(repo):
         raise ValueError('template is not tracked: ' + ', '.join(missing))
     selected = list(TOOL_PATHS)
     for path in tracked:
-        if path.startswith(SKILL_ROOTS) or path.startswith(READER_PREFIX):
+        if path.startswith(SKILL_ROOTS):
+            selected.append(path)
+        elif path.startswith(READER_PREFIX) and '/testdata/' not in path:
+            # Reader unit-test saves stay in the repo (include_bytes!). A package
+            # carries a save only when the spec declares that private input.
             selected.append(path)
     return selected
 
@@ -647,7 +660,7 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
             'inputs': inputs,
             'dependencies': [asset],
             'resources': {key: spec['resources'][key] for key in ('cpu', 'memory_mb', 'time_seconds')},
-            'required_outputs': ['outputs/handoff.md', 'outputs/research.json', 'outputs/result.json'],
+            'required_outputs': list(REQUIRED_OUTPUTS),
             'policy': spec['policy'],
         }
         if fmt == 'v3':

@@ -43,7 +43,16 @@ structured result without executing returned code.
 
 New definitions require `outputs/result.json`, `outputs/handoff.md` and
 `outputs/research.json`. Their exact schemas are bundled into the payload under
-`inputs/contracts.json`. Research reports link claims to evidence IDs, preserve
+`inputs/contracts.json`. Keep `required_outputs` to that closeout trio. Published
+outputs are also capped at about 512 entries, 32 MiB per file and 128 MiB per
+generation. Emulator jobs that leave screenshots, calibration dumps, and action
+logs as individual files exceed the entry cap (one MGS job wrote 655 files).
+Tell the job to pack those into a few archives under `outputs/` and to leave
+`handoff.md`, `field-ledger.md`, `research.json`, `result.json`, `decoder/`,
+and a small fixtures set loose. In this repository the question template and
+`assemble_package` defaults already carry that layout.
+
+Research reports link claims to evidence IDs, preserve
 passed/failed/inconclusive/not_run checks with methods and expected/observed
 results, and include reproduction steps, dependency hashes and limitations.
 Research-side validation is part of the work. A collection hash verifies delivered

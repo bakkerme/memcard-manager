@@ -124,8 +124,16 @@ files and receipts. A dashboard job can be adopted with
 `research-runner attach my-existing-run REMOTE_JOB_ID` (a read-only remote lookup).
 
 Closeout requires `outputs/result.json`, `outputs/handoff.md` and
-`outputs/research.json` using the bundled `inputs/contracts.json` schemas. Publish
-referenced evidence and final readers/suites/helpers/specs under `outputs/`.
+`outputs/research.json` using the bundled `inputs/contracts.json` schemas. Those
+three paths are the manifest `required_outputs`. Also publish a loose
+`outputs/field-ledger.md`, `outputs/decoder/`, and a small `outputs/fixtures/`
+set. Pack screenshots, raw frames, calibration dumps, and action logs into a few
+archives under `outputs/` (`evidence-screenshots.tar.gz`,
+`evidence-calibration.tar.gz`, `evidence-actions.tar.gz`) and cite each archive
+from `research.json`. Publication accepts about 512 entries, 32 MiB per file,
+and 128 MiB per generation. A job that left those captures loose wrote 655 files
+and could not publish.
+
 `results` verifies delivery and validates the research report; it never executes
 reported reproduction commands. Researcher validation and independent local
 reproduction remain separate facts. Review returned commands before execution.
