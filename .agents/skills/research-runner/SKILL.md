@@ -44,13 +44,20 @@ structured result without executing returned code.
 New definitions require `outputs/result.json`, `outputs/handoff.md` and
 `outputs/research.json`. Their exact schemas are bundled into the payload under
 `inputs/contracts.json`. Keep `required_outputs` to that closeout trio. Published
-outputs are also capped at about 512 entries, 32 MiB per file and 128 MiB per
-generation. Emulator jobs that leave screenshots, calibration dumps, and action
-logs as individual files exceed the entry cap (one MGS job wrote 655 files).
-Tell the job to pack those into a few archives under `outputs/` and to leave
-`handoff.md`, `field-ledger.md`, `research.json`, `result.json`, `decoder/`,
-and a small fixtures set loose. In this repository the question template and
-`assemble_package` defaults already carry that layout.
+outputs currently allow 4,096 entries (files and directories), 32 MiB per
+published file and 128 MiB per generation. Check the server capabilities for
+the active limits; uploaded input packages have a separate 512-entry admission
+limit. A past MGS job with 655 loose evidence entries failed under the former
+512-entry output cap. Pack bulky screenshots, calibration dumps, and action
+logs into a few archives under `outputs/`. Measure each final compressed archive
+and shard it until every archive is at most 32 MiB; small members do not guarantee
+a small archive. All published files together, including loose files and Runner
+receipts, must fit within 128 MiB; sharding does not reduce that total.
+Leave `handoff.md`, `field-ledger.md`, `research.json`, `result.json`,
+`checkpoint.json`, `tool-image.json`, `decoder/`, and a small fixtures set loose
+under `outputs/`. The runner reads `outputs/checkpoint.json` and the image check
+reads `outputs/tool-image.json` during the job. In this repository the question
+template and `assemble_package` defaults already carry that layout.
 
 Research reports link claims to evidence IDs, preserve
 passed/failed/inconclusive/not_run checks with methods and expected/observed

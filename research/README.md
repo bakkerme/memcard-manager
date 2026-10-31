@@ -126,13 +126,20 @@ files and receipts. A dashboard job can be adopted with
 Closeout requires `outputs/result.json`, `outputs/handoff.md` and
 `outputs/research.json` using the bundled `inputs/contracts.json` schemas. Those
 three paths are the manifest `required_outputs`. Also publish a loose
-`outputs/field-ledger.md`, `outputs/decoder/`, and a small `outputs/fixtures/`
-set. Pack screenshots, raw frames, calibration dumps, and action logs into a few
-archives under `outputs/` (`evidence-screenshots.tar.gz`,
+`outputs/field-ledger.md`, `outputs/checkpoint.json`, `outputs/tool-image.json`,
+`outputs/decoder/`, and a small `outputs/fixtures/` set. The checkpoint and
+image-check receipts are read during the job. Pack screenshots, raw frames,
+calibration dumps, and action logs into a few archives under `outputs/`
+(`evidence-screenshots.tar.gz`,
 `evidence-calibration.tar.gz`, `evidence-actions.tar.gz`) and cite each archive
-from `research.json`. Publication accepts about 512 entries, 32 MiB per file,
-and 128 MiB per generation. A job that left those captures loose wrote 655 files
-and could not publish.
+from `research.json`. Check the active server capabilities: publication currently
+allows 4,096 output entries (files and directories), 32 MiB per published file,
+and 128 MiB per generation. Uploaded input packages retain their separate
+512-entry admission limit. Measure each final compressed archive and shard it
+until every archive is at most 32 MiB. All published files together, including
+loose reports, fixtures and Runner receipts, must fit within 128 MiB; sharding
+does not reduce that total. A past job with 655 loose evidence entries failed
+under the former 512-entry output cap.
 
 `results` verifies delivery and validates the research report; it never executes
 reported reproduction commands. Researcher validation and independent local

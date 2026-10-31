@@ -376,7 +376,7 @@ class AssembleTests(unittest.TestCase):
         for path in detailed:
             text = path.read_text()
             self.assertIn('field-ledger.md', text)
-            self.assertIn('512', text)
+            self.assertIn('4,096', text)
             self.assertIn('outputs/decoder/', text)
             self.assertIn('outputs/fixtures/', text)
             for archive in archives:
@@ -392,7 +392,7 @@ class AssembleTests(unittest.TestCase):
         for path in pointers:
             text = path.read_text()
             self.assertIn('field-ledger.md', text)
-            self.assertIn('512', text)
+            self.assertIn('4,096', text)
             self.assertIn('calibration dumps', text)
         question = (REAL / 'research/templates/question.md').read_text()
         self.assertIn(
