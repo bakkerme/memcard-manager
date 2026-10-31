@@ -2,6 +2,7 @@
 import filecmp
 import json
 import os
+import posixpath
 from pathlib import Path
 import re
 import shutil
@@ -16,6 +17,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 import assemble_package as package_builder
+from packaging_contract import CONTRACT_INPUT, CONTRACT_SOURCE
 from assemble_package import (
     PLACEHOLDER_SHA, READER_PREFIX, REQUIRED_OUTPUTS, SKILL_ROOTS, TEMPLATE_PATHS,
     TOOL_PATHS, assemble_package as build_package,
@@ -44,7 +46,7 @@ def copy_tree(source, dest):
 def snapshot_sources(dest):
     for relative in TOOL_PATHS:
         copy_tree(REAL / relative, dest)
-    for relative in TEMPLATE_PATHS:
+    for relative in (*TEMPLATE_PATHS, CONTRACT_SOURCE):
         copy_tree(REAL / relative, dest)
     for root in SKILL_ROOTS:
         for path in (REAL / root).rglob('*'):
@@ -354,52 +356,65 @@ class AssembleTests(unittest.TestCase):
             self.assertIn('create saves in the emulator', agents)
             self.assertIn('emulator-generated saves', question)
             self.assertIn('native-load', agents)
-            self.assertIn('outputs/evidence-screenshots.tar.gz', question)
-            self.assertIn('outputs/field-ledger.md', question)
+            self.assertIn('[output-packaging contract](output-packaging.md)', question)
+            policy = archive_text(first['package'], CONTRACT_INPUT)
+            self.assertIn('outputs/evidence-screenshots.tar.gz', policy)
+            self.assertIn('outputs/field-ledger.md', policy)
 
-    def test_publish_layout_archives_bulky_evidence_and_keeps_required_outputs_small(self):
-        self.assertEqual(list(REQUIRED_OUTPUTS), [
-            'outputs/handoff.md',
-            'outputs/research.json',
-            'outputs/result.json',
-        ])
-        archives = (
-            'outputs/evidence-screenshots.tar.gz',
-            'outputs/evidence-calibration.tar.gz',
-            'outputs/evidence-actions.tar.gz',
-        )
-        detailed = (
-            REAL / 'research/templates/question.md',
-            REAL / 'research/ps1-summary/inputs/question.md',
-            REAL / '.agents/skills/ps1-save-research/SKILL.md',
-        )
-        for path in detailed:
-            text = path.read_text()
-            self.assertIn('field-ledger.md', text)
-            self.assertIn('4,096', text)
-            self.assertIn('outputs/decoder/', text)
-            self.assertIn('outputs/fixtures/', text)
-            for archive in archives:
-                self.assertIn(archive, text)
-            self.assertIn('tar --sort=name --mtime=@0', text)
-        pointers = (
-            REAL / 'research/templates/AGENTS.md',
-            REAL / 'research/templates/brief.md',
-            REAL / 'research/ps1-summary/AGENTS.md',
-            REAL / 'research/ps1-summary/brief.md',
-            REAL / '.agents/skills/research-runner/SKILL.md',
-        )
-        for path in pointers:
-            text = path.read_text()
-            self.assertIn('field-ledger.md', text)
-            self.assertIn('4,096', text)
-            self.assertIn('calibration dumps', text)
-        question = (REAL / 'research/templates/question.md').read_text()
-        self.assertIn(
-            '`required_outputs` stays `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`',
-            question)
-        for forbidden in archives + ('outputs/decoder/', 'outputs/fixtures/'):
-            self.assertNotIn(forbidden, REQUIRED_OUTPUTS)
+    def test_v2_and_v3_include_one_identical_contract_and_resolving_links(self):
+        link = re.compile(r'\[[^\]]+\]\(([^)\s]*output-packaging\.md)\)')
+        expected = (self.repo / CONTRACT_SOURCE).read_bytes()
+        for fmt in ('v2', 'v3'):
+            with self.subTest(fmt=fmt), tempfile.TemporaryDirectory() as tmp:
+                built = self.assemble(tmp, fmt=fmt)
+                manifest = envelope(built['package'])['manifest']
+                self.assertEqual(manifest['inputs'].count(CONTRACT_INPUT), 1)
+                self.assertEqual(manifest['required_outputs'], list(REQUIRED_OUTPUTS))
+                with tarfile.open(built['package'], 'r:gz') as archive:
+                    self.assertEqual(archive.extractfile(CONTRACT_INPUT).read(), expected)
+                    self.assertEqual(archive.getnames().count(CONTRACT_INPUT), 1)
+                    self.assertEqual([name for name in archive.getnames()
+                                      if name.endswith('output-packaging.md')], [CONTRACT_INPUT])
+                    linked = set()
+                    for name in archive.getnames():
+                        if not name.endswith('.md') or name == CONTRACT_INPUT:
+                            continue
+                        text = archive.extractfile(name).read().decode()
+                        for target in link.findall(text):
+                            resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), target))
+                            self.assertEqual(resolved, CONTRACT_INPUT, name)
+                            self.assertIn(resolved, manifest['inputs'])
+                            linked.add(name)
+                        self.assertNotIn('4,096', text, name)
+                    self.assertTrue({'AGENTS.md', 'brief.md', 'inputs/question.md',
+                                     'skills/ps1-save-research/SKILL.md',
+                                     'skills/ps1-save-research/references/repository-guide.md',
+                                     'skills/emulator-replay/SKILL.md'}.issubset(linked))
+
+    def test_untracked_contract_is_rejected_instead_of_omitted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / 'repo'
+            repo.mkdir()
+            snapshot_sources(repo)
+            git(repo, 'init', '-b', 'main')
+            git(repo, 'add', '-A')
+            git(repo, 'rm', '--cached', CONTRACT_SOURCE)
+            with self.assertRaisesRegex(ValueError, 'not tracked.*output-packaging'):
+                package_builder.source_paths(repo)
+
+    def test_contract_edits_flow_into_new_packages_without_refreshing_a_copy(self):
+        source = self.repo / CONTRACT_SOURCE
+        original = source.read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            before = self.assemble(Path(tmp) / 'before')
+            try:
+                updated = original + b'\nNew publication guidance.\n'
+                source.write_bytes(updated)
+                after = self.assemble(Path(tmp) / 'after', allow_dirty=True)
+                self.assertNotEqual(before['sha256'], after['sha256'])
+                self.assertEqual(archive_text(after['package'], CONTRACT_INPUT).encode(), updated)
+            finally:
+                source.write_bytes(original)
 
 
 if __name__ == '__main__':

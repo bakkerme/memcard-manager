@@ -33,17 +33,7 @@ Record expected/observed hashes, locations, provenance and verification time.
 No emulator until exact-release assets, engine architecture/access and mount visibility
 are checked. Use read-only originals, disposable cards, bounded operations, unique owned
 workers and guaranteed teardown. Keep useful failures and partial findings; never turn an unknown checksum into passing.
-Check the server capabilities and keep the published tree within the active quotas:
-currently 4,096 output entries (files and directories), 32 MiB per published file,
-and 128 MiB per generation. Uploaded input packages have a separate 512-entry limit.
-Measure each final compressed archive and shard it until every archive meets the
-per-file limit. All published files together, including Runner receipts, must fit
-the generation total; sharding does not reduce it.
-Pack screenshots, raw frames, calibration dumps, and action logs into the archives
-named in `inputs/question.md`. Leave loose `outputs/handoff.md`,
-`outputs/field-ledger.md`, `outputs/research.json`, `outputs/result.json`,
-`outputs/checkpoint.json`, `outputs/tool-image.json`, `outputs/decoder/`, and a small
-`outputs/fixtures/` set. Never publish ROM or BIOS bytes.
+Follow the [output-packaging contract](../output-packaging.md) for publication and runtime receipt paths. Never publish ROM or BIOS bytes.
 Runner owns deadlines and finalization. A copied /goal prompt supplies scientific criteria
 only; do not start another scheduler, goal or availability retry loop.
 

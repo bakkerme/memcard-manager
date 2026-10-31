@@ -14,7 +14,7 @@ The decoder should help a person tell saves apart and track progress. A 100% sam
 - Known values from the supplied or emulator-generated saves, plus boundary and malformed cases. Synthetic edits stay labelled synthetic.
 - Cross-check against the MIT editor cited below. Cite it. Do not copy its source into the deliverable.
 - The cited editor has no checksum logic. Leave checksum status null unless a separate experiment establishes an algorithm. Do not invent a passing checksum.
-- `native-load` reads the on-screen completion percent. A screenshot of that screen is evidence. Pack it in `outputs/evidence-screenshots.tar.gz` and cite that archive plus the member name.
+- `native-load` reads the on-screen completion percent. Retain a screenshot of that screen and cite its published evidence archive plus the member name.
 - Two different progress snapshots must not collapse to the same summary.
 - Required checks below are mandatory. If one cannot be done, the outcome is partial with the blocker, never complete.
 
@@ -46,25 +46,7 @@ Offsets below are that editor's claims for one 0x2000-byte slot, not a copied im
 
 ## Published outputs
 
-Research Runner currently allows 4,096 output entries (files and directories), 32 MiB per published file, and 128 MiB per generation. Check the server capabilities for the active limits; uploaded input packages have a separate 512-entry admission limit. A past MGS job with 655 loose evidence entries failed under the former 512-entry output cap; that is historical context, not the current output limit.
-
-Leave these loose:
-
-- `outputs/handoff.md`, `outputs/field-ledger.md`, `outputs/research.json`, `outputs/result.json`
-- `outputs/checkpoint.json` and `outputs/tool-image.json` (the runner and the tool-image check read these paths during the job)
-- `outputs/decoder/`: the read-only decoder and its tests
-- `outputs/fixtures/`: the small set of saves and sidecars the suite loads
-
-Other single-file reports may stay loose. Pack per-step screenshots, raw frames, calibration dumps, and action logs into `outputs/evidence-screenshots.tar.gz`, `outputs/evidence-calibration.tar.gz`, and `outputs/evidence-actions.tar.gz`. One archive is enough when only one kind is bulky. Measure each final compressed `.tar.gz` file and shard the evidence into additional archives until every published archive is at most 32 MiB. The limit applies to the archive itself, not each member inside it. Keep all published files together (archives, loose reports, fixtures and Runner receipts) within 128 MiB per generation; sharding does not reduce that total. If the evidence cannot fit, report the publication limitation rather than silently discarding it. Stage the files outside `outputs/`, write `INDEX.txt` in that staging directory listing every archived path, write and verify the size and contents of each archive, then remove the packed directories from `outputs/` so those entries are not published twice. Build each archive with sorted names, a zero timestamp, and no gzip filename metadata:
-
-```sh
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - -C staging/screenshots . \
-  | gzip -n -9 > outputs/evidence-screenshots.tar.gz
-```
-
-In `outputs/research.json`, set each evidence `path` to the published archive and `sha256` to that archive's digest. Name decisive members in the description. Cite each archive once.
-
-`required_outputs` stays `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`. Publish the field ledger, decoder, fixtures, and archives because this question asks for them.
+Follow the [output-packaging contract](../output-packaging.md). Deliver the field ledger, read-only decoder and its tests, a small fixture set, and the evidence needed for the acceptance criteria above.
 
 ## Out of scope
 

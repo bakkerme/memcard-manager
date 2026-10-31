@@ -8,6 +8,7 @@
 /*/inputs/*
 !/*/inputs/question.md
 !/*/inputs/contracts.json
+!/*/inputs/output-packaging.md
 
 # Committed game specs and package templates. Private bytes stay out of both.
 !/specs/
