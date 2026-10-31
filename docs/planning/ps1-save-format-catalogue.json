@@ -69,17 +69,25 @@
     {
       "game": "Metal Gear Solid",
       "genre": "Action / adventure",
-      "evidence": "Source available",
-      "fields": "Playtime, location, disc, clear count, difficulty, health, weapons and items.",
-      "regions": "SLUS-00594 / SLES-01370",
-      "note": "Shendo’s MGSEdit source explicitly supports these two product codes. Rejects photo and VR-training saves. Repository is archived.",
+      "evidence": "Native USA loads, research jobs 847c6930 and c2c8f3aa",
+      "fields": "Saved title, difficulty, stage, playtime, save count, stored continues, life, max life, ten weapons and ammo, rations, medicine, diazepam, ID card, Stealth and Bandana.",
+      "regions": "SLUS-00594 (NTSC-U). Directory prefix BA. Story identifier G plus seven printable bytes.",
+      "note": "USA reader uses the natively confirmed bank fields. Clear count, Tuxedo, endings, story completion percentage, radar, PAL state and disc number are not decoded. VR identifiers are rejected. SLES-01370 is not accepted. Shendo’s MGSEdit was not the layout source. The Nieko blog is only the corrected difficulty-offset citation.",
       "links": [
         [
-          "MGSEdit source",
+          "MGSEdit source (not used for this layout)",
           "https://github.com/ShendoXT/memcardrex-plugins/tree/master/MGSEdit%20(codename%20Liquid)"
+        ],
+        [
+          "Difficulty offset lead",
+          "https://nieko.net/blog/metal-gear-solid-mgs1---all-weapons-and-items-hack"
         ]
       ],
-      "implementationStatus": "Research candidate"
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00594 (NTSC-U)",
+      "implementationDocumentation": "docs/formats/metal-gear-solid-us.md",
+      "validationBoundary": "Native USA loads confirmed the listed bank fields and the per-bank CRC32. Stealth and Bandana are current inventory words 1 and -1. Clear count, Tuxedo and endings were not confirmed. Synthetic tests pin the research sample layout; they are not native saves.",
+      "implementedFields": "Saved title, difficulty, stage, playtime, save count, stored continues, life, max life, weapons and ammo, rations, medicine, diazepam, ID card, Stealth and Bandana. Unsupported words stay out of the summary."
     },
     {
       "game": "Tomb Raider II",
