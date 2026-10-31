@@ -10,6 +10,7 @@ mod crash_bandicoot;
 mod grandia;
 mod level_summaries;
 mod mega_man_legends2;
+mod metal_gear_solid;
 mod overnight;
 mod pacman_us;
 mod rayman;
@@ -98,6 +99,12 @@ impl Format {
             "tomb-raider" => suffix.is_empty(),
             // The 8-byte suffix is the save id (`aaa63592`, `smd56832`), not a fixed token.
             "rayman" => true,
+            // Story files are `G` plus seven printable bytes. VR training starts with `V`.
+            "metal-gear-solid" => {
+                identifier.len() == 8
+                    && identifier.starts_with('G')
+                    && identifier.bytes().all(|byte| (0x20..0x7f).contains(&byte))
+            }
             "final-fantasy-vii" | "final-fantasy-viii" => {
                 suffix.len() == 2
                     && suffix.bytes().all(|b| b.is_ascii_digit())
@@ -140,6 +147,7 @@ pub(super) fn format(code: &str) -> Option<Format> {
         "SLUS-00152" => ("tomb-raider", "Tomb Raider", 1, "BA", "TOMBRAID"),
         // Observed USA directory prefix is BI. BA is also accepted; see rayman::decode.
         "SLUS-00005" => ("rayman", "Rayman", 1, "BI", ""),
+        "SLUS-00594" => ("metal-gear-solid", "Metal Gear Solid", 1, "BA", ""),
         "SLES-03900" => (
             "digimon-digital-card-battle",
             "Digimon Digital Card Battle",
@@ -254,6 +262,9 @@ pub(super) fn decode(
     }
     if code == "SLUS-00005" {
         return rayman::decode(&format, code, region, data).map(GameDetails::Summary);
+    }
+    if code == "SLUS-00594" {
+        return metal_gear_solid::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00213" {
         return tekken2::decode(&format, code, data).map(GameDetails::Summary);

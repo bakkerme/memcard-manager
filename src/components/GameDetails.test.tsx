@@ -45,3 +45,64 @@ describe("Bomberman profile states", () => {
     expect(html).toContain("Save 50");
   });
 });
+
+describe("Metal Gear Solid summary", () => {
+  const save = demoView().saves[0];
+  const details: GameSummary = {
+    game: "metal-gear-solid",
+    title: "Metal Gear Solid",
+    release: "NTSC-U · SLUS-00594",
+    checksumOk: null,
+    notes: ["The three bank copies do not agree, so there is no single checksum verdict."],
+    profiles: [{
+      number: 1,
+      name: "MGS [EZ] 00:00 Dock",
+      empty: false,
+      checksumOk: null,
+      fields: [
+        { label: "Difficulty", value: "Easy" },
+        { label: "Stage", value: "Cmnd room (s16d)" },
+        { label: "Bank data", value: "Withheld (no single bank verdict)" },
+      ],
+      records: [{
+        name: "SOCOM",
+        fields: [
+          { label: "Carried", value: "Yes" },
+          { label: "Ammo", value: "122" },
+          { label: "Capacity", value: "217" },
+        ],
+      }],
+    }],
+  };
+
+  it("labels weapon records and an unresolved bank checksum", () => {
+    const html = renderToStaticMarkup(
+      <GameDetailsButton save={{ ...save, gameDetails: details, gameDetailsError: undefined }} />,
+    );
+    expect(html).toContain("Metal Gear Solid");
+    expect(html).toContain("NTSC-U · SLUS-00594");
+    expect(html).toContain("Game checksum");
+    expect(html).toContain("Unresolved");
+    expect(html).toContain("Difficulty");
+    expect(html).toContain("Easy");
+    expect(html).toContain("Cmnd room (s16d)");
+    expect(html).toContain("Weapons <span>");
+    expect(html).toContain("SOCOM");
+    expect(html).toContain("122");
+    expect(html).not.toContain("Characters <span>");
+    expect(html).toContain("no single checksum verdict");
+  });
+
+  it("warns when the shared bank CRC does not match", () => {
+    const html = renderToStaticMarkup(
+      <GameDetailsButton save={{
+        ...save,
+        gameDetails: { ...details, checksumOk: false, profiles: [{ ...details.profiles[0], records: [] }] },
+        gameDetailsError: undefined,
+      }} />,
+    );
+    expect(html).toContain("Does not match");
+    expect(html).toContain("The game checksum does not match");
+    expect(html).not.toContain("SOCOM");
+  });
+});
