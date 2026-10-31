@@ -3,8 +3,11 @@
 //! Directory saves are `BA` / `SLUS-00594` / an 8-byte `G…` identifier, one
 //! 8192-byte SC block. Three `0xa40`-byte banks sit at `0x100`, `0xb40` and
 //! `0x1580`. Interpreted bank fields are reported only when those copies are
-//! identical, structurally valid and CRC32-valid. Offsets below are
-//! bank-relative unless marked SC. See `docs/formats/metal-gear-solid-us.md`.
+//! identical, structurally valid and CRC32-valid. The editor writes the first
+//! bank's checksum only; this reader does not adopt that. Offsets below are
+//! bank-relative unless marked SC or MCS. MCS offsets from MGSEdit include the
+//! 128-byte directory header (`MCS = SC + 0x80`, so `B = MCS - 0x180`).
+//! See `docs/formats/metal-gear-solid-us.md`.
 
 use super::{Field, Format, Profile, Record, SaveDetails};
 use encoding_rs::SHIFT_JIS;
@@ -12,58 +15,115 @@ use unicode_normalization::UnicodeNormalization;
 
 const BANK_BASES: [usize; 3] = [0x100, 0xb40, 0x1580];
 const BANK_SIZE: usize = 0xa40;
+/// Editor weapon order. Native ammo checks used this same order.
 const WEAPONS: [&str; 10] = [
-    "SOCOM",
-    "FAMAS",
-    "Grenade",
+    "Socom",
+    "FA-MAS",
+    "Grenades",
     "Nikita",
     "Stinger",
     "Claymore",
     "C4",
-    "Stun Grenade",
-    "Chaff Grenade",
-    "PSG1",
+    "Stun grenades",
+    "Chaff grenades",
+    "PSG-1",
+];
+/// Editor filename letters `A`..=`_`. Spellings are the editor's, including "Blast Furnance".
+const FILENAME_LOCATIONS: [&str; 31] = [
+    "Dock",
+    "Heliport",
+    "Tank Hangar",
+    "Cell",
+    "Medi room",
+    "Armory",
+    "Armory Sth",
+    "Canyon",
+    "Nuke Bldg 1",
+    "Nuke Bldg. B1",
+    "Cmnder room",
+    "Nuke Bldg. B2",
+    "Lab",
+    "Cave",
+    "U.Grnd Pssge",
+    "Comm Twr A",
+    "Roof/Comm Twr",
+    "Comm Twr B",
+    "Twr Wall A",
+    "Walkway",
+    "Snowfield",
+    "Blast Furnance",
+    "Cargo Elev.",
+    "Warehouse",
+    "Warehouse Nth",
+    "U.Grnd Base 1",
+    "U.Grnd Base 2",
+    "U.Grnd Base 3",
+    "Cmnd room",
+    "Spply Rte.",
+    "Esc Route",
 ];
 
 const NOTE_CONFIRMED: &str = concat!(
     "Difficulty, weapons and ammo, rations, medicine, diazepam, ID card level, life, max life, ",
     "stage, playtime, save count and the stored continue count were checked on native USA loads ",
     "(research jobs 847c6930 and c2c8f3aa). Stealth and Bandana were confirmed by separate ",
-    "cold-boot edits. Playtime uses 60 ticks per second. The save-screen label truncates that to ",
-    "minutes, and the tick count is kept so same-minute saves stay distinct. Easy and Normal were ",
-    "seen on native lists. Hard and Extreme are the code-traced names; their gameplay effects ",
-    "were not separately established."
+    "cold-boot edits. Job 377ea84c cold-loaded max rations (menu 4/5 to 4/7), max medicine ",
+    "(1/1 to 1/6), max diazepam (1/9 to 1/12) and radar bit 0x0800 (visible, then hidden, then ",
+    "visible). Filename hours and minutes, after clearing bit 0x40 on the minute characters, ",
+    "and location codes A (Dock), ] (Cmnd room) and ^ (Spply Rte.) matched native save lists ",
+    "and the Shift-JIS titles. Playtime is frames at 60 Hz. The save-screen label and the ",
+    "filename both truncate that to minutes; job 377ea84c's titles agree with that minute ",
+    "floor. Easy and Normal were seen on native lists. Hard and Extreme are the code-traced ",
+    "names; their gameplay effects were not separately established."
+);
+
+const NOTE_EDITOR: &str = concat!(
+    "Item words other than the native counts, weapon names, option bits other than radar, the ",
+    "generic-flags word, filename difficulty bits, the filename disc rule, the filename new-game ",
+    "marker and the Meryl bit are the MGSEdit map (ShendoXT/memcardrex-plugins commit ",
+    "6928e9c50600b2ea2c8c501f3424dcc219901133, MIT). They were not cold-boot re-proven in job ",
+    "377ea84c. Meryl is bit O (mask 0x08) of the byte at bank 0x15A in Additional/Metal Gear ",
+    "Solid save.txt; mainWindow.cs does not implement it. The editor clear-count integer is ",
+    "not shown. The editor writes a checksum for the first bank only; this reader still ",
+    "requires all three banks to agree and does not pick a copy."
 );
 
 const NOTE_UNSUPPORTED: &str = concat!(
-    "No story completion percentage, clear count, Tuxedo or ending is decoded. Radar mode, PAL ",
-    "key state and disc number are not decoded. Only s16d (Cmnd room) and s18a (Spply Rte.) have ",
-    "confirmed stage names. Other ids, including rank, stay raw."
+    "No story completion percentage, numeric clear count, Tuxedo or ending is decoded. Only ",
+    "s16d (Cmnd room) and s18a (Spply Rte.) have confirmed stage names. Other stage ids, ",
+    "including rank, stay raw. Filename letters other than A, ] and ^ use the editor table. ",
+    "Letters outside that table stay raw. Other option bits and other torture-byte bits stay raw."
 );
 
 const NOTE_INVENTORY: &str = concat!(
-    "Weapon ammo 0 is still carried and -1 is absent. Other negative weapon words stay unknown. ",
-    "Item counts of zero are not confirmed absence, and negative item words stay unknown. A count ",
-    "can be higher than the menu capacity; no capacity is inferred. Stealth and Bandana are ",
-    "current availability for the words 1 and -1, not permanent unlocks. ID card level 7 was seen ",
-    "in the item menu; levels 1 through 6 use the same word and were not each cold-loaded. The ",
-    "stored continue count can lag the live counter immediately after a Codec save; the update ",
-    "boundary is unconfirmed."
+    "Weapon ammo 0 is still carried and -1 is absent. Other negative weapon words stay unknown; ",
+    "the editor would mask off the sign bit instead. Ration, medicine and diazepam counts of ",
+    "zero are not confirmed absence, and negative words stay unknown. Their maximums are ",
+    "separate unsigned words, and a count can be higher than the menu capacity. Stealth and ",
+    "Bandana use native words 1 and -1; zero stays unknown there, not the editor's absent. ",
+    "Other item flags follow the editor: a positive word is available and zero or a negative ",
+    "word is absent. ID card level 7 was seen in the item menu; levels 1 through 6 use the same ",
+    "word and were not each cold-loaded. The stored continue count can lag the live counter ",
+    "immediately after a Codec save; the update boundary is unconfirmed. The editor UI clamps ",
+    "life at 1400 and playtime at 99:59:59; stored values are shown without those clamps. Save ",
+    "count is the native 16-bit word. The editor text calls that byte an 8-bit counter."
 );
 
 const NOTE_CRC_OK: &str = concat!(
     "All three banks match and each CRC32 matches. The checksum covers the 2616 bytes from ",
-    "bank+8 through the end of the 0xa40-byte bank. The save title is outside that range."
+    "bank+8 through the end of the 0xa40-byte bank. The save title and the directory filename ",
+    "are outside that range."
 );
 
 const NOTE_CRC_BAD: &str = concat!(
     "All three banks match each other and fail CRC32. Weapon, item, life, stage, time, save ",
-    "count and continue fields are withheld."
+    "count, continue, radar, flag and Meryl fields are withheld. Filename fields stay visible."
 );
 
 const NOTE_CRC_UNRESOLVED: &str = concat!(
     "The three bank copies do not agree, so there is no single checksum verdict. Weapon, item, ",
-    "life, stage, time, save count and continue fields are withheld."
+    "life, stage, time, save count, continue, radar, flag and Meryl fields are withheld. ",
+    "Filename fields stay visible. A valid first bank is not preferred over the other copies."
 );
 
 fn field(label: &str, value: impl Into<String>) -> Field {
@@ -207,6 +267,234 @@ fn availability(value: i16) -> String {
     }
 }
 
+fn editor_flag(value: i16) -> &'static str {
+    if value > 0 {
+        "Available (editor)"
+    } else {
+        "Absent (editor)"
+    }
+}
+
+fn radar_label(word: u16) -> &'static str {
+    if word & 0x0800 != 0 {
+        "Hidden"
+    } else {
+        "Visible"
+    }
+}
+
+fn meryl_label(byte: u8) -> &'static str {
+    if byte & 0x08 != 0 {
+        "Dies (bit O)"
+    } else {
+        "Bit O clear"
+    }
+}
+
+/// Editor `GHHMMCLI` suffix. `0x40` on a minute character is the difficulty bit.
+struct FilenameRead {
+    difficulty: String,
+    location: String,
+    time: String,
+    code: String,
+    disc: String,
+    clear_marker: String,
+}
+
+fn filename_read(identifier: &str) -> FilenameRead {
+    let bytes = identifier.as_bytes();
+    let printable = bytes.len() == 8
+        && bytes[0] == b'G'
+        && bytes.iter().all(|byte| (0x20..0x7f).contains(byte));
+    if !printable {
+        return FilenameRead {
+            difficulty: "Unknown".into(),
+            location: "Unknown".into(),
+            time: "Unknown".into(),
+            code: "Unknown".into(),
+            disc: "Unknown".into(),
+            clear_marker: "Unknown".into(),
+        };
+    }
+    let difficulty = match (bytes[3] & 0x40 != 0, bytes[4] & 0x40 != 0) {
+        (false, false) => "Easy (editor)",
+        (false, true) => "Normal (editor)",
+        (true, false) => "Hard (editor)",
+        (true, true) => "Extreme (editor)",
+    };
+    let code = bytes[5];
+    FilenameRead {
+        difficulty: difficulty.into(),
+        location: filename_location(bytes[6]),
+        time: filename_time(bytes),
+        code: (code as char).to_string(),
+        disc: if code >= 0x48 {
+            "Disc 2 (editor)".into()
+        } else {
+            "Disc 1 (editor)".into()
+        },
+        clear_marker: clear_marker(code),
+    }
+}
+
+fn filename_time(identifier: &[u8]) -> String {
+    let hours = &identifier[1..3];
+    let minutes = [identifier[3] & !0x40, identifier[4] & !0x40];
+    if hours.iter().all(|byte| byte.is_ascii_digit())
+        && minutes.iter().all(|byte| byte.is_ascii_digit())
+        && minutes[0] < b'6'
+    {
+        format!(
+            "{}{}:{}{}",
+            hours[0] as char, hours[1] as char, minutes[0] as char, minutes[1] as char
+        )
+    } else {
+        "Unknown".into()
+    }
+}
+
+fn filename_location(byte: u8) -> String {
+    if (0x41..0x60).contains(&byte) {
+        let name = FILENAME_LOCATIONS[(byte - 0x41) as usize];
+        let letter = byte as char;
+        if matches!(byte, b'A' | b']' | b'^') {
+            format!("{name} ({letter})")
+        } else {
+            format!("{name} ({letter}, editor)")
+        }
+    } else {
+        format!("Unknown ('{}')", byte as char)
+    }
+}
+
+fn clear_marker(byte: u8) -> String {
+    if byte == b'@' {
+        return "New game (editor)".into();
+    }
+    // `(byte - 0x40) & 7` is the editor's clear count. `0x40` is divisible by 8,
+    // so those low bits are `byte & 7`. The integer itself is not shown.
+    if byte & 0x07 != 0 {
+        "Cleared (editor, count not shown)".into()
+    } else {
+        "No clear bits (editor, count not shown)".into()
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ItemKind {
+    NativeFlag,
+    EditorFlag,
+    NativeCount(usize),
+    IdCard,
+    EditorSeconds,
+}
+
+struct ItemSpec {
+    name: &'static str,
+    kind: ItemKind,
+}
+
+/// Editor item order, 24 words at bank `0x8a`. The save.txt prose says 23; the
+/// arrays and this name list are 24 and end at max rations (`0xba`).
+const ITEMS: [ItemSpec; 24] = [
+    ItemSpec {
+        name: "Cigarettes",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Magnifying scope",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Cardboard box A",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Cardboard box B",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Cardboard box C",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Night-vision goggles",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Thermal goggles",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Gas mask",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Body armor",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Ketchup",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Stealth",
+        kind: ItemKind::NativeFlag,
+    },
+    ItemSpec {
+        name: "Bandana",
+        kind: ItemKind::NativeFlag,
+    },
+    ItemSpec {
+        name: "Camera",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Rations",
+        kind: ItemKind::NativeCount(0xba),
+    },
+    ItemSpec {
+        name: "Cold medicine",
+        kind: ItemKind::NativeCount(0xbc),
+    },
+    ItemSpec {
+        name: "Diazepam",
+        kind: ItemKind::NativeCount(0xbe),
+    },
+    ItemSpec {
+        name: "PAL card key",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "ID card",
+        kind: ItemKind::IdCard,
+    },
+    ItemSpec {
+        name: "Timer bomb",
+        kind: ItemKind::EditorSeconds,
+    },
+    ItemSpec {
+        name: "Mine detector",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "MO disc",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Rope",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Handkerchief",
+        kind: ItemKind::EditorFlag,
+    },
+    ItemSpec {
+        name: "Suppressor",
+        kind: ItemKind::EditorFlag,
+    },
+];
+
 fn weapon_record(bank: &[u8], index: usize) -> Record {
     let current = i16_at(bank, 0x62 + 2 * index);
     let capacity = i16_at(bank, 0x76 + 2 * index);
@@ -239,7 +527,54 @@ fn weapon_record(bank: &[u8], index: usize) -> Record {
     }
 }
 
-pub(super) fn decode(fmt: &Format, code: &str, data: &[u8]) -> Result<SaveDetails, String> {
+fn item_record(bank: &[u8], index: usize) -> Record {
+    let value = i16_at(bank, 0x8a + 2 * index);
+    let spec = &ITEMS[index];
+    let fields = match spec.kind {
+        ItemKind::NativeFlag => vec![
+            field("Status", availability(value)),
+            field("Stored", value.to_string()),
+        ],
+        ItemKind::EditorFlag => vec![
+            field("Status", editor_flag(value)),
+            field("Stored", value.to_string()),
+        ],
+        ItemKind::NativeCount(max_at) => vec![
+            field("Count", signed_known(value)),
+            field("Max", u16_at(bank, max_at).to_string()),
+        ],
+        ItemKind::IdCard => vec![
+            field("Level", id_card_label(value)),
+            field("Stored", value.to_string()),
+        ],
+        ItemKind::EditorSeconds => vec![
+            field("Status", editor_flag(value)),
+            field("Seconds", signed_known(value)),
+        ],
+    };
+    Record {
+        name: spec.name.into(),
+        fields,
+    }
+}
+
+fn filename_fields(read: &FilenameRead) -> Vec<Field> {
+    vec![
+        field("Filename difficulty (editor)", read.difficulty.clone()),
+        field("Filename location", read.location.clone()),
+        field("Filename time", read.time.clone()),
+        field("Filename code", read.code.clone()),
+        field("Disc (editor)", read.disc.clone()),
+        field("Clear marker (editor)", read.clear_marker.clone()),
+    ]
+}
+
+pub(super) fn decode(
+    fmt: &Format,
+    code: &str,
+    identifier: &str,
+    data: &[u8],
+) -> Result<SaveDetails, String> {
     // Dispatch already checked BA / SLUS-00594 / the G… identifier, one block and SC size.
     if !matches!(data[2], 0x11 | 0x12 | 0x13) {
         return Err("Unsupported Metal Gear Solid USA header or icon layout.".into());
@@ -279,10 +614,17 @@ pub(super) fn decode(fmt: &Format, code: &str, data: &[u8]) -> Result<SaveDetail
         title
     };
 
-    let mut notes = vec![NOTE_CONFIRMED.into(), NOTE_UNSUPPORTED.into()];
+    let filename = filename_read(identifier);
+    let mut notes = vec![
+        NOTE_CONFIRMED.into(),
+        NOTE_EDITOR.into(),
+        NOTE_UNSUPPORTED.into(),
+    ];
     let (fields, records) = if uniform_valid {
         let life = i16_at(first, 0x56);
         let max_life = i16_at(first, 0x58);
+        let options = u16_at(first, 0x44);
+        let torture = first[0x15a];
         notes.push(NOTE_INVENTORY.into());
         notes.push(NOTE_CRC_OK.into());
         if life >= 0 && max_life > 0 && life > max_life {
@@ -290,25 +632,37 @@ pub(super) fn decode(fmt: &Format, code: &str, data: &[u8]) -> Result<SaveDetail
                 "Stored life is above stored max life and is shown as stored. A native load of stored life 1000 was clamped to max life 768.".into(),
             );
         }
-        let fields = vec![
+        let mut fields = vec![
             field("Saved title", title_value),
             field("Difficulty", difficulty_label(u16_at(first, 0x42))),
             field("Stage", stage_label(stage_id(first).as_deref())),
+        ];
+        fields.extend(filename_fields(&filename));
+        fields.extend([
             field("Playtime", playtime(u32_at(first, 0x10))),
             field("Save count", u16_at(first, 0xf0).to_string()),
             field("Continues", signed_known(i16_at(first, 0xee))),
             field("Life", signed_known(life)),
             field("Max life", max_life_label(max_life)),
+            field("Radar", radar_label(options)),
+            field("Option flags", format!("0x{options:04X}")),
+            field("Generic flags", format!("0x{:08X}", u32_at(first, 0x3c))),
             field("ID card", id_card_label(i16_at(first, 0xac))),
             field("Rations", signed_known(i16_at(first, 0xa4))),
+            field("Max rations", u16_at(first, 0xba).to_string()),
             field("Medicine", signed_known(i16_at(first, 0xa6))),
+            field("Max medicine", u16_at(first, 0xbc).to_string()),
             field("Diazepam", signed_known(i16_at(first, 0xa8))),
+            field("Max diazepam", u16_at(first, 0xbe).to_string()),
             field("Stealth", availability(i16_at(first, 0x9e))),
             field("Bandana", availability(i16_at(first, 0xa0))),
-        ];
-        let records = (0..WEAPONS.len())
+            field("Meryl (editor)", meryl_label(torture)),
+            field("Torture flags", format!("0x{torture:02X}")),
+        ]);
+        let mut records: Vec<Record> = (0..WEAPONS.len())
             .map(|index| weapon_record(first, index))
             .collect();
+        records.extend((0..ITEMS.len()).map(|index| item_record(first, index)));
         (fields, records)
     } else {
         notes.push(if checksum_ok == Some(false) {
@@ -321,13 +675,10 @@ pub(super) fn decode(fmt: &Format, code: &str, data: &[u8]) -> Result<SaveDetail
         } else {
             "Withheld (no single bank verdict)"
         };
-        (
-            vec![
-                field("Saved title", title_value),
-                field("Bank data", withheld),
-            ],
-            vec![],
-        )
+        let mut fields = vec![field("Saved title", title_value)];
+        fields.extend(filename_fields(&filename));
+        fields.push(field("Bank data", withheld));
+        (fields, vec![])
     };
 
     Ok(SaveDetails {
@@ -425,6 +776,14 @@ mod tests {
             .to_string()
     }
 
+    fn directory_field(label: &str) -> bool {
+        label == "Saved title"
+            || label == "Bank data"
+            || label.starts_with("Filename")
+            || label == "Disc (editor)"
+            || label == "Clear marker (editor)"
+    }
+
     fn record<'a>(details: &'a game_details::SaveDetails, name: &str) -> Vec<(&'a str, &'a str)> {
         details.profiles[0]
             .records
@@ -434,6 +793,23 @@ mod tests {
             .fields
             .iter()
             .map(|field| (field.label.as_str(), field.value.as_str()))
+            .collect()
+    }
+
+    fn record_dump(details: &game_details::SaveDetails) -> Vec<(String, Vec<(String, String)>)> {
+        details.profiles[0]
+            .records
+            .iter()
+            .map(|record| {
+                (
+                    record.name.clone(),
+                    record
+                        .fields
+                        .iter()
+                        .map(|field| (field.label.clone(), field.value.clone()))
+                        .collect(),
+                )
+            })
             .collect()
     }
 
@@ -463,26 +839,53 @@ mod tests {
                 ("Saved title", "MGS [EZ] 00:00 Dock"),
                 ("Difficulty", "Easy"),
                 ("Stage", "zzzz"),
+                ("Filename difficulty (editor)", "Easy (editor)"),
+                ("Filename location", "Dock (A)"),
+                ("Filename time", "00:00"),
+                ("Filename code", "B"),
+                ("Disc (editor)", "Disc 1 (editor)"),
+                ("Clear marker (editor)", "Cleared (editor, count not shown)"),
                 ("Playtime", "00:00:00 (0 ticks)"),
                 ("Save count", "0"),
                 ("Continues", "0"),
                 ("Life", "256"),
                 ("Max life", "256"),
+                ("Radar", "Visible"),
+                ("Option flags", "0x0000"),
+                ("Generic flags", "0x00000000"),
                 ("ID card", "Unknown (0)"),
                 ("Rations", "0"),
+                ("Max rations", "0"),
                 ("Medicine", "0"),
+                ("Max medicine", "0"),
                 ("Diazepam", "0"),
+                ("Max diazepam", "0"),
                 ("Stealth", "Unknown (0)"),
                 ("Bandana", "Unknown (0)"),
+                ("Meryl (editor)", "Bit O clear"),
+                ("Torture flags", "0x00"),
             ]
         );
+        assert_eq!(details.profiles[0].records.len(), 34);
+        assert_eq!(details.profiles[0].records[0].name, "Socom");
+        assert_eq!(details.profiles[0].records[9].name, "PSG-1");
+        assert_eq!(details.profiles[0].records[10].name, "Cigarettes");
+        assert_eq!(details.profiles[0].records[33].name, "Suppressor");
         assert_eq!(
-            record(&details, "SOCOM"),
+            record(&details, "Socom"),
             vec![("Carried", "Yes"), ("Ammo", "0"), ("Capacity", "0")]
         );
         assert_eq!(
             record(&details, "Claymore"),
             vec![("Carried", "Yes"), ("Ammo", "0"), ("Capacity", "0")]
+        );
+        assert_eq!(
+            record(&details, "Cigarettes"),
+            vec![("Status", "Absent (editor)"), ("Stored", "0")]
+        );
+        assert_eq!(
+            record(&details, "Rations"),
+            vec![("Count", "0"), ("Max", "0")]
         );
         assert!(details
             .notes
@@ -494,6 +897,18 @@ mod tests {
             .notes
             .iter()
             .any(|note| note.contains("847c6930") && note.contains("c2c8f3aa")));
+        assert!(details
+            .notes
+            .iter()
+            .any(|note| note.contains("377ea84c") && note.contains("first bank")));
+        assert!(details.profiles[0]
+            .fields
+            .iter()
+            .all(|field| !field.label.to_ascii_lowercase().contains("completion")));
+        assert!(details.profiles[0]
+            .fields
+            .iter()
+            .all(|field| !field.value.contains("times")));
     }
 
     #[test]
@@ -538,7 +953,7 @@ mod tests {
         assert_eq!(value(&details, "Stealth"), "Available");
         assert_eq!(value(&details, "Bandana"), "Absent");
         assert_eq!(
-            record(&details, "SOCOM"),
+            record(&details, "Socom"),
             vec![("Carried", "Yes"), ("Ammo", "122"), ("Capacity", "217")]
         );
         assert_eq!(
@@ -546,11 +961,11 @@ mod tests {
             vec![("Carried", "Yes"), ("Ammo", "2"), ("Capacity", "5")]
         );
         assert_eq!(
-            record(&details, "Stun Grenade"),
+            record(&details, "Stun grenades"),
             vec![("Carried", "Yes"), ("Ammo", "14"), ("Capacity", "31")]
         );
         assert_eq!(
-            record(&details, "Chaff Grenade"),
+            record(&details, "Chaff grenades"),
             vec![("Carried", "Yes"), ("Ammo", "7"), ("Capacity", "29")]
         );
         assert!(details
@@ -567,9 +982,9 @@ mod tests {
         assert_eq!(value(&details, "Playtime"), value(&zero, "Playtime"));
         assert_eq!(value(&details, "Save count"), value(&zero, "Save count"));
         assert_eq!(pairs(&details), pairs(&zero));
-        assert_eq!(record(&zero, "SOCOM")[0].1, "Yes");
-        assert_eq!(record(&zero, "SOCOM")[1].1, "0");
-        assert_ne!(record(&details, "SOCOM"), record(&zero, "SOCOM"));
+        assert_eq!(record(&zero, "Socom")[0].1, "Yes");
+        assert_eq!(record(&zero, "Socom")[1].1, "0");
+        assert_ne!(record(&details, "Socom"), record(&zero, "Socom"));
         assert_eq!(value(&next, "Playtime"), "09:39:04 (2084646 ticks)");
         assert_eq!(value(&next, "Save count"), "49");
         assert_ne!(value(&details, "Playtime"), value(&next, "Playtime"));
@@ -664,7 +1079,7 @@ mod tests {
         let odd = edit(&odd, 0xa4, &(-2i16).to_le_bytes(), &BANK_BASES, true);
         let details = summary("G0000BAA", &odd);
         assert_eq!(
-            record(&details, "SOCOM"),
+            record(&details, "Socom"),
             vec![
                 ("Carried", "Unknown"),
                 ("Ammo", "Unknown (-2)"),
@@ -692,16 +1107,33 @@ mod tests {
             "Unknown (2)"
         );
 
+        let unclamped = edit(&sample(), 0x56, &2000i16.to_le_bytes(), &BANK_BASES, true);
+        assert_eq!(value(&summary("G0000BAA", &unclamped), "Life"), "2000");
+
         let base = summary("G0000BAA", &sample());
         let baseline = pairs(&base);
-        for offset in [0x40usize, 0x46, 0xaa] {
+        let base_records = record_dump(&base);
+        for offset in [0x40usize, 0x46] {
             let data = edit(&sample(), offset, &3u16.to_le_bytes(), &BANK_BASES, true);
+            let details = summary("G0000BAA", &data);
             assert_eq!(
-                pairs(&summary("G0000BAA", &data)),
+                pairs(&details),
                 baseline,
                 "offset {offset:#x} changed a displayed field"
             );
+            assert_eq!(
+                record_dump(&details),
+                base_records,
+                "offset {offset:#x} changed a record"
+            );
         }
+        let pal = edit(&sample(), 0xaa, &3u16.to_le_bytes(), &BANK_BASES, true);
+        let details = summary("G0000BAA", &pal);
+        assert_eq!(pairs(&details), baseline);
+        assert_eq!(
+            record(&details, "PAL card key"),
+            vec![("Status", "Available (editor)"), ("Stored", "3")]
+        );
     }
 
     #[test]
@@ -717,7 +1149,17 @@ mod tests {
         );
         assert!(pairs(&details)
             .iter()
-            .all(|(label, _)| *label == "Saved title" || *label == "Bank data"));
+            .all(|(label, _)| directory_field(label)));
+        assert!(pairs(&details).iter().all(|(label, _)| *label != "Radar"));
+        assert_eq!(value(&details, "Filename location"), "Dock (A)");
+
+        let first_bank = edit(&sample(), 0x44, &0x0800u16.to_le_bytes(), &[0x100], true);
+        let details = summary("G0000BAA", &first_bank);
+        assert_eq!(details.checksum_ok, None);
+        assert!(pairs(&details)
+            .iter()
+            .all(|(label, _)| directory_field(label)));
+        assert!(pairs(&details).iter().all(|(label, _)| *label != "Radar"));
 
         let one_bad = edit(&sample(), 0x56, &1i16.to_le_bytes(), &[0x100], false);
         let details = summary("G0000BAA", &one_bad);
@@ -850,6 +1292,8 @@ mod tests {
                 (
                     save.identifier.as_str(),
                     value(details, "Difficulty").to_string(),
+                    value(details, "Filename difficulty (editor)").to_string(),
+                    value(details, "Filename location").to_string(),
                     value(details, "Stage").to_string(),
                     value(details, "Save count").to_string(),
                 )
@@ -858,10 +1302,19 @@ mod tests {
         assert_eq!(
             progress,
             vec![
-                ("G0000BAA", "Easy".into(), "zzzz".into(), "0".into()),
+                (
+                    "G0000BAA",
+                    "Easy".into(),
+                    "Easy (editor)".into(),
+                    "Dock (A)".into(),
+                    "zzzz".into(),
+                    "0".into()
+                ),
                 (
                     "G0000BAB",
                     "Normal".into(),
+                    "Easy (editor)".into(),
+                    "Dock (A)".into(),
                     "Spply Rte. (s18a)".into(),
                     "49".into()
                 ),
@@ -885,5 +1338,344 @@ mod tests {
         let save = &card.view().saves[0];
         assert!(save.game_details.is_none());
         assert!(save.game_details_error.is_some());
+    }
+
+    #[test]
+    fn editor_map_filename_radar_meryl_and_items() {
+        let mut menu = sample();
+        menu = edit(&menu, 0xa4, &4i16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0xba, &7u16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0xa6, &1i16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0xbc, &6u16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0xa8, &1i16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0xbe, &12u16.to_le_bytes(), &BANK_BASES, true);
+        menu = edit(&menu, 0x44, &0x0800u16.to_le_bytes(), &BANK_BASES, true);
+        let details = summary("G0936H]A", &menu);
+        assert_eq!(value(&details, "Rations"), "4");
+        assert_eq!(value(&details, "Max rations"), "7");
+        assert_eq!(
+            record(&details, "Rations"),
+            vec![("Count", "4"), ("Max", "7")]
+        );
+        assert_eq!(value(&details, "Medicine"), "1");
+        assert_eq!(value(&details, "Max medicine"), "6");
+        assert_eq!(
+            record(&details, "Cold medicine"),
+            vec![("Count", "1"), ("Max", "6")]
+        );
+        assert_eq!(value(&details, "Diazepam"), "1");
+        assert_eq!(value(&details, "Max diazepam"), "12");
+        assert_eq!(
+            record(&details, "Diazepam"),
+            vec![("Count", "1"), ("Max", "12")]
+        );
+        assert_eq!(value(&details, "Radar"), "Hidden");
+        assert_eq!(value(&details, "Option flags"), "0x0800");
+        assert_eq!(value(&details, "Filename time"), "09:36");
+        assert_eq!(value(&details, "Filename location"), "Cmnd room (])");
+        assert_eq!(value(&details, "Filename code"), "H");
+        assert_eq!(value(&details, "Disc (editor)"), "Disc 2 (editor)");
+        assert_eq!(
+            value(&details, "Clear marker (editor)"),
+            "No clear bits (editor, count not shown)"
+        );
+        assert_eq!(
+            value(&details, "Filename difficulty (editor)"),
+            "Easy (editor)"
+        );
+
+        for (word, radar, raw) in [
+            (0u16, "Visible", "0x0000"),
+            (8, "Visible", "0x0008"),
+            (0x2000, "Visible", "0x2000"),
+            (0x2400, "Visible", "0x2400"),
+            (0x0800, "Hidden", "0x0800"),
+            (0x2c00, "Hidden", "0x2C00"),
+            (0xffff, "Hidden", "0xFFFF"),
+        ] {
+            let data = edit(&sample(), 0x44, &word.to_le_bytes(), &BANK_BASES, true);
+            let details = summary("G0000BAA", &data);
+            assert_eq!(value(&details, "Radar"), radar, "{word:#x}");
+            assert_eq!(value(&details, "Option flags"), raw, "{word:#x}");
+        }
+
+        let flags = edit(
+            &sample(),
+            0x3c,
+            &0xa1b2_c3d4u32.to_le_bytes(),
+            &BANK_BASES,
+            true,
+        );
+        let details = summary("G0000BAA", &flags);
+        assert_eq!(value(&details, "Generic flags"), "0xA1B2C3D4");
+        assert_eq!(value(&details, "Radar"), "Visible");
+        assert_eq!(value(&details, "Difficulty"), "Easy");
+
+        for (byte, meryl) in [
+            (0u8, "Bit O clear"),
+            (0x40, "Bit O clear"),
+            (0x41, "Bit O clear"),
+            (0x08, "Dies (bit O)"),
+            (0x49, "Dies (bit O)"),
+        ] {
+            let data = edit(&sample(), 0x15a, &[byte], &BANK_BASES, true);
+            let details = summary("G0000BAA", &data);
+            assert_eq!(value(&details, "Meryl (editor)"), meryl, "{byte:#x}");
+            assert_eq!(value(&details, "Torture flags"), format!("0x{byte:02X}"));
+        }
+
+        let mut items = sample();
+        items = edit(&items, 0x8a, &1i16.to_le_bytes(), &BANK_BASES, true);
+        items = edit(&items, 0xae, &45i16.to_le_bytes(), &BANK_BASES, true);
+        items = edit(&items, 0xb8, &(-1i16).to_le_bytes(), &BANK_BASES, true);
+        items = edit(&items, 0x9e, &1i16.to_le_bytes(), &BANK_BASES, true);
+        let details = summary("G0000BAA", &items);
+        assert_eq!(
+            record(&details, "Cigarettes"),
+            vec![("Status", "Available (editor)"), ("Stored", "1")]
+        );
+        assert_eq!(
+            record(&details, "Timer bomb"),
+            vec![("Status", "Available (editor)"), ("Seconds", "45")]
+        );
+        assert_eq!(
+            record(&details, "Suppressor"),
+            vec![("Status", "Absent (editor)"), ("Stored", "-1")]
+        );
+        assert_eq!(
+            record(&details, "Stealth"),
+            vec![("Status", "Available"), ("Stored", "1")]
+        );
+        assert_eq!(value(&details, "Stealth"), "Available");
+        assert_eq!(
+            record(&details, "Bandana"),
+            vec![("Status", "Unknown (0)"), ("Stored", "0")]
+        );
+
+        let names = [
+            (
+                "G000pCAA",
+                "00:00",
+                "Normal (editor)",
+                "Dock (A)",
+                "C",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+            (
+                "G0000BAA",
+                "00:00",
+                "Easy (editor)",
+                "Dock (A)",
+                "B",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+            (
+                "G0936H]A",
+                "09:36",
+                "Easy (editor)",
+                "Cmnd room (])",
+                "H",
+                "Disc 2 (editor)",
+                "No clear bits (editor, count not shown)",
+            ),
+            (
+                "G070vH^A",
+                "07:06",
+                "Normal (editor)",
+                "Spply Rte. (^)",
+                "H",
+                "Disc 2 (editor)",
+                "No clear bits (editor, count not shown)",
+            ),
+            (
+                "G0635H^A",
+                "06:35",
+                "Easy (editor)",
+                "Spply Rte. (^)",
+                "H",
+                "Disc 2 (editor)",
+                "No clear bits (editor, count not shown)",
+            ),
+            (
+                "G9959@?Z",
+                "99:59",
+                "Easy (editor)",
+                "Unknown ('?')",
+                "@",
+                "Disc 1 (editor)",
+                "New game (editor)",
+            ),
+            (
+                "G00p0BAA",
+                "00:00",
+                "Hard (editor)",
+                "Dock (A)",
+                "B",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+            (
+                "G00pqBAA",
+                "00:01",
+                "Extreme (editor)",
+                "Dock (A)",
+                "B",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+            (
+                "G0060@AA",
+                "Unknown",
+                "Easy (editor)",
+                "Dock (A)",
+                "@",
+                "Disc 1 (editor)",
+                "New game (editor)",
+            ),
+            (
+                "G0A00@AA",
+                "Unknown",
+                "Easy (editor)",
+                "Dock (A)",
+                "@",
+                "Disc 1 (editor)",
+                "New game (editor)",
+            ),
+            (
+                "G0000B_A",
+                "00:00",
+                "Easy (editor)",
+                "Esc Route (_, editor)",
+                "B",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+            (
+                "G0000BBA",
+                "00:00",
+                "Easy (editor)",
+                "Heliport (B, editor)",
+                "B",
+                "Disc 1 (editor)",
+                "Cleared (editor, count not shown)",
+            ),
+        ];
+        for (id, time, difficulty, location, code, disc, marker) in names {
+            let details = summary(id, &sample());
+            assert_eq!(value(&details, "Filename time"), time, "{id}");
+            assert_eq!(
+                value(&details, "Filename difficulty (editor)"),
+                difficulty,
+                "{id}"
+            );
+            assert_eq!(value(&details, "Filename location"), location, "{id}");
+            assert_eq!(value(&details, "Filename code"), code, "{id}");
+            assert_eq!(value(&details, "Disc (editor)"), disc, "{id}");
+            assert_eq!(value(&details, "Clear marker (editor)"), marker, "{id}");
+            assert_eq!(value(&details, "Difficulty"), "Easy", "{id}");
+        }
+
+        for (ticks, hm) in [
+            (0u32, "00:00"),
+            (2_076_953, "09:36"),
+            (1_535_399, "07:06"),
+            (1_423_525, "06:35"),
+        ] {
+            let data = edit(&sample(), 0x10, &ticks.to_le_bytes(), &BANK_BASES, true);
+            let shown = value(&summary("G0000BAA", &data), "Playtime");
+            assert!(
+                shown.starts_with(&format!("{hm}:")),
+                "{shown} did not keep minute floor {hm}"
+            );
+        }
+    }
+
+    #[derive(serde::Deserialize)]
+    struct JobFixture {
+        sha256: String,
+        metadata: JobMeta,
+        expected_fields: JobExpected,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct JobMeta {
+        identifier: String,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct JobExpected {
+        max_rations: u16,
+        radar_hidden: bool,
+        max_cold_meds: u16,
+        max_diazepam: u16,
+    }
+
+    fn promote_fixture(raw: &[u8]) -> Vec<u8> {
+        let mut data = raw.to_vec();
+        for base in BANK_BASES {
+            data[base..base + 4].copy_from_slice(&(BANK_SIZE as u32).to_le_bytes());
+            data[base + 8..base + 12].copy_from_slice(&95u32.to_le_bytes());
+            data[base + 12..base + 16].copy_from_slice(&2048u32.to_le_bytes());
+            let sum = crc32(&data[base + 8..base + BANK_SIZE]);
+            data[base + 4..base + 8].copy_from_slice(&sum.to_le_bytes());
+        }
+        data
+    }
+
+    fn assert_job_fixture(raw: &[u8], sidecar: &str) {
+        let fixture: JobFixture = serde_json::from_str(sidecar).unwrap();
+        assert_eq!(sha256(raw), fixture.sha256);
+        let id = fixture
+            .metadata
+            .identifier
+            .strip_prefix("BASLUS-00594")
+            .unwrap();
+        assert_eq!(id.len(), 8);
+        let data = promote_fixture(raw);
+        assert_ne!(sha256(raw), sha256(&data));
+        let details = summary(id, &data);
+        assert_eq!(details.checksum_ok, Some(true));
+        assert_eq!(
+            value(&details, "Max rations"),
+            fixture.expected_fields.max_rations.to_string()
+        );
+        assert_eq!(
+            value(&details, "Max medicine"),
+            fixture.expected_fields.max_cold_meds.to_string()
+        );
+        assert_eq!(
+            value(&details, "Max diazepam"),
+            fixture.expected_fields.max_diazepam.to_string()
+        );
+        assert_eq!(
+            value(&details, "Radar"),
+            if fixture.expected_fields.radar_hidden {
+                "Hidden"
+            } else {
+                "Visible"
+            }
+        );
+        assert_eq!(
+            u16::from_le_bytes(data[0x1ba..0x1bc].try_into().unwrap()),
+            fixture.expected_fields.max_rations
+        );
+    }
+
+    #[test]
+    fn job377_synthetic_fixtures_keep_their_hashes() {
+        assert_job_fixture(
+            include_bytes!("testdata/mgs-synthetic-early.sc"),
+            include_str!("testdata/mgs-synthetic-early.json"),
+        );
+        assert_job_fixture(
+            include_bytes!("testdata/mgs-synthetic-late.sc"),
+            include_str!("testdata/mgs-synthetic-late.json"),
+        );
+        assert_job_fixture(
+            include_bytes!("testdata/mgs-synthetic-boundary.sc"),
+            include_str!("testdata/mgs-synthetic-boundary.json"),
+        );
     }
 }

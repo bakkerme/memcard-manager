@@ -62,6 +62,8 @@ describe("Metal Gear Solid summary", () => {
       fields: [
         { label: "Difficulty", value: "Easy" },
         { label: "Stage", value: "Cmnd room (s16d)" },
+        { label: "Radar", value: "Hidden" },
+        { label: "Max rations", value: "7" },
         { label: "Bank data", value: "Withheld (no single bank verdict)" },
       ],
       records: [{
@@ -86,7 +88,10 @@ describe("Metal Gear Solid summary", () => {
     expect(html).toContain("Difficulty");
     expect(html).toContain("Easy");
     expect(html).toContain("Cmnd room (s16d)");
-    expect(html).toContain("Weapons <span>");
+    expect(html).toContain("Weapons and items <span>");
+    expect(html).toContain("Radar");
+    expect(html).toContain("Hidden");
+    expect(html).toContain("Max rations");
     expect(html).toContain("SOCOM");
     expect(html).toContain("122");
     expect(html).not.toContain("Characters <span>");
