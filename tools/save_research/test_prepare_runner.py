@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path, PureWindowsPath
 
 from prepare_runner import checked, relative_name, sha, suite_files
+from packaging_contract import CONTRACT_INPUT, CONTRACT_SOURCE, REPO
 
 
 class PreparationTests(unittest.TestCase):
@@ -124,6 +125,8 @@ class MigrationTests(unittest.TestCase):
         self.assertIn('outputs/final/reader.py', manifest['required_outputs'])
         self.assertEqual(manifest['policy'], self.manifest['policy'])
         self.assertIn('inputs/contracts.json', inventory)
+        self.assertIn(CONTRACT_INPUT, inventory)
+        self.assertEqual((target / CONTRACT_INPUT).read_bytes(), (REPO / CONTRACT_SOURCE).read_bytes())
         self.assertEqual(sha(self.archive), self.expected)
         self.assertFalse((self.repo.state / 'runs').exists())
         self.assertEqual((target / 'preparation/runner-migration-original/brief.md').read_text(),
@@ -143,6 +146,25 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(sha(target / name), expected, name)
         self.assertEqual(ledger['original_manifest'], self.manifest)
 
+    def test_imported_contract_keeps_extra_manifest_outputs_required_when_blocked(self):
+        from prepare_runner import import_package
+        package = import_package(self.repo, 'legacy-closeout', self.archive, self.expected)
+        manifest, inventory = verify(package['archive'])
+        self.assertEqual(manifest['required_outputs'], [
+            *self.manifest['required_outputs'], 'outputs/research.json'])
+        self.assertIn('outputs/final/reader.py', manifest['required_outputs'])
+        self.assertIn(CONTRACT_INPUT, inventory)
+        target = self.repo.root / 'research/legacy-closeout'
+        self.assertIn('](inputs/output-packaging.md)', (target / manifest['agents']).read_text())
+        contract = (target / CONTRACT_INPUT).read_text()
+        for guidance in ('New definitions default to',
+                         'Existing and imported manifests remain authoritative',
+                         'preserve every entry in their `required_outputs`',
+                         'including extra legacy paths', 'apply to partial or blocked closeout',
+                         'the default trio does not waive them', 'report its blocker explicitly'):
+            self.assertIn(guidance, contract)
+        self.assertNotIn('blocked jobs still close out with the trio', contract)
+
     def test_nested_control_files_remain_declared_once(self):
         from prepare_runner import import_package
         for key in ('brief', 'agents'):
@@ -161,6 +183,8 @@ class MigrationTests(unittest.TestCase):
             self.assertIn(name, inventory)
             self.assertNotIn(name, manifest['inputs'])
         self.assertTrue(all('\\' not in name for name in manifest['inputs']))
+        self.assertIn('](../inputs/output-packaging.md)', (self.repo.root / 'research/nested-control' /
+                                                        manifest['agents']).read_text())
 
     def test_mismatch_creates_no_definition(self):
         from prepare_runner import import_package

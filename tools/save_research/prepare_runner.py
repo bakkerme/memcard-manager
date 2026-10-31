@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import tempfile
 
+from packaging_contract import CONTRACT_INPUT, CONTRACT_LINK, contract_link, copy_contract, relocate_contract_links
+
 REPO = Path(__file__).resolve().parents[2]
 
 
@@ -90,15 +92,20 @@ def import_package(repo, name, archive, expected_sha256):
         manifest['required_outputs'] = list(dict.fromkeys([
             *manifest['required_outputs'], 'outputs/research.json']))
         occupied = [p for p in stage.rglob('*') if p.is_file()]
-        additions = ['inputs/contracts.json', 'inputs/question.md', 'preparation/runner-migration.json']
+        additions = ['inputs/contracts.json', 'inputs/question.md', 'preparation/runner-migration.json',
+                     CONTRACT_INPUT]
         if any((stage / p).exists() for p in additions):
             raise ValueError('Migration metadata would overwrite an existing input')
         write(stage / additions[0], schemas())
+        copy_contract(stage)
         (stage / additions[1]).write_text(
             '# Legacy continuation\n\nRead the retained brief and scoped target. Audit current project support and '
             'remaining evidence gaps before starting new discovery. Historical readiness and missing-input '
             'claims are provenance, not a current qualification. Do not repeat already-completed research.\n', encoding='utf-8')
         template_agents = (repo.root / 'research/ps1-summary/AGENTS.md').read_text(encoding='utf-8')
+        template_agents = relocate_contract_links(template_agents, manifest['agents'])
+        if not CONTRACT_LINK.search(template_agents):
+            template_agents += f'\nFollow the [output-packaging contract]({contract_link(manifest["agents"])}).\n'
         # Preserve original instructions separately and give the new closeout
         # contract precedence without changing any scientific input or helper.
         history = stage / 'preparation/runner-migration-original'

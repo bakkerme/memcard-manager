@@ -16,6 +16,8 @@ import re
 import subprocess
 import sys
 
+from packaging_contract import CONTRACT_SOURCE, copy_contract, relocate_contract_links
+
 REPO = Path(__file__).resolve().parents[2]
 ASSEMBLER_VERSION = '1'
 PLACEHOLDER_SHA = '0' * 64
@@ -46,10 +48,8 @@ TEMPLATE_PATHS = (
     'research/templates/brief.md',
     'research/templates/question.md',
 )
-# Closeout files the runner must see as loose paths. The question template
-# tells the job to also publish a field ledger, decoder/, a small fixtures set,
-# and bulky screenshots, calibration dumps, and action logs as a few archives.
-# Those paths vary, and a blocked job still closes out with this trio.
+# Closeout paths remain a trio even when a scoped job is blocked. Publication
+# layout and quotas live in research/output-packaging.md, copied into each job.
 REQUIRED_OUTPUTS = [
     'outputs/handoff.md',
     'outputs/research.json',
@@ -232,7 +232,7 @@ def source_paths(repo):
     missing = [path for path in TOOL_PATHS if path not in tracked_set]
     if missing:
         raise ValueError('required tool file is not tracked: ' + ', '.join(missing))
-    missing = [path for path in TEMPLATE_PATHS if path not in tracked_set]
+    missing = [path for path in (*TEMPLATE_PATHS, CONTRACT_SOURCE) if path not in tracked_set]
     if missing:
         raise ValueError('template is not tracked: ' + ', '.join(missing))
     selected = list(TOOL_PATHS)
@@ -604,7 +604,12 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
             source = repo / relative
             if source.is_symlink() or not source.is_file():
                 raise ValueError(f'refusing to package non-regular file: {relative}')
-            write_bytes(stage / destination_for(relative), source.read_bytes())
+            destination = destination_for(relative)
+            data = source.read_bytes()
+            if source.suffix == '.md':
+                data = relocate_contract_links(data.decode('utf-8'), destination).encode('utf-8')
+            write_bytes(stage / destination, data)
+        copy_contract(stage, repo)
         for item, source, _digest in privates:
             target = stage / item['path']
             if target.exists():
@@ -616,8 +621,9 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
         image = tool_image_declaration(stage, fmt)
         values = template_values(spec, image, fmt)
         template_root = repo / 'research' / 'templates'
-        write_text(stage / 'AGENTS.md', render_text((template_root / 'AGENTS.md').read_text(encoding='utf-8'), values))
-        write_text(stage / 'brief.md', render_text((template_root / 'brief.md').read_text(encoding='utf-8'), values))
+        for name in ('AGENTS.md', 'brief.md'):
+            text = render_text((template_root / name).read_text(encoding='utf-8'), values)
+            write_text(stage / name, relocate_contract_links(text, name))
         question = render_text((template_root / 'question.md').read_text(encoding='utf-8'), values)
         extra = spec.get('question_extra')
         if extra:
@@ -626,7 +632,7 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
             if not isinstance(extra, str):
                 raise ValueError('spec question_extra must be a string or list of strings')
             question = question.rstrip('\n') + '\n\n' + extra.rstrip('\n') + '\n'
-        write_text(stage / 'inputs' / 'question.md', question)
+        write_text(stage / 'inputs' / 'question.md', relocate_contract_links(question, 'inputs/question.md'))
         write_json(stage / 'inputs' / 'contracts.json', contracts())
         write_json(stage / 'inputs' / 'spec.json', spec)
         write_json(stage / 'inputs' / 'provenance.json', provenance)

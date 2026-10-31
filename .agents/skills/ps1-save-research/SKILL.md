@@ -50,30 +50,6 @@ Write a concise partial specification and an explicit unsupported/unknown list. 
 
 When implementation is requested, add a bounded read-only research decoder first, then promote verified fields into the production reader with exact supported identifiers/layouts and meaningful known-value/malformed-input tests. Keep parser attribution. Synthetic tests validate parser behavior, not a hypothesized field's real-world meaning. A requested research finding does not automatically authorize a production editor or hardware write feature.
 
-## Publish runner outputs under the entry cap
+## Publish Runner outputs
 
-Research Runner publishes about 512 output entries, with a separate 32 MiB per-file limit and 128 MiB per generation. An MGS job that left screenshots, calibration dumps, and action logs as individual files wrote 655 entries and could not publish.
-
-Local run directories (`tools/save_research/runs/`, `tools/ps1_replay/runs/`) stay unpacked. When the deliverable is a Runner `outputs/` tree, pack that bulky per-step evidence into a few reproducible archives and leave the important files loose:
-
-- `outputs/handoff.md`, `outputs/field-ledger.md`, `outputs/research.json`, `outputs/result.json`
-- `outputs/checkpoint.json` and `outputs/tool-image.json`, which the runner and the tool-image check read during the job
-- `outputs/decoder/`: the read-only decoder and its tests
-- `outputs/fixtures/`: the small set of saves and sidecars the suite loads
-
-Other single-file reports may stay loose. Pack per-step screenshots, raw frames, calibration dumps, and action logs into:
-
-- `outputs/evidence-screenshots.tar.gz`
-- `outputs/evidence-calibration.tar.gz`
-- `outputs/evidence-actions.tar.gz`
-
-One archive is enough when only one kind is bulky. Split a kind into a second archive when one file would exceed 32 MiB. Stage the files outside `outputs/`, write `INDEX.txt` in that staging directory listing every archived path, write the archive, then remove the packed directories from `outputs/` so those entries are not published twice. Build each archive with sorted names, a zero timestamp, and no gzip filename metadata:
-
-```sh
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - -C staging/screenshots . \
-  | gzip -n -9 > outputs/evidence-screenshots.tar.gz
-```
-
-In `outputs/research.json`, set each evidence `path` to the published archive and `sha256` to that archive's digest. Name decisive members in the description. Cite an archive once per kind; the research report caps evidence items, so one item per capture will not fit.
-
-The package `required_outputs` list stays `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`. Publish the field ledger, decoder, fixtures, and archives because the question asks for them.
+For a Research Runner job, follow the [output-packaging contract](../../../research/output-packaging.md). The question defines the required field ledger, decoder, fixtures, and evidence for its scope.

@@ -10,7 +10,8 @@
   "skills": [],
   "inputs": [
     "inputs/question.md",
-    "inputs/contracts.json"
+    "inputs/contracts.json",
+    "inputs/output-packaging.md"
   ],
   "resources": {
     "cpu": 1,

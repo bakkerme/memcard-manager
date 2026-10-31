@@ -48,10 +48,13 @@ For a new question:
 
 ```sh
 research-runner new my-game
+python3 tools/save_research/packaging_contract.py --definition research/my-game
 ```
 
 Edit `research/my-game/inputs/question.md`, `brief.md`, `AGENTS.md` and
 `manifest.json`. Copy the PS1 constraints from `research/ps1-summary/AGENTS.md`.
+The command above installs the current packaging contract and declares it in the
+manifest; rerun it after updating the source before packaging a manual definition.
 Set the exact release, small summary target, acceptance criteria and budget.
 Place every required save, reader/helper, spec and evidence file in `inputs/`,
 with relative paths and a size/hash/provenance ledger. Include BIOS and the entire
@@ -123,16 +126,15 @@ An interrupted pull resumes its pinned generation when repeated; keep `.partial`
 files and receipts. A dashboard job can be adopted with
 `research-runner attach my-existing-run REMOTE_JOB_ID` (a read-only remote lookup).
 
-Closeout requires `outputs/result.json`, `outputs/handoff.md` and
-`outputs/research.json` using the bundled `inputs/contracts.json` schemas. Those
-three paths are the manifest `required_outputs`. Also publish a loose
-`outputs/field-ledger.md`, `outputs/decoder/`, and a small `outputs/fixtures/`
-set. Pack screenshots, raw frames, calibration dumps, and action logs into a few
-archives under `outputs/` (`evidence-screenshots.tar.gz`,
-`evidence-calibration.tar.gz`, `evidence-actions.tar.gz`) and cite each archive
-from `research.json`. Publication accepts about 512 entries, 32 MiB per file,
-and 128 MiB per generation. A job that left those captures loose wrote 655 files
-and could not publish.
+Follow the [output-packaging contract](output-packaging.md) for closeout paths,
+evidence archives, citation rules and publication checks. The assembler copies
+this source into every package at `inputs/output-packaging.md` and adjusts links
+from the bundled skills and rendered templates.
+
+The manual `ps1-summary` starter contains a generated identical copy declared in
+its manifest. After editing the source, refresh it with
+`python3 tools/save_research/packaging_contract.py`; `--check` detects drift
+without changing files. The package tests run that check in CI.
 
 `results` verifies delivery and validates the research report; it never executes
 reported reproduction commands. Researcher validation and independent local
