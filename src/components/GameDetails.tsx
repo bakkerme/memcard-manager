@@ -100,7 +100,7 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
     : details.game === "gran-turismo" || details.game === "gran-turismo-2" ? "Licences"
     : details.game === "final-fantasy-viii" ? "Characters and Guardian Forces"
     : details.game === "tekken-3" ? "Character records"
-    : details.game === "metal-gear-solid" ? "Weapons" : "Characters";
+    : details.game === "metal-gear-solid" ? "Weapons and items" : "Characters";
   return <>
     {checksum === false && <p className="game-details-warning" role="status">{checksumSubject} does not match. These values may be unreliable; try another backup of this save.</p>}
     <p className="muted">{checksumLabel}: {checksumStatus}</p>

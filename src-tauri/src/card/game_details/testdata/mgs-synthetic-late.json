@@ -1,0 +1,17 @@
+{
+  "file": "synthetic-late.sc",
+  "sha256": "ac6cdfbd04ac9ad9144b91820cc9ec6ecfa5e4a2b7a9f3212d28eef68b8f00e4",
+  "synthetic": true,
+  "provenance": "Constructed from zero bytes; not a public or game-written save. Field values are parser boundary checks only.",
+  "metadata": {
+    "productCode": "BASLUS-00594",
+    "region": "USA",
+    "identifier": "BASLUS-00594G0936H]A"
+  },
+  "expected_fields": {
+    "max_rations": 5,
+    "radar_hidden": false,
+    "max_cold_meds": 1,
+    "max_diazepam": 9
+  }
+}

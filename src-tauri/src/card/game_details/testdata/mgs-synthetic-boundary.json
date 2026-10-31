@@ -1,0 +1,17 @@
+{
+  "file": "synthetic-boundary.sc",
+  "sha256": "fbf2b52f22e72db788ff7b98d1497f2afb7f583dc1612b841938d65e6294eebd",
+  "synthetic": true,
+  "provenance": "Constructed from zero bytes; not a public or game-written save. Field values are parser boundary checks only.",
+  "metadata": {
+    "productCode": "BASLUS-00594",
+    "region": "USA",
+    "identifier": "BASLUS-00594G9959@?Z"
+  },
+  "expected_fields": {
+    "max_rations": 0,
+    "radar_hidden": false,
+    "max_cold_meds": 1,
+    "max_diazepam": 65535
+  }
+}

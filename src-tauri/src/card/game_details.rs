@@ -264,7 +264,7 @@ pub(super) fn decode(
         return rayman::decode(&format, code, region, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00594" {
-        return metal_gear_solid::decode(&format, code, data).map(GameDetails::Summary);
+        return metal_gear_solid::decode(&format, code, identifier, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00213" {
         return tekken2::decode(&format, code, data).map(GameDetails::Summary);
