@@ -29,4 +29,6 @@ tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf - -C staging/
 
 In `outputs/research.json`, set each evidence `path` to the published archive and `sha256` to that archive's digest. Name decisive members in the description. Cite each archive once; the research report caps evidence items, so one item per capture will not fit.
 
-The package `required_outputs` list stays `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`. The question defines the field ledger, decoder, fixtures, and evidence required for its scope; blocked jobs still close out with the trio.
+New definitions default to the `required_outputs` trio: `outputs/handoff.md`, `outputs/research.json`, and `outputs/result.json`. The question defines the field ledger, decoder, fixtures, and evidence required for its scope.
+
+Existing and imported manifests remain authoritative: preserve every entry in their `required_outputs`, including extra legacy paths. These additional requirements also apply to partial or blocked closeout; the default trio does not waive them. If a required output cannot be produced, report its blocker explicitly rather than silently dropping the manifest requirement.
