@@ -510,6 +510,133 @@ class AssembleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'overlaps another dependency'):
                 package_builder.load_spec(self._spec_with(root, [disc2, nested]))
 
+    def test_warped_spec_is_cheat_diff_without_offsets_or_a_save(self):
+        spec = json.loads((REAL / 'research/specs/crash-bandicoot-warped-us.json').read_text())
+        loaded = package_builder.load_spec(REAL / 'research/specs/crash-bandicoot-warped-us.json')
+        self.assertEqual(spec['method'], 'cheat-diff')
+        self.assertEqual(spec['serial'], 'SCUS-94244')
+        self.assertEqual(spec['product_code'], 'SCUS-94244')
+        self.assertEqual(spec['asset']['asset_id'], 'title:Crash Bandicoot: Warped (USA)')
+        self.assertNotIn('cross_check', spec)
+        self.assertNotIn('extra_assets', spec)
+        self.assertEqual([field['id'] for field in spec['fields']], spec['fields_target'])
+        for field in spec['fields']:
+            self.assertIn(field['confidence'], package_builder.CONFIDENCE)
+            self.assertNotIn('offset', field)
+        self.assertEqual(spec['fields'][0]['confidence'], 'partial')
+        self.assertEqual(spec['fields'][2]['confidence'], 'unknown')
+        self.assertEqual(set(spec['check_notes']), set(spec['required_checks']))
+        self.assertIn('save-gate', spec['required_checks'])
+        self.assertIn('cheat-diff', spec['required_checks'])
+        self.assertIn('native-load', spec['required_checks'])
+        bios = {item['role']: item for item in spec['private_inputs']}
+        self.assertNotIn('save', bios)
+        self.assertEqual(bios['bios']['sha256'],
+                         '71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3')
+        self.assertIn('BASCUS-9424400000000', spec['layout']['directory_filename_lead'])
+        self.assertIn('SCES-01420', spec['layout']['scope'])
+        self.assertIn('SCPS-10073', spec['layout']['scope'])
+        self.assertEqual(loaded['name'], 'crash-bandicoot-warped-us')
+        self.assertIn('research/templates/question-cheat-diff.md', package_builder.TEMPLATE_PATHS)
+        self.assertTrue((REAL / 'research/templates/question-cheat-diff.md').is_file())
+
+    def test_cheat_diff_package_uses_the_title_disc_and_hides_the_editor_map(self):
+        try:
+            runner = package_builder.load_research_runner()
+        except ValueError as error:
+            self.skipTest(str(error))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bios = root / 'bios.bin'
+            bios.write_bytes(b'warped-bios-fixture')
+            spec = json.loads((REAL / 'research/specs/crash-bandicoot-warped-us.json').read_text())
+            spec['private_inputs'][0]['sha256'] = sha256(bios)
+            spec_path = root / 'crash-bandicoot-warped-us.json'
+            spec_path.write_text(json.dumps(spec, indent=2) + '\n')
+            with self.assertRaisesRegex(ValueError, 'sha256 mismatch'):
+                build_package(REAL / 'research/specs/crash-bandicoot-warped-us.json', root / 'real',
+                              bios=bios, repo=self.repo)
+            first = build_package(spec_path, root / 'one', fmt='v2', bios=bios, repo=self.repo)
+            second = build_package(spec_path, root / 'two', fmt='v2', bios=bios, repo=self.repo)
+            self.assertEqual(first['sha256'], second['sha256'])
+            manifest, files = runner.package.verify(first['package'])
+            self.assertEqual(manifest['name'], 'crash-bandicoot-warped-us')
+            self.assertEqual(manifest['dependencies'], [{
+                'asset_type': 'psx-rom',
+                'asset_id': 'title:Crash Bandicoot: Warped (USA)',
+                'destination': 'inputs/roms/game',
+            }])
+            self.assertNotIn('required_checks', manifest)
+            self.assertIn('inputs/bios/ps-22a.bin', files)
+            self.assertFalse(any(name.endswith(('.gme', '.mcr', '.mcs')) for name in files))
+            question = archive_text(first['package'], 'inputs/question.md')
+            agents = archive_text(first['package'], 'AGENTS.md')
+            self.assertIn(spec['no_save_note'], question)
+            self.assertIn('cheat-and-diff', question)
+            self.assertIn('`save-gate`:', question)
+            self.assertIn('`cheat-diff`:', question)
+            self.assertIn('confidence partial', question)
+            self.assertIn('BASCUS-9424400000000', question)
+            self.assertIn('SCUS-94900', question)
+            self.assertIn('game-tools-collection', question)
+            self.assertIn('CrashEdit', question)
+            self.assertIn('[output-packaging contract](output-packaging.md)', question)
+            self.assertNotIn('@@', question)
+            self.assertNotIn('SLUS-00005', question)
+            self.assertNotIn('cited editor has no checksum', question)
+            self.assertIsNone(re.search(r'offset\s+0x', question))
+            self.assertNotIn('`lives`: offset', question)
+            self.assertIn('python3 tools/ps1_replay/host.py --engine docker ensure', agents)
+            self.assertIn('python3 tools/ps1_replay/host.py --engine docker ensure', question)
+            self.assertIn('create saves in the emulator', agents)
+            v3 = build_package(spec_path, root / 'v3', fmt='v3', bios=bios, repo=self.repo)
+            payload = envelope(v3['package'])['manifest']
+            self.assertEqual(payload['required_checks'], spec['required_checks'])
+            v3_question = archive_text(v3['package'], 'inputs/question.md')
+            v3_agents = archive_text(v3['package'], 'AGENTS.md')
+            self.assertIn('.runner/tool-images.json', v3_question)
+            self.assertIn('Do not rebuild the image', v3_question)
+            self.assertNotIn('host.py --engine docker ensure', v3_question)
+            self.assertNotIn('host.py --engine docker ensure', v3_agents)
+            self.assertIn('--image-tag', v3_question)
+
+    def test_cheat_diff_rejects_an_editor_map_and_editor_map_keeps_its_cross_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            spec = json.loads((REAL / 'research/specs/crash-bandicoot-warped-us.json').read_text())
+
+            def write(name, value):
+                path = root / name
+                path.write_text(json.dumps(value) + '\n')
+                return path
+
+            offset = json.loads(json.dumps(spec))
+            offset['fields'][0]['offset'] = '0x10'
+            with self.assertRaisesRegex(ValueError, 'must not include offset'):
+                package_builder.load_spec(write('offset.json', offset))
+            missing = json.loads(json.dumps(spec))
+            del missing['non_sources']
+            with self.assertRaisesRegex(ValueError, 'non_sources must be a non-empty list'):
+                package_builder.load_spec(write('missing.json', missing))
+            crossed = json.loads(json.dumps(spec))
+            crossed['cross_check'] = {
+                'name': 'editor', 'url': 'https://example.com/editor', 'license': 'MIT'}
+            with self.assertRaisesRegex(ValueError, 'use non_sources instead of cross_check'):
+                package_builder.load_spec(write('crossed.json', crossed))
+            rayman = json.loads((REAL / 'research/specs/rayman-us.json').read_text())
+            self.assertNotIn('method', rayman)
+            del rayman['cross_check']
+            with self.assertRaisesRegex(ValueError, 'spec cross_check is required'):
+                package_builder.load_spec(write('rayman.json', rayman))
+            rayman = json.loads((REAL / 'research/specs/rayman-us.json').read_text())
+            rayman['non_sources'] = spec['non_sources']
+            with self.assertRaisesRegex(ValueError, 'only for method cheat-diff'):
+                package_builder.load_spec(write('rayman-non-sources.json', rayman))
+            partial = json.loads(json.dumps(spec))
+            partial['check_notes']['tool-image-provisioned'] = {'v2': 'build with ensure'}
+            with self.assertRaisesRegex(ValueError, 'format map must contain v2 and v3'):
+                package_builder.load_spec(write('partial-note.json', partial))
+
 
 if __name__ == '__main__':
     unittest.main()
