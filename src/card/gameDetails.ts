@@ -7,7 +7,7 @@ export interface DigimonWorld2Details {
 export type SummaryGame = "final-fantasy-vii" | "final-fantasy-viii" | "final-fantasy-ix"
   | "final-fantasy-tactics" | "chrono-cross" | "castlevania-symphony-of-the-night"
   | "gran-turismo" | "gran-turismo-2" | "ctr-crash-team-racing" | "spyro-the-dragon"
-  | "tekken-2" | "crash-bandicoot" | "tomb-raider" | "tomb-raider-2" | "grandia" | "tony-hawks-pro-skater" | "resident-evil" | "tekken-3" | "silent-hill" | "mega-man-legends-2" | "ape-escape" | "klonoa" | "pac-man-world" | "bomberman-fantasy-race" | "metal-gear-solid" | "legend-of-dragoon";
+  | "tekken" | "tekken-2" | "crash-bandicoot" | "tomb-raider" | "tomb-raider-2" | "grandia" | "tony-hawks-pro-skater" | "resident-evil" | "tekken-3" | "silent-hill" | "mega-man-legends-2" | "ape-escape" | "klonoa" | "pac-man-world" | "bomberman-fantasy-race" | "metal-gear-solid" | "legend-of-dragoon";
 export interface GameSummary {
   game: SummaryGame;
   title: string;
