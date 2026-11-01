@@ -88,7 +88,7 @@ and no field offsets. It lists `non_sources`, a confidence label on every target
 and `check_notes` whose keys match `required_checks`. A note is a string, or a `{v2, v3}` pair when the instruction depends on package format. The Warped image check is split that way: v2 runs `host.py ensure`, and v3 records the runner-provisioned image id and does not rebuild. The assembler renders
 `research/templates/question-cheat-diff.md` for that method. Crash Bandicoot:
 Warped (USA) is the cheat-diff example. Its disc id is
-`title:Crash Bandicoot: Warped (USA)` because Redump lists both `SCUS-94244` and
+`title:Crash Bandicoot - Warped (USA)` because Redump lists both `SCUS-94244` and
 `SCUS-94244CE` on one multi-edition entry, and the disc image also contains other
 executables. Parse a `title:` id on the first colon. Metal Gear Solid Disc 2 uses
 the same form (`title:Metal Gear Solid (USA) (Disc 2)`).

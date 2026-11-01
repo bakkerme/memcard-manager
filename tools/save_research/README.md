@@ -26,7 +26,7 @@ is the primary disc. Optional `extra_assets` adds more dependencies, each with
 Destinations must not overlap. `method` defaults to `editor-map` (a required
 `cross_check`). `"method": "cheat-diff"` is the no-editor path: `non_sources`,
 confidence labels, `check_notes` (a string, or `{v2, v3}` when the step differs by format), and no offsets. Crash Bandicoot: Warped (USA)
-uses it and requests the disc as `title:Crash Bandicoot: Warped (USA)`.
+uses it and requests the disc as `title:Crash Bandicoot - Warped (USA)`.
 `--format v2` (the default) is the package Runner 0.4.0 can run, and its first instruction is
 `host.py ensure`. Two assemblies with the same spec, commit, and private-input
 bytes produce the same archive sha256.
