@@ -46,6 +46,54 @@ describe("Bomberman profile states", () => {
   });
 });
 
+describe("Legend of Dragoon summary", () => {
+  const save = demoView().saves[0];
+  const details: GameSummary = {
+    game: "legend-of-dragoon",
+    title: "The Legend of Dragoon",
+    release: "NTSC-U · SCUS-94491",
+    checksumOk: null,
+    notes: ["Neither editor documents a checksum, so checksumOk stays unverified."],
+    profiles: [{
+      number: 1,
+      name: "Seles",
+      empty: false,
+      checksumOk: null,
+      fields: [
+        { label: "Playtime (hh:mm:ss)", value: "01:00:01" },
+        { label: "Gold", value: "123456" },
+        { label: "Party 1", value: "Dart" },
+      ],
+      records: [{
+        name: "Dart",
+        fields: [
+          { label: "Level", value: "10" },
+          { label: "HP", value: "120" },
+          { label: "Weapon", value: "Indora's Axe" },
+        ],
+      }],
+    }],
+  };
+
+  it("shows editor fields under Characters and leaves the checksum unverified", () => {
+    const html = renderToStaticMarkup(
+      <GameDetailsButton save={{ ...save, gameDetails: details, gameDetailsError: undefined }} />,
+    );
+    expect(html).toContain("The Legend of Dragoon");
+    expect(html).toContain("NTSC-U · SCUS-94491");
+    expect(html).toContain("Game checksum");
+    expect(html).toContain("Not verified for this format");
+    expect(html).not.toContain("The game checksum does not match");
+    expect(html).toContain("Playtime (hh:mm:ss)");
+    expect(html).toContain("01:00:01");
+    expect(html).toContain("123,456");
+    expect(html).toContain("Characters <span>");
+    expect(html).toContain("Dart");
+    expect(html).toContain("Indora&#x27;s Axe");
+    expect(html).toContain("checksumOk stays unverified");
+  });
+});
+
 describe("Metal Gear Solid summary", () => {
   const save = demoView().saves[0];
   const details: GameSummary = {

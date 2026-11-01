@@ -8,6 +8,7 @@ mod archive_summaries;
 mod bomberman_fantasy_race;
 mod crash_bandicoot;
 mod grandia;
+mod legend_of_dragoon;
 mod level_summaries;
 mod mega_man_legends2;
 mod metal_gear_solid;
@@ -99,6 +100,12 @@ impl Format {
             "tomb-raider" => suffix.is_empty(),
             // The 8-byte suffix is the save id (`aaa63592`, `smd56832`), not a fixed token.
             "rayman" => true,
+            // Story files are `drgn` plus a four-digit suffix from 0000 through 0255.
+            "legend-of-dragoon" => {
+                suffix.len() == 4
+                    && suffix.bytes().all(|byte| byte.is_ascii_digit())
+                    && suffix.parse::<u8>().is_ok()
+            }
             // Story files are `G` plus seven printable bytes. VR training starts with `V`.
             "metal-gear-solid" => {
                 identifier.len() == 8
@@ -131,6 +138,13 @@ impl Format {
 
 pub(super) fn format(code: &str) -> Option<Format> {
     let (slug, title, blocks, region, identifier_prefix) = match code {
+        "SCUS-94491" => (
+            "legend-of-dragoon",
+            "The Legend of Dragoon",
+            1,
+            "BA",
+            "drgn",
+        ),
         "SCUSP94457" => ("grandia", "Grandia", 1, "BA", "GRA-S01"),
         "SLUS-00860" => (
             "tony-hawks-pro-skater",
@@ -274,6 +288,10 @@ pub(super) fn decode(
     }
     if code == "SLUS-00437" {
         return tomb_raider2::decode(&format, code, data).map(GameDetails::Summary);
+    }
+    if code == "SCUS-94491" {
+        return legend_of_dragoon::decode(&format, code, identifier, data)
+            .map(GameDetails::Summary);
     }
     if code == "SCUSP94457" {
         return grandia::decode(&format, code, data).map(GameDetails::Summary);
