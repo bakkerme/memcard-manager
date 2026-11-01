@@ -112,7 +112,10 @@
     "parser-suite"
   ],
   "check_notes": {
-    "tool-image-provisioned": "Run python3 tools/ps1_replay/host.py --engine docker ensure before any emulator command. Save the printed JSON, including imageId and action, as outputs/tool-image.json. The package builds this PCSX-Redux image from the packaged Containerfile.",
+    "tool-image-provisioned": {
+      "v2": "Run python3 tools/ps1_replay/host.py --engine docker ensure before any emulator command. Save the printed JSON, including imageId and action, as outputs/tool-image.json. Runner 0.4.0 does not provision the image; this step builds it from the packaged Containerfile.",
+      "v3": "The runner provisions this image before the first turn. Read .runner/tool-images.json and record its image ID as the evidence for this check. Do not rebuild the image. Pass that tag to every emulator command, for example python3 tools/ps1_replay/host.py --engine docker --image-tag <tag> .... The v3 tag pins the whole tools/ps1_replay context, so host.py's built-in default tag differs."
+    },
     "save-gate": "Show that the current scene can write a memory-card save before any poke. If the opening will not save, play forward until it will, and record what you passed. A state that cannot save is not a cheat-diff baseline.",
     "control-save": "From a save-capable state, in a --guest-writes session that never calls poke, let the game write one save. cardEvidence.control must be true and harnessPatchedCard must stay false. Keep that card as the diff baseline.",
     "cheat-diff": "Opt into logged guest RAM pokes and let the game write each save. Change more than one target across the run (lives, fruit, a collectible, an unlock, playtime, or a secret), one variable at a time when you can, each against a control. Order and code choice are yours. A single lives poke does not finish this check. Record memory-writes.jsonl, the card diff, and the on-screen value.",

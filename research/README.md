@@ -85,7 +85,7 @@ the spec. A save is packaged only when the spec declares one. Rayman does not:
 `method` defaults to `editor-map`, which requires `cross_check`. A game with no
 public save editor uses `"method": "cheat-diff"`. That spec has no `cross_check`
 and no field offsets. It lists `non_sources`, a confidence label on every target,
-and `check_notes` whose keys match `required_checks`. The assembler renders
+and `check_notes` whose keys match `required_checks`. A note is a string, or a `{v2, v3}` pair when the instruction depends on package format. The Warped image check is split that way: v2 runs `host.py ensure`, and v3 records the runner-provisioned image id and does not rebuild. The assembler renders
 `research/templates/question-cheat-diff.md` for that method. Crash Bandicoot:
 Warped (USA) is the cheat-diff example. Its disc id is
 `title:Crash Bandicoot: Warped (USA)` because Redump lists both `SCUS-94244` and

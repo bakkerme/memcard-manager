@@ -194,6 +194,22 @@ def validate_cheat_diff_fields(spec):
         raise ValueError('cheat-diff fields and fields_target must list the same ids in the same order')
 
 
+def validate_check_note(note, key):
+    """A note is one string, or a v2/v3 pair when the instruction depends on format."""
+    if isinstance(note, str):
+        if not note.strip():
+            raise ValueError(f'check_notes[{key}] must be a non-empty string')
+        return
+    if isinstance(note, dict):
+        if set(note) != {'v2', 'v3'}:
+            raise ValueError(f'check_notes[{key}] format map must contain v2 and v3 only')
+        for fmt in ('v2', 'v3'):
+            if not isinstance(note[fmt], str) or not note[fmt].strip():
+                raise ValueError(f'check_notes[{key}].{fmt} must be a non-empty string')
+        return
+    raise ValueError(f'check_notes[{key}] must be a string or a v2/v3 map')
+
+
 def validate_check_notes(spec):
     notes = spec.get('check_notes')
     if not isinstance(notes, dict):
@@ -201,8 +217,7 @@ def validate_check_notes(spec):
     if set(notes) != set(spec['required_checks']):
         raise ValueError('check_notes keys must match required_checks')
     for key in spec['required_checks']:
-        if not isinstance(notes[key], str) or not notes[key].strip():
-            raise ValueError(f'check_notes[{key}] must be a non-empty string')
+        validate_check_note(notes[key], key)
 
 
 def validate_research_method(spec):
@@ -443,11 +458,18 @@ def markdown_non_sources(spec):
     return '\n'.join(lines) + '\n'
 
 
-def markdown_check_notes(spec):
+def check_note_text(note, fmt):
+    if isinstance(note, str):
+        return note
+    return note[fmt]
+
+
+def markdown_check_notes(spec, fmt):
     notes = spec.get('check_notes') or {}
     if not notes:
         return ''
-    lines = [f"- `{check}`: {notes[check]}" for check in spec['required_checks']]
+    lines = [f"- `{check}`: {check_note_text(notes[check], fmt)}"
+             for check in spec['required_checks']]
     return '\n'.join(lines) + '\n'
 
 
@@ -505,7 +527,7 @@ def template_values(spec, image, fmt):
         'CROSS_NOTE': cross.get('note', ''),
         'EXTRA_DISCS': extra_dependency_note(spec),
         'NON_SOURCES': markdown_non_sources(spec),
-        'CHECK_NOTES': markdown_check_notes(spec),
+        'CHECK_NOTES': markdown_check_notes(spec, fmt),
         'LAYOUT': markdown_layout(spec),
     }
 

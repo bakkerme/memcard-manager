@@ -587,10 +587,18 @@ class AssembleTests(unittest.TestCase):
             self.assertIsNone(re.search(r'offset\s+0x', question))
             self.assertNotIn('`lives`: offset', question)
             self.assertIn('python3 tools/ps1_replay/host.py --engine docker ensure', agents)
+            self.assertIn('python3 tools/ps1_replay/host.py --engine docker ensure', question)
             self.assertIn('create saves in the emulator', agents)
             v3 = build_package(spec_path, root / 'v3', fmt='v3', bios=bios, repo=self.repo)
             payload = envelope(v3['package'])['manifest']
             self.assertEqual(payload['required_checks'], spec['required_checks'])
+            v3_question = archive_text(v3['package'], 'inputs/question.md')
+            v3_agents = archive_text(v3['package'], 'AGENTS.md')
+            self.assertIn('.runner/tool-images.json', v3_question)
+            self.assertIn('Do not rebuild the image', v3_question)
+            self.assertNotIn('host.py --engine docker ensure', v3_question)
+            self.assertNotIn('host.py --engine docker ensure', v3_agents)
+            self.assertIn('--image-tag', v3_question)
 
     def test_cheat_diff_rejects_an_editor_map_and_editor_map_keeps_its_cross_check(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -624,6 +632,10 @@ class AssembleTests(unittest.TestCase):
             rayman['non_sources'] = spec['non_sources']
             with self.assertRaisesRegex(ValueError, 'only for method cheat-diff'):
                 package_builder.load_spec(write('rayman-non-sources.json', rayman))
+            partial = json.loads(json.dumps(spec))
+            partial['check_notes']['tool-image-provisioned'] = {'v2': 'build with ensure'}
+            with self.assertRaisesRegex(ValueError, 'format map must contain v2 and v3'):
+                package_builder.load_spec(write('partial-note.json', partial))
 
 
 if __name__ == '__main__':
