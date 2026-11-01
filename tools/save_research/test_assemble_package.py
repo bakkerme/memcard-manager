@@ -516,7 +516,7 @@ class AssembleTests(unittest.TestCase):
         self.assertEqual(spec['method'], 'cheat-diff')
         self.assertEqual(spec['serial'], 'SCUS-94244')
         self.assertEqual(spec['product_code'], 'SCUS-94244')
-        self.assertEqual(spec['asset']['asset_id'], 'title:Crash Bandicoot: Warped (USA)')
+        self.assertEqual(spec['asset']['asset_id'], 'title:Crash Bandicoot - Warped (USA)')
         self.assertNotIn('cross_check', spec)
         self.assertNotIn('extra_assets', spec)
         self.assertEqual([field['id'] for field in spec['fields']], spec['fields_target'])
@@ -563,7 +563,7 @@ class AssembleTests(unittest.TestCase):
             self.assertEqual(manifest['name'], 'crash-bandicoot-warped-us')
             self.assertEqual(manifest['dependencies'], [{
                 'asset_type': 'psx-rom',
-                'asset_id': 'title:Crash Bandicoot: Warped (USA)',
+                'asset_id': 'title:Crash Bandicoot - Warped (USA)',
                 'destination': 'inputs/roms/game',
             }])
             self.assertNotIn('required_checks', manifest)
