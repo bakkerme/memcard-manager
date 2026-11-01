@@ -16,6 +16,7 @@ mod overnight;
 mod pacman_us;
 mod rayman;
 mod resident_evil;
+mod spyro_year_of_the_dragon;
 mod summaries;
 mod tekken;
 mod tekken2;
@@ -219,6 +220,13 @@ pub(super) fn format(code: &str) -> Option<Format> {
             "-SLOTS",
         ),
         "SCUS-94228" => ("spyro-the-dragon", "Spyro the Dragon", 1, "BA", "SPYRO"),
+        "SCUS-94467" => (
+            "spyro-year-of-the-dragon",
+            "Spyro: Year of the Dragon",
+            1,
+            "BA",
+            "SPY3_1",
+        ),
         "SCUS-94423" => ("ape-escape", "Ape Escape", 1, "BA", "SYS"),
         "SLUS-00006" => ("tekken", "Tekken", 1, "BA", "<TEKKEN>"),
         "SCES-00005" => ("tekken", "Tekken", 1, "BE", "<TEKKEN>"),
@@ -280,6 +288,9 @@ pub(super) fn decode(
     }
     if code == "SLUS-00005" {
         return rayman::decode(&format, code, region, data).map(GameDetails::Summary);
+    }
+    if code == "SCUS-94467" {
+        return spyro_year_of_the_dragon::decode(&format, code, data).map(GameDetails::Summary);
     }
     if code == "SLUS-00594" {
         return metal_gear_solid::decode(&format, code, identifier, data).map(GameDetails::Summary);

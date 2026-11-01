@@ -3,7 +3,7 @@
   "project": "memcard-viewer",
   "researchDate": "2026-10-04",
   "implementationStatusDate": "2026-10-05",
-  "scope": "Original PlayStation memory-card saves only; 26 research entries, 24 with public implementation references and two historical editor leads.",
+  "scope": "Original PlayStation memory-card saves only; 27 research entries, 25 with public implementation references and two historical editor leads.",
   "evidenceBoundary": "Original survey preserved. The twelve-game proposal is now implemented as narrow read-only summaries for the exact real-save-tested product codes documented in docs/save-details.md. User PAL FFVII and public completion/endgame saves were used; upstream region claims do not imply support. Selected uploader values and checksums were checked without console or emulator playback.",
   "originalCoverageProposal": [
     "Final Fantasy VII",
@@ -246,6 +246,25 @@
       "regressionManifest": "tests/fixtures/ps1/manifest.json",
       "validationBoundary": "Real-save checksums where known, selected completion values and byte-level regressions; no in-game playback. Full research field list is not fully decoded.",
       "implementedFields": "Three profiles with empty state, location, lives, dragons, gems, eggs; 35 per-level dragon/gem records; per-profile checksums"
+    },
+    {
+      "game": "Spyro: Year of the Dragon",
+      "genre": "Platformer",
+      "evidence": "Source available",
+      "fields": "Three adventures: saved location, lives, gems, eggs and title-screen completion.",
+      "regions": "SCUS-94467 (NTSC-U rev 0 decomp). Other regions are not accepted.",
+      "note": "Traced from TheMobyCollective/spyro-3 commit e97cd3387ac1bb7b7c9c958f7b7bdc591a2ae273. There is no MemcardRex YOTD editor. Spyro 1 remains the separate SCUS-94228 reader. No captured save was hashed.",
+      "links": [
+        [
+          "Matching decompilation",
+          "https://github.com/TheMobyCollective/spyro-3/tree/e97cd3387ac1bb7b7c9c958f7b7bdc591a2ae273"
+        ]
+      ],
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SCUS-94467 (NTSC-U)",
+      "implementationDocumentation": "docs/formats/spyro-year-of-the-dragon-us.md",
+      "validationBoundary": "Code-traced from the matching NTSC-U rev 0 decomp. Synthetic fixtures only. Not save/reload-verified and not checked against a captured card.",
+      "implementedFields": "Three adventures with empty state, location, stored lives, loader gem and egg totals, title-screen completion, 37 per-level gem/egg rows, and per-adventure checksums."
     },
     {
       "game": "Chrono Cross",
