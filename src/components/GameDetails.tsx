@@ -99,6 +99,7 @@ function SummaryDetails({ details, profileIndex, setProfileIndex }: {
     : details.game === "final-fantasy-tactics" ? "Units"
     : details.game === "gran-turismo" || details.game === "gran-turismo-2" ? "Licences"
     : details.game === "final-fantasy-viii" ? "Characters and Guardian Forces"
+    : details.game === "tekken" ? "Records"
     : details.game === "tekken-3" ? "Character records"
     : details.game === "metal-gear-solid" ? "Weapons and items" : "Characters";
   return <>

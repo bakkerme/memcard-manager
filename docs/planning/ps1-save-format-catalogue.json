@@ -110,14 +110,18 @@
       "evidence": "Source available",
       "fields": "Character unlocks, costumes, arcade completion, time records and versus wins.",
       "regions": "EU / US / JP",
-      "note": "Editor definitions inspected; regional claims come from the project. Not tested with saves here.",
+      "note": "Original survey: editor definitions inspected; regional claims come from the project. The read-only summary for SLUS-00006, SCES-00005 and SLPS-00040 is documented in docs/formats/tekken.md.",
       "links": [
         [
           "Field definitions",
-          "https://github.com/RyudoSynbios/game-tools-collection/blob/cc2bc1044986903833547369b007f57fef2216b9/src/lib/templates/tekken/saveEditor/template.ts"
+          "https://github.com/RyudoSynbios/game-tools-collection/blob/15d71340c3f1717745139c2e0774510cd37dfbdd/src/lib/templates/tekken/saveEditor/template.ts"
         ]
       ],
-      "implementationStatus": "Research candidate"
+      "implementationStatus": "Read-only summary implemented",
+      "validatedRelease": "SLUS-00006 (NTSC-U), SCES-00005 (PAL), SLPS-00040 (NTSC-J)",
+      "implementationDocumentation": "docs/formats/tekken.md",
+      "validationBoundary": "MIT editor field map plus hash-pinned public memory-card round-trip. No emulator save/reload. Options, button config and disabled costume placeholders are not decoded. No checksum is defined.",
+      "implementedFields": "17 character unlocks, Kazuya costume bit, arcade completion, 16 time places, 16 versus-win places, unnamed per-character totals"
     },
     {
       "game": "Tekken 2",

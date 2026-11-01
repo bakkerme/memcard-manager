@@ -94,6 +94,50 @@ describe("Legend of Dragoon summary", () => {
   });
 });
 
+describe("Tekken summary", () => {
+  const save = demoView().saves[0];
+  const details: GameSummary = {
+    game: "tekken",
+    title: "Tekken",
+    release: "NTSC-U · SLUS-00006",
+    checksumOk: null,
+    notes: ["No checksum is defined."],
+    profiles: [{
+      number: 1,
+      name: "Game progress",
+      empty: false,
+      checksumOk: null,
+      fields: [
+        { label: "Unlocked characters", value: "Kazuya, Paul" },
+        { label: "Kazuya costume", value: "Locked" },
+      ],
+      records: [{
+        name: "Time 1st place",
+        fields: [
+          { label: "Time", value: "50:00.000" },
+          { label: "Name", value: "PAS" },
+        ],
+      }],
+    }],
+  };
+
+  it("labels time records and leaves the checksum unverified", () => {
+    const html = renderToStaticMarkup(
+      <GameDetailsButton save={{ ...save, gameDetails: details, gameDetailsError: undefined }} />,
+    );
+    expect(html).toContain("Tekken");
+    expect(html).toContain("NTSC-U · SLUS-00006");
+    expect(html).toContain("Not verified for this format");
+    expect(html).toContain("Unlocked characters");
+    expect(html).toContain("Kazuya, Paul");
+    expect(html).toContain("Records <span>");
+    expect(html).toContain("Time 1st place");
+    expect(html).toContain("50:00.000");
+    expect(html).not.toContain("Characters <span>");
+    expect(html).toContain("No checksum is defined.");
+  });
+});
+
 describe("Metal Gear Solid summary", () => {
   const save = demoView().saves[0];
   const details: GameSummary = {
