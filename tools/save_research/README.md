@@ -23,8 +23,11 @@ in `no_save_note` and the job generates saves in the emulator. Disc bytes are
 not packaged; the manifest lists each disc as a `psx-rom` dependency. `asset`
 is the primary disc. Optional `extra_assets` adds more dependencies, each with
 `asset_type`, `asset_id`, `destination`, and an optional `provenance`.
-Destinations must not overlap. `--format v2`
-(the default) is the package Runner 0.4.0 can run, and its first instruction is
+Destinations must not overlap. `method` defaults to `editor-map` (a required
+`cross_check`). `"method": "cheat-diff"` is the no-editor path: `non_sources`,
+confidence labels, `check_notes`, and no offsets. Crash Bandicoot: Warped (USA)
+uses it and requests the disc as `title:Crash Bandicoot: Warped (USA)`.
+`--format v2` (the default) is the package Runner 0.4.0 can run, and its first instruction is
 `host.py ensure`. Two assemblies with the same spec, commit, and private-input
 bytes produce the same archive sha256.
 
@@ -34,8 +37,16 @@ PS1_BIOS=/path/to/ps-22a.bin \
   --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
 ```
 
-The Rayman spec's BIOS digest is the Tomb Raider `ps-22a.bin` sha256. No save
-file is declared. Neither BIOS nor save bytes belong in git.
+The Rayman spec's BIOS digest is the Tomb Raider `ps-22a.bin` sha256. The Warped
+spec uses that same digest and also declares no save. Neither BIOS nor save
+bytes belong in git.
+
+```sh
+PS1_BIOS=/path/to/ps-22a.bin \
+  python3 tools/save_research/assemble_package.py \
+  --spec research/specs/crash-bandicoot-warped-us.json --format v2 \
+  --out /tmp/crash-warped-pkg
+```
 
 Copy this directory's `harness.py` and `parser_template.py` with your private
 suite. Python 3.10+ and the standard library are sufficient. No desktop app,

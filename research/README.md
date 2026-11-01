@@ -82,12 +82,29 @@ BIOS is a private input: the assembler copies it only after its sha256 matches
 the spec. A save is packaged only when the spec declares one. Rayman does not:
 `no_save_note` tells the job to generate saves in the emulator.
 
+`method` defaults to `editor-map`, which requires `cross_check`. A game with no
+public save editor uses `"method": "cheat-diff"`. That spec has no `cross_check`
+and no field offsets. It lists `non_sources`, a confidence label on every target,
+and `check_notes` whose keys match `required_checks`. The assembler renders
+`research/templates/question-cheat-diff.md` for that method. Crash Bandicoot:
+Warped (USA) is the cheat-diff example. Its disc id is
+`title:Crash Bandicoot: Warped (USA)` because Redump lists both `SCUS-94244` and
+`SCUS-94244CE` on one multi-edition entry, and the disc image also contains other
+executables. Parse a `title:` id on the first colon. Metal Gear Solid Disc 2 uses
+the same form (`title:Metal Gear Solid (USA) (Disc 2)`).
+
 ```sh
 # BIOS digest in research/specs/rayman-us.json is the Tomb Raider ps-22a.bin sha256.
 # No RAYMAN_SAVE is required; the spec has no save input.
 PS1_BIOS=/path/to/ps-22a.bin \
   python3 tools/save_research/assemble_package.py \
   --spec research/specs/rayman-us.json --format v2 --out /tmp/rayman-pkg
+
+# Same BIOS digest. Warped declares no save; the job generates saves after the save gate.
+PS1_BIOS=/path/to/ps-22a.bin \
+  python3 tools/save_research/assemble_package.py \
+  --spec research/specs/crash-bandicoot-warped-us.json --format v2 \
+  --out /tmp/crash-warped-pkg
 ```
 
 Run that twice. Both prints must show the same `sha256`. `--format v2` is what

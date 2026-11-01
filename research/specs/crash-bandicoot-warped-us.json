@@ -1,0 +1,141 @@
+{
+  "format": "memcard-research-spec/v1",
+  "method": "cheat-diff",
+  "name": "crash-bandicoot-warped-us",
+  "title": "Crash Bandicoot: Warped (USA)",
+  "serial": "SCUS-94244",
+  "product_code": "SCUS-94244",
+  "goal": "Produce a read-only save-details decoder for Crash Bandicoot: Warped (USA), product SCUS-94244 only, using cheat-and-diff. No public memory-card editor exists for this release. Find the saved bytes for lives, fruit, crystals, gems, relics, completion percent, level unlocks, secrets, and playtime, and determine whether a checksum is present. Label each claim with confidence. An October 2026 overnight run reported that lives and fruit persist and that completion and collectible meanings were still unknown. This repository does not retain those offsets, so this package supplies none.",
+  "asset": {
+    "asset_type": "psx-rom",
+    "asset_id": "title:Crash Bandicoot: Warped (USA)",
+    "destination": "inputs/roms/game",
+    "provenance": "USA retail Crash Bandicoot: Warped, one data track, fetched by the operator psx-rom loader as cue/bin. Request the disc by title, not by serial. Redump disc 5006 lists serials SCUS-94244 and SCUS-94244CE and editions Original, Greatest Hits, and Collector's Edition on one entry, while the internal serial and volume label are SCUS-94244. The disc also carries WARPSCUS.BIN and a Spyro demo executable, so a scan that ignores SYSTEM.CNF can pick the wrong product. This is the same title-id form used for Metal Gear Solid Disc 2 (`title:Metal Gear Solid (USA) (Disc 2)`). The Redump filename stem spells the colon as a hyphen: Crash Bandicoot - Warped (USA). After the loader materializes the disc, read SYSTEM.CNF and require boot SCUS_942.44, which is serial SCUS-94244. PAL SCES-01420 and JP SCPS-10073 are different products. The disc is a runner dependency, not a packaged file."
+  },
+  "fields_target": [
+    "lives",
+    "fruit",
+    "crystals",
+    "gems",
+    "relics",
+    "completion_percent",
+    "level_unlocks",
+    "secrets",
+    "playtime",
+    "checksum"
+  ],
+  "fields": [
+    {
+      "id": "lives",
+      "confidence": "partial",
+      "note": "The October 2026 overnight ledger says lives persist. No offset was retained in this repository. Recover the offset from a save diff."
+    },
+    {
+      "id": "fruit",
+      "confidence": "partial",
+      "note": "The overnight ledger says fruit persists and uses that word. The USA game calls the counter Wumpa. Treat them as one target only after a save shows one counter. No offset was retained."
+    },
+    {
+      "id": "crystals",
+      "confidence": "unknown",
+      "note": "Target. The overnight ledger says collectible meanings were still unknown."
+    },
+    {
+      "id": "gems",
+      "confidence": "unknown",
+      "note": "Target. Separate from crystals until a diff shows otherwise. Color variants are part of this target, not extra fields, until evidence splits them."
+    },
+    {
+      "id": "relics",
+      "confidence": "unknown",
+      "note": "Target. Time relics are part of this target until evidence splits them."
+    },
+    {
+      "id": "completion_percent",
+      "confidence": "unknown",
+      "note": "Target. Record the on-screen value when the game shows one. A title string or a gem total is not a percent by itself."
+    },
+    {
+      "id": "level_unlocks",
+      "confidence": "unknown",
+      "note": "Target. Which levels or warp rooms a save can open."
+    },
+    {
+      "id": "secrets",
+      "confidence": "unknown",
+      "note": "Target. Options, costumes, and other extras the save keeps. Name one only after a diff isolates it."
+    },
+    {
+      "id": "playtime",
+      "confidence": "unknown",
+      "note": "Target. Confirm the displayed clock before converting ticks."
+    },
+    {
+      "id": "checksum",
+      "confidence": "unknown",
+      "note": "Unknown. Leave checksumOk null until a save the game accepts and a save the game rejects show the algorithm and its range."
+    }
+  ],
+  "layout": {
+    "directory_filename_lead": "BASCUS-9424400000000",
+    "directory_filename_lead_note": "TonyHax variables.mk at commit 6c9d18ccbdfd3ffc3dc5f0eb373a50600199e208 lists this raw entrypoint beside Crash 2 BASCUS-9415400047975 and PAL BESCES-0142000000000. It is a directory-name lead for product 94244, not a save-body map. Confirm it from a USA save this job writes.",
+    "scope": "USA retail SCUS-94244 only. PAL SCES-01420 and JP SCPS-10073 are out of scope. Block count, slot size, header, and checksum are unknown until a real save is read. The original Crash Bandicoot reader (SCUS-94900, one block) is a different game."
+  },
+  "non_sources": [
+    {
+      "name": "game-tools-collection Crash Bandicoot save editor",
+      "license": "MIT",
+      "url": "https://github.com/RyudoSynbios/game-tools-collection/tree/47203c0683893fb41f59154c5c60752125199ca5/src/lib/templates/crash-bandicoot/saveEditor",
+      "note": "Commit 47203c0683893fb41f59154c5c60752125199ca5 has a save editor for the original Crash Bandicoot and for CTR, and none for Warped. The Crash 1 map is SCUS-94900. Do not reuse it here."
+    },
+    {
+      "name": "CrashEdit",
+      "license": "No SPDX identifier. LICENSE.md says the project is otherwise whatever, plus noted third-party audio and icon bits.",
+      "url": "https://github.com/cbhacks/CrashEdit/blob/1797920868823b4f09f7a054150b5e92071a811a/README.md",
+      "note": "Commit 1797920868823b4f09f7a054150b5e92071a811a edits NSF and NSD level assets. It lists SCUS-94244 as a supported disc for those files. It is not a memory-card save editor."
+    }
+  ],
+  "no_save_note": "No reference save is packaged. Public USA saves were not available to hash for this spec, so none are declared. After the save gate, generate several saves in the emulator: the first save the game allows, then later snapshots that differ in lives, fruit, a crystal or gem, a cleared level, and playtime when the screen shows it. The opening often will not save; move forward until it will, and record what you passed. If further USA saves are supplied later, add them as private inputs with sha256 and provenance before trusting them. Do not republish save bytes.",
+  "question_extra": [
+    "Prior finding, with no offsets: the memcard-manager note in docs/formats/overnight-readers.md records Crash 3 SCUS-94244 US as partial. Lives and fruit persist, and completion and collectible meanings were unknown. Counters alone were called too thin for a production summary. The ignored Spark snapshot named there is not in this package. Leave an offset unknown until a new diff shows it.",
+    "",
+    "Directory-name lead, not a body map: TonyHax variables.mk at commit 6c9d18ccbdfd3ffc3dc5f0eb373a50600199e208 lists raw entrypoint BASCUS-9424400000000 beside Crash 2 BASCUS-9415400047975 and PAL BESCES-0142000000000 (https://github.com/socram8888/tonyhax/blob/6c9d18ccbdfd3ffc3dc5f0eb373a50600199e208/variables.mk). Confirm the USA directory name from a save this job writes. PAL SCES-01420 and JP SCPS-10073 stay out of scope.",
+    "",
+    "inputs/current-reader/ includes the Crash Bandicoot reader for SCUS-94900, the original game. Keep its offsets, checksum, and identifiers on that product. Warped needs its own map."
+  ],
+  "required_checks": [
+    "tool-image-provisioned",
+    "save-gate",
+    "control-save",
+    "cheat-diff",
+    "native-load",
+    "parser-suite"
+  ],
+  "check_notes": {
+    "tool-image-provisioned": "Run python3 tools/ps1_replay/host.py --engine docker ensure before any emulator command. Save the printed JSON, including imageId and action, as outputs/tool-image.json. The package builds this PCSX-Redux image from the packaged Containerfile.",
+    "save-gate": "Show that the current scene can write a memory-card save before any poke. If the opening will not save, play forward until it will, and record what you passed. A state that cannot save is not a cheat-diff baseline.",
+    "control-save": "From a save-capable state, in a --guest-writes session that never calls poke, let the game write one save. cardEvidence.control must be true and harnessPatchedCard must stay false. Keep that card as the diff baseline.",
+    "cheat-diff": "Opt into logged guest RAM pokes and let the game write each save. Change more than one target across the run (lives, fruit, a collectible, an unlock, playtime, or a secret), one variable at a time when you can, each against a control. Order and code choice are yours. A single lives poke does not finish this check. Record memory-writes.jsonl, the card diff, and the on-screen value.",
+    "native-load": "From a fresh boot, load one game-written save and capture the progress screen. Emulator state restore does not count. Read lives, fruit, and any crystals, gems, relics, or completion the screen shows. If no percent is displayed, say so and keep the capture.",
+    "parser-suite": "Deliver a read-only inspect_save decoder and a harness suite under outputs/. Known values come from saves this job captured. Label synthetic edits synthetic. Two different progress snapshots must not share one summary. Reject the wrong product, PAL SCES-01420, and JP SCPS-10073. Leave checksumOk null until an accepted save and a rejected save demonstrate an algorithm."
+  },
+  "policy": {
+    "checkpoint_seconds": 30,
+    "finalization_seconds": 900,
+    "termination_seconds": 60
+  },
+  "private_inputs": [
+    {
+      "path": "inputs/bios/ps-22a.bin",
+      "path_env": "PS1_BIOS",
+      "provenance": "SCPH-1001 BIOS image ps-22a.bin, the same bytes as the Tomb Raider US package inputs/bios/ps-22a.bin and the Rayman US spec. Supplied at assemble time via PS1_BIOS or --bios. Not committed.",
+      "role": "bios",
+      "sha256": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3"
+    }
+  ],
+  "resources": {
+    "cpu": 2,
+    "memory_mb": 6144,
+    "time_seconds": 21600
+  }
+}

@@ -6,6 +6,9 @@ and save bytes are copied only when their sha256 matches the spec, and they are
 never read from the git tree. Disc images stay runner asset dependencies. The
 spec asset is the primary disc. extra_assets may list further discs, and each
 one is included the same way. Their destinations must not overlap.
+
+method editor-map (the default) requires an editor cross_check. method cheat-diff
+has no editor field map: it requires non_sources, confidence labels, and check_notes.
 """
 import argparse
 import hashlib
@@ -49,6 +52,7 @@ TEMPLATE_PATHS = (
     'research/templates/AGENTS.md',
     'research/templates/brief.md',
     'research/templates/question.md',
+    'research/templates/question-cheat-diff.md',
 )
 # Closeout paths remain a trio even when a scoped job is blocked. Publication
 # layout and quotas live in research/output-packaging.md, copied into each job.
@@ -60,7 +64,15 @@ REQUIRED_OUTPUTS = [
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
 COMMIT_RE = re.compile(r'^[0-9a-f]{40}(?:[0-9a-f]{24})?$')
 CHECK_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,99}$')
+FIELD_ID = re.compile(r'^[a-z][a-z0-9_]{0,63}$')
 NAME_RE = re.compile(r'^[a-z][a-z0-9-]{0,63}$')
+METHODS = ('editor-map', 'cheat-diff')
+# partial: a prior run saw the value persist but left no offset in this repo.
+# The other words match the save-research skill's ledger vocabulary.
+CONFIDENCE = (
+    'unknown', 'partial', 'candidate', 'corroborated', 'code-traced',
+    'save-reload-verified',
+)
 
 
 def git_env():
@@ -121,6 +133,95 @@ def write_json(path, value):
     write_text(path, json.dumps(value, indent=2, sort_keys=True) + '\n')
 
 
+def validate_cross_check(cross):
+    if not isinstance(cross, dict):
+        raise ValueError('spec cross_check is required')
+    for key in ('name', 'url', 'license'):
+        if not isinstance(cross.get(key), str) or not cross[key].strip():
+            raise ValueError(f'spec cross_check.{key} is required')
+    if not str(cross['url']).startswith('https://'):
+        raise ValueError('spec cross_check.url must be https')
+
+
+def validate_non_sources(spec):
+    items = spec.get('non_sources')
+    if not isinstance(items, list) or not items:
+        raise ValueError('spec non_sources must be a non-empty list')
+    if len(items) > 20:
+        raise ValueError('spec non_sources must be at most 20')
+    seen = set()
+    for index, item in enumerate(items):
+        label = f'spec non_sources[{index}]'
+        if not isinstance(item, dict):
+            raise ValueError(f'{label} must be an object')
+        for key in ('name', 'url', 'license', 'note'):
+            if not isinstance(item.get(key), str) or not item[key].strip():
+                raise ValueError(f'{label}.{key} is required')
+        if not item['url'].startswith('https://'):
+            raise ValueError(f'{label}.url must be https')
+        if item['url'] in seen:
+            raise ValueError(f'{label} duplicates another url')
+        seen.add(item['url'])
+
+
+def validate_cheat_diff_fields(spec):
+    if 'levels' in spec:
+        raise ValueError('cheat-diff specs must not include an editor level table')
+    fields = spec.get('fields')
+    if not isinstance(fields, list) or not fields:
+        raise ValueError('cheat-diff spec fields must be a non-empty list')
+    ids = []
+    allowed = ', '.join(CONFIDENCE)
+    for index, field in enumerate(fields):
+        label = f'spec fields[{index}]'
+        if not isinstance(field, dict):
+            raise ValueError(f'{label} must be an object')
+        ident = field.get('id')
+        if not isinstance(ident, str) or not FIELD_ID.fullmatch(ident):
+            raise ValueError(f'{label}.id must be a lowercase field id')
+        if ident in ids:
+            raise ValueError(f'{label}.id duplicates {ident}')
+        ids.append(ident)
+        if field.get('confidence') not in CONFIDENCE:
+            raise ValueError(f'{label}.confidence must be one of: {allowed}')
+        for banned in ('offset', 'length', 'type', 'bit', 'flags'):
+            if banned in field:
+                raise ValueError(
+                    f'{label} must not include {banned}; cheat-diff has no retained field map')
+        if 'note' in field and (not isinstance(field['note'], str) or not field['note'].strip()):
+            raise ValueError(f'{label}.note must be a non-empty string')
+    if ids != list(spec['fields_target']):
+        raise ValueError('cheat-diff fields and fields_target must list the same ids in the same order')
+
+
+def validate_check_notes(spec):
+    notes = spec.get('check_notes')
+    if not isinstance(notes, dict):
+        raise ValueError('cheat-diff spec check_notes is required')
+    if set(notes) != set(spec['required_checks']):
+        raise ValueError('check_notes keys must match required_checks')
+    for key in spec['required_checks']:
+        if not isinstance(notes[key], str) or not notes[key].strip():
+            raise ValueError(f'check_notes[{key}] must be a non-empty string')
+
+
+def validate_research_method(spec):
+    """editor-map keeps the Rayman cross-check. cheat-diff has no editor map."""
+    method = spec.get('method', 'editor-map')
+    if method not in METHODS:
+        raise ValueError('spec method must be editor-map or cheat-diff')
+    if method == 'editor-map':
+        if 'non_sources' in spec or 'check_notes' in spec:
+            raise ValueError('non_sources and check_notes are only for method cheat-diff')
+        validate_cross_check(spec.get('cross_check'))
+        return
+    if 'cross_check' in spec:
+        raise ValueError('cheat-diff specs use non_sources instead of cross_check')
+    validate_non_sources(spec)
+    validate_cheat_diff_fields(spec)
+    validate_check_notes(spec)
+
+
 def load_spec(path):
     path = Path(path)
     try:
@@ -145,14 +246,7 @@ def load_spec(path):
     validate_extra_assets(spec)
     if not isinstance(spec.get('fields_target'), list) or not spec['fields_target']:
         raise ValueError('spec fields_target must be a non-empty list')
-    cross = spec.get('cross_check')
-    if not isinstance(cross, dict):
-        raise ValueError('spec cross_check is required')
-    for key in ('name', 'url', 'license'):
-        if not isinstance(cross.get(key), str) or not cross[key].strip():
-            raise ValueError(f'spec cross_check.{key} is required')
-    if not str(cross['url']).startswith('https://'):
-        raise ValueError('spec cross_check.url must be https')
+    validate_research_method(spec)
     privates = spec.get('private_inputs')
     if not isinstance(privates, list) or not privates:
         raise ValueError('spec private_inputs must be a non-empty list')
@@ -294,7 +388,8 @@ def markdown_fields(spec):
         if not isinstance(field, dict) or 'id' not in field:
             continue
         detail = ', '.join(f'{key} {field[key]}' for key in
-                           ('offset', 'length', 'type', 'bit', 'note') if key in field)
+                           ('confidence', 'offset', 'length', 'type', 'bit', 'note')
+                           if key in field)
         lines.append(f"- `{field['id']}`: {detail}" if detail else f"- `{field['id']}`")
         for flag in field.get('flags') or []:
             lines.append(f"  - {flag.get('label', 'flag')} at {flag.get('offset')} bit {flag.get('bit')}")
@@ -336,8 +431,45 @@ def ensure_section(fmt):
     )
 
 
+def markdown_non_sources(spec):
+    lines = []
+    for item in spec.get('non_sources') or []:
+        lines.append(
+            f"- {item['name']} ({item['license']}): {item['url']}\n"
+            f"  {item['note']}"
+        )
+    if not lines:
+        return ''
+    return '\n'.join(lines) + '\n'
+
+
+def markdown_check_notes(spec):
+    notes = spec.get('check_notes') or {}
+    if not notes:
+        return ''
+    lines = [f"- `{check}`: {notes[check]}" for check in spec['required_checks']]
+    return '\n'.join(lines) + '\n'
+
+
+def markdown_layout(spec):
+    layout = spec.get('layout')
+    if not isinstance(layout, dict) or not layout:
+        return 'The spec did not include a layout note.\n'
+    lines = []
+    for key in sorted(layout):
+        value = layout[key]
+        if isinstance(value, (dict, list)):
+            rendered = json.dumps(value, sort_keys=True)
+        else:
+            rendered = str(value)
+        lines.append(f'- `{key}`: {rendered}')
+    return '\n'.join(lines) + '\n'
+
+
 def template_values(spec, image, fmt):
-    cross = spec['cross_check']
+    cross = spec.get('cross_check') or {}
+    if not isinstance(cross, dict):
+        cross = {}
     save = next((item for item in spec['private_inputs'] if item['role'] == 'save'), None)
     bios = next(item for item in spec['private_inputs'] if item['role'] == 'bios')
     if save is None:
@@ -366,12 +498,15 @@ def template_values(spec, image, fmt):
         'DISC_ID': spec['asset']['asset_id'],
         'DISC_DEST': spec['asset']['destination'],
         'DISC_PROVENANCE': spec['asset'].get('provenance', ''),
-        'CROSS_NAME': cross['name'],
-        'CROSS_URL': cross['url'],
-        'CROSS_LICENSE': cross['license'],
+        'CROSS_NAME': cross.get('name', ''),
+        'CROSS_URL': cross.get('url', ''),
+        'CROSS_LICENSE': cross.get('license', ''),
         'CROSS_COMMIT': cross.get('commit', ''),
         'CROSS_NOTE': cross.get('note', ''),
         'EXTRA_DISCS': extra_dependency_note(spec),
+        'NON_SOURCES': markdown_non_sources(spec),
+        'CHECK_NOTES': markdown_check_notes(spec),
+        'LAYOUT': markdown_layout(spec),
     }
 
 
@@ -681,7 +816,9 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
         for name in ('AGENTS.md', 'brief.md'):
             text = render_text((template_root / name).read_text(encoding='utf-8'), values)
             write_text(stage / name, relocate_contract_links(text, name))
-        question = render_text((template_root / 'question.md').read_text(encoding='utf-8'), values)
+        question_name = ('question-cheat-diff.md' if spec.get('method') == 'cheat-diff'
+                         else 'question.md')
+        question = render_text((template_root / question_name).read_text(encoding='utf-8'), values)
         extra = spec.get('question_extra')
         if extra:
             if isinstance(extra, list):
