@@ -20,7 +20,10 @@ and current reader. It does not submit or start work. Each declared private
 input is passed with `--bios`/`--save` or the spec's `path_env` and must match
 the spec sha256. A spec with no save role packages no save; Rayman records that
 in `no_save_note` and the job generates saves in the emulator. Disc bytes are
-not packaged; the manifest lists them as a `psx-rom` dependency. `--format v2`
+not packaged; the manifest lists each disc as a `psx-rom` dependency. `asset`
+is the primary disc. Optional `extra_assets` adds more dependencies, each with
+`asset_type`, `asset_id`, `destination`, and an optional `provenance`.
+Destinations must not overlap. `--format v2`
 (the default) is the package Runner 0.4.0 can run, and its first instruction is
 `host.py ensure`. Two assemblies with the same spec, commit, and private-input
 bytes produce the same archive sha256.

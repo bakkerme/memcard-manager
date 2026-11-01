@@ -3,7 +3,9 @@
 
 The definition tree is rendered from tracked sources and the spec. Private BIOS
 and save bytes are copied only when their sha256 matches the spec, and they are
-never read from the git tree. Disc images stay runner asset dependencies.
+never read from the git tree. Disc images stay runner asset dependencies. The
+spec asset is the primary disc. extra_assets may list further discs, and each
+one is included the same way. Their destinations must not overlap.
 """
 import argparse
 import hashlib
@@ -140,6 +142,7 @@ def load_spec(path):
         if not isinstance(asset.get(key), str) or not asset[key]:
             raise ValueError(f'spec asset.{key} is required')
     safe_rel(asset['destination'], 'asset destination')
+    validate_extra_assets(spec)
     if not isinstance(spec.get('fields_target'), list) or not spec['fields_target']:
         raise ValueError('spec fields_target must be a non-empty list')
     cross = spec.get('cross_check')
@@ -368,6 +371,7 @@ def template_values(spec, image, fmt):
         'CROSS_LICENSE': cross['license'],
         'CROSS_COMMIT': cross.get('commit', ''),
         'CROSS_NOTE': cross.get('note', ''),
+        'EXTRA_DISCS': extra_dependency_note(spec),
     }
 
 
@@ -572,6 +576,59 @@ def overlaps(path, destination):
     return path == destination or path.startswith(destination + '/') or destination.startswith(path + '/')
 
 
+def validate_extra_assets(spec):
+    """Accept an optional extra_assets list and reject overlapping destinations.
+
+    Each entry is another runner dependency, same fields as the primary asset.
+    Provenance stays on the spec and is not part of the dependency object.
+    """
+    if 'extra_assets' not in spec:
+        return
+    extras = spec['extra_assets']
+    if not isinstance(extras, list):
+        raise ValueError('spec extra_assets must be a list')
+    destinations = [spec['asset']['destination']]
+    for index, item in enumerate(extras):
+        label = f'spec extra_assets[{index}]'
+        if not isinstance(item, dict):
+            raise ValueError(f'{label} must be an object')
+        for key in ('asset_type', 'asset_id', 'destination'):
+            if not isinstance(item.get(key), str) or not item[key]:
+                raise ValueError(f'{label}.{key} is required')
+        safe_rel(item['destination'], f'{label} destination')
+        if 'provenance' in item and not isinstance(item['provenance'], str):
+            raise ValueError(f'{label}.provenance must be a string')
+        for previous in destinations:
+            if overlaps(previous, item['destination']):
+                raise ValueError(
+                    'asset destination overlaps another dependency: '
+                    f'{item["destination"]}')
+        destinations.append(item['destination'])
+
+
+def dependency_entries(spec):
+    items = [spec['asset'], *(spec.get('extra_assets') or [])]
+    return [{key: item[key] for key in ('asset_type', 'asset_id', 'destination')}
+            for item in items]
+
+
+def extra_dependency_note(spec):
+    """Question text for discs after the primary asset. Empty when there are none."""
+    lines = []
+    for asset in spec.get('extra_assets') or []:
+        line = (
+            f"- Additional dependency: `{asset['asset_type']}` `{asset['asset_id']}`, "
+            f"materialized at `{asset['destination']}` before the first turn."
+        )
+        provenance = asset.get('provenance') or ''
+        if provenance:
+            line += ' ' + provenance
+        lines.append(line)
+    if not lines:
+        return ''
+    return '\n' + '\n'.join(lines)
+
+
 def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, allow_dirty=False):
     if fmt not in ('v2', 'v3'):
         raise ValueError('format must be v2 or v3')
@@ -643,7 +700,7 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
                    {'format': 'memcard-tool-images/v1',
                     'images': [dict(declaration, input_hash=image['input_hash'])]})
 
-        asset = {key: spec['asset'][key] for key in ('asset_type', 'asset_id', 'destination')}
+        dependencies = dependency_entries(spec)
         skills = sorted(path.relative_to(stage).as_posix()
                         for path in (stage / 'skills').rglob('SKILL.md'))
         if not skills:
@@ -652,9 +709,16 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
         inputs = sorted(path.relative_to(stage).as_posix()
                         for path in stage.rglob('*')
                         if path.is_file() and path.relative_to(stage).as_posix() not in reserved)
-        for path in inputs + skills:
-            if overlaps(path, asset['destination']):
-                raise ValueError(f'packaged path overlaps the disc dependency destination: {path}')
+        # Same overlap rule Runner uses at seal: packaged files, reserved names,
+        # and the other dependency destinations.
+        occupied = inputs + skills + ['AGENTS.md', 'brief.md', 'package.json', 'manifest.json', 'outputs']
+        for dependency in dependencies:
+            dest = dependency['destination']
+            for path in occupied:
+                if overlaps(path, dest):
+                    raise ValueError(
+                        f'packaged path overlaps dependency destination {dest}: {path}')
+            occupied.append(dest)
         manifest = {
             'format': f'research-package/{fmt}',
             'name': spec['name'],
@@ -664,7 +728,7 @@ def assemble_package(spec_path, out, fmt='v2', bios=None, save=None, repo=None, 
             'agents': 'AGENTS.md',
             'skills': skills,
             'inputs': inputs,
-            'dependencies': [asset],
+            'dependencies': dependencies,
             'resources': {key: spec['resources'][key] for key in ('cpu', 'memory_mb', 'time_seconds')},
             'required_outputs': list(REQUIRED_OUTPUTS),
             'policy': spec['policy'],

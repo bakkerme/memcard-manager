@@ -353,6 +353,8 @@ class AssembleTests(unittest.TestCase):
             note = json.loads(spec.read_text())['no_save_note']
             self.assertIn(note, question)
             self.assertIn('(none supplied)', question)
+            self.assertNotIn('Additional dependency', question)
+            self.assertNotIn('@@', question)
             self.assertIn('create saves in the emulator', agents)
             self.assertIn('emulator-generated saves', question)
             self.assertIn('native-load', agents)
@@ -415,6 +417,98 @@ class AssembleTests(unittest.TestCase):
                 self.assertEqual(archive_text(after['package'], CONTRACT_INPUT).encode(), updated)
             finally:
                 source.write_bytes(original)
+
+    def _spec_with(self, directory, extra_assets):
+        spec = json.loads(self.spec.read_text())
+        spec['extra_assets'] = extra_assets
+        path = Path(directory) / 'extra-assets.json'
+        path.write_text(json.dumps(spec) + '\n')
+        return path
+
+    def test_extra_asset_is_a_second_dependency(self):
+        try:
+            runner = package_builder.load_research_runner()
+        except ValueError as error:
+            self.skipTest(str(error))
+        disc2 = {
+            'asset_type': 'psx-rom',
+            'asset_id': 'title:Metal Gear Solid (USA) (Disc 2)',
+            'destination': 'inputs/roms/disc2',
+            'provenance': 'Operator psx-rom loader, Disc 2 cue/bin. Not a packaged file.',
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            spec_path = self._spec_with(root, [disc2])
+            built = build_package(spec_path, root / 'out', fmt='v2',
+                                  bios=self.bios, save=self.save, repo=self.repo)
+            manifest, files = runner.package.verify(built['package'])
+            self.assertEqual(manifest['dependencies'], [
+                {'asset_type': 'psx-rom', 'asset_id': 'SLUS-00005', 'destination': 'inputs/roms/game'},
+                {'asset_type': 'psx-rom', 'asset_id': disc2['asset_id'],
+                 'destination': 'inputs/roms/disc2'},
+            ])
+            self.assertNotIn('provenance', manifest['dependencies'][1])
+            self.assertNotIn('inputs/roms/game', files)
+            self.assertNotIn('inputs/roms/disc2', files)
+            self.assertFalse(any(name.startswith('inputs/roms/disc2/') for name in files))
+            question = archive_text(built['package'], 'inputs/question.md')
+            self.assertIn('`psx-rom` `SLUS-00005`', question)
+            self.assertIn(
+                '- Additional dependency: `psx-rom` `title:Metal Gear Solid (USA) (Disc 2)`, '
+                'materialized at `inputs/roms/disc2` before the first turn. '
+                'Operator psx-rom loader, Disc 2 cue/bin. Not a packaged file.',
+                question)
+            packaged = json.loads(archive_text(built['package'], 'inputs/spec.json'))
+            self.assertEqual(packaged['extra_assets'], [disc2])
+
+            spec_path = self._spec_with(root, [dict(disc2, destination='inputs/bios')])
+            with self.assertRaisesRegex(ValueError, 'overlaps dependency destination inputs/bios'):
+                build_package(spec_path, root / 'overlap', fmt='v2',
+                              bios=self.bios, save=self.save, repo=self.repo)
+
+    def test_extra_assets_reject_bad_entries_and_overlapping_destinations(self):
+        disc2 = {
+            'asset_type': 'psx-rom',
+            'asset_id': 'title:Metal Gear Solid (USA) (Disc 2)',
+            'destination': 'inputs/roms/disc2',
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            loaded = package_builder.load_spec(self._spec_with(root, [disc2]))
+            self.assertEqual(package_builder.dependency_entries(loaded), [
+                {'asset_type': 'psx-rom', 'asset_id': 'SLUS-00005', 'destination': 'inputs/roms/game'},
+                {'asset_type': 'psx-rom', 'asset_id': disc2['asset_id'],
+                 'destination': 'inputs/roms/disc2'},
+            ])
+            self.assertEqual(package_builder.extra_dependency_note(loaded),
+                             '\n- Additional dependency: `psx-rom` '
+                             '`title:Metal Gear Solid (USA) (Disc 2)`, '
+                             'materialized at `inputs/roms/disc2` before the first turn.')
+            omitted = package_builder.load_spec(self.spec)
+            self.assertNotIn('extra_assets', omitted)
+            self.assertEqual(package_builder.extra_dependency_note(omitted), '')
+            self.assertEqual(len(package_builder.dependency_entries(omitted)), 1)
+
+            with self.assertRaisesRegex(ValueError, 'must be a list'):
+                package_builder.load_spec(self._spec_with(root, {'asset_type': 'psx-rom'}))
+            with self.assertRaisesRegex(ValueError, 'must be an object'):
+                package_builder.load_spec(self._spec_with(root, ['not-an-object']))
+            with self.assertRaisesRegex(ValueError, r'extra_assets\[0\]\.destination is required'):
+                package_builder.load_spec(self._spec_with(root, [{
+                    'asset_type': 'psx-rom',
+                    'asset_id': disc2['asset_id'],
+                }]))
+            with self.assertRaisesRegex(ValueError, 'provenance must be a string'):
+                package_builder.load_spec(self._spec_with(root, [dict(disc2, provenance=1)]))
+            with self.assertRaisesRegex(ValueError, 'relative posix path'):
+                package_builder.load_spec(self._spec_with(root, [dict(disc2, destination='../disc2')]))
+            for destination in ('inputs/roms/game', 'inputs/roms/game/track', 'inputs/roms'):
+                with self.subTest(destination=destination):
+                    with self.assertRaisesRegex(ValueError, 'overlaps another dependency'):
+                        package_builder.load_spec(self._spec_with(root, [dict(disc2, destination=destination)]))
+            nested = dict(disc2, destination='inputs/roms/disc2/extra')
+            with self.assertRaisesRegex(ValueError, 'overlaps another dependency'):
+                package_builder.load_spec(self._spec_with(root, [disc2, nested]))
 
 
 if __name__ == '__main__':

@@ -73,8 +73,11 @@ affected scope.
 ## Assemble a game package
 
 Game packages are generated, not hand-copied. The committed spec carries no BIOS,
-disc, or save bytes. The disc is a v2 `dependencies` entry (`psx-rom`), resolved
+disc, or save bytes. Each disc is a v2 `dependencies` entry (`psx-rom`), resolved
 by the operator loader the same way the Tomb Raider package fetched its disc.
+`asset` is the primary disc. Further discs belong in `extra_assets`, a list of
+`{asset_type, asset_id, destination, provenance?}` objects, and are listed the
+same way. Destinations must not overlap each other or a packaged file.
 BIOS is a private input: the assembler copies it only after its sha256 matches
 the spec. A save is packaged only when the spec declares one. Rayman does not:
 `no_save_note` tells the job to generate saves in the emulator.

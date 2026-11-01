@@ -35,7 +35,7 @@ Offsets below are that editor's claims for one 0x2000-byte slot, not a copied im
 - Save: `@@SAVE_PATH@@` (sha256 `@@SAVE_SHA@@`). @@SAVE_PROVENANCE@@
 - BIOS: `@@BIOS_PATH@@` (sha256 `@@BIOS_SHA@@`). @@BIOS_PROVENANCE@@
   The BIOS is a packaged private input, the same way the Tomb Raider US package carried `inputs/bios/ps-22a.bin`. It is not an asset-loader download.
-- Disc: runner dependency `psx-rom` `@@DISC_ID@@`, materialized at `@@DISC_DEST@@` before the first turn. @@DISC_PROVENANCE@@
+- Disc: runner dependency `psx-rom` `@@DISC_ID@@`, materialized at `@@DISC_DEST@@` before the first turn. @@DISC_PROVENANCE@@@@EXTRA_DISCS@@
   Do not package or publish disc or BIOS bytes.
 - Current reader: `inputs/current-reader/`. Tooling: `tools/ps1_replay/` (including the Containerfile and `host.py`) and `tools/save_research/`. Skills: `skills/ps1-save-research/` and `skills/emulator-replay/`.
 - Editor field table and this question's source spec: `inputs/spec.json`.
